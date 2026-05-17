@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser
 class User(AbstractUser):
     """Custom user model for future scaling (e.g., Premium features)."""
     is_premium = models.BooleanField(default=False)
+    is_approved = models.BooleanField(default=False)
 
 class KeywordSearch(models.Model):
     """Stores the main search term and when it was last updated."""

@@ -22,8 +22,11 @@ def signup_view(request):
             
             user = User.objects.create_user(username=username, password=password, first_name=first_name)
             login(request, user)
-            return redirect('dashboard')
+            return redirect('pending_approval')
     return render(request, 'keywords/signup.html')
+
+def pending_approval_view(request):
+    return render(request, 'keywords/pending_approval.html')
 
 @login_required
 def dashboard_view(request):
