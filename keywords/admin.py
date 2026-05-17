@@ -3,7 +3,7 @@ from .models import User, KeywordSearch, KeywordResult
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ('username', 'email', 'is_approved', 'is_premium', 'is_staff')
+    list_display = ('username', 'first_name', 'email', 'is_approved', 'is_premium', 'is_staff')
     list_editable = ('is_approved', 'is_premium')
     list_filter = ('is_approved', 'is_premium', 'is_staff')
 
