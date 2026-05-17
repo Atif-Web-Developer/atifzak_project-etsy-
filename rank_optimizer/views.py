@@ -10,7 +10,7 @@ from keywords.models import KeywordSearch, KeywordResult
 def dashboard_view(request):
     load_id = request.GET.get('load')
     if load_id:
-        search_obj = KeywordSearch.objects.filter(id=load_id).first()
+        search_obj = KeywordSearch.objects.filter(id=load_id, user=request.user).first()
         if search_obj:
             results = KeywordResult.objects.filter(search=search_obj)
             data_list = []
@@ -89,7 +89,7 @@ def upload_file_view(request):
         request.session.modified = True
 
         # Save to global File History database
-        search_obj, _ = KeywordSearch.objects.get_or_create(term=f"[Opt] {file.name}")
+        search_obj, _ = KeywordSearch.objects.get_or_create(user=request.user, term=f"[Opt] {file.name}")
         KeywordResult.objects.filter(search=search_obj).delete()
         
         results_to_create = []

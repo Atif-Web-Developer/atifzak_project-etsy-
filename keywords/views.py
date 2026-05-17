@@ -48,7 +48,7 @@ def upload_csv(request):
         data = data.fillna(0)
         
         results = []
-        search_obj, _ = KeywordSearch.objects.get_or_create(term=f"Upload_{csv_file.name}")
+        search_obj, _ = KeywordSearch.objects.get_or_create(user=request.user, term=f"Upload_{csv_file.name}")
         KeywordResult.objects.filter(search=search_obj).delete()
 
         for index, row in data.iterrows():
@@ -122,7 +122,7 @@ def analyze_keyword(request):
     if not term:
         return JsonResponse({'error': 'Keyword is required'}, status=400)
 
-    search_obj, created = KeywordSearch.objects.get_or_create(term=term)
+    search_obj, created = KeywordSearch.objects.get_or_create(user=request.user, term=term)
     results = scrape_keyword_data(term)
     
     KeywordResult.objects.filter(search=search_obj).delete()
@@ -178,7 +178,7 @@ def export_csv(request):
     if not term:
         return HttpResponse("No term provided", status=400)
     
-    search_obj = KeywordSearch.objects.filter(term=term).first()
+    search_obj = KeywordSearch.objects.filter(term=term, user=request.user).first()
     if not search_obj:
         return HttpResponse("Search results not found", status=404)
     
@@ -197,12 +197,12 @@ def export_csv(request):
 
 @login_required
 def history_view(request):
-    searches = KeywordSearch.objects.all().order_by('-last_updated')
+    searches = KeywordSearch.objects.filter(user=request.user).order_by('-last_updated')
     return render(request, 'keywords/history.html', {'searches': searches})
 
 @login_required
 def load_results(request, search_id):
-    search_obj = KeywordSearch.objects.filter(id=search_id).first()
+    search_obj = KeywordSearch.objects.filter(id=search_id, user=request.user).first()
     if not search_obj:
         return JsonResponse({'error': 'Search not found'}, status=404)
     
@@ -230,18 +230,18 @@ def load_results(request, search_id):
 
 @login_required
 def overview_dashboard(request):
-    total_files = KeywordSearch.objects.count()
-    total_keywords = KeywordResult.objects.count()
-    favorites_count = KeywordResult.objects.filter(is_favorite=True).count()
+    total_files = KeywordSearch.objects.filter(user=request.user).count()
+    total_keywords = KeywordResult.objects.filter(search__user=request.user).count()
+    favorites_count = KeywordResult.objects.filter(is_favorite=True, search__user=request.user).count()
     
     # Golden Nuggets: High Demand (>1000) + Low Comp (<5000)
-    golden_nuggets = KeywordResult.objects.filter(competition__lt=5000, avg_searches__gte=1000).order_by('-avg_searches')[:10]
+    golden_nuggets = KeywordResult.objects.filter(competition__lt=5000, avg_searches__gte=1000, search__user=request.user).order_by('-avg_searches')[:10]
     
     # Easy to Rank: Good Demand (>500) + Med-Low Comp (<15000)
-    easy_to_rank = KeywordResult.objects.filter(competition__lt=15000, avg_searches__gte=500).exclude(id__in=[g.id for g in golden_nuggets]).order_by('-avg_searches')[:10]
+    easy_to_rank = KeywordResult.objects.filter(competition__lt=15000, avg_searches__gte=500, search__user=request.user).exclude(id__in=[g.id for g in golden_nuggets]).order_by('-avg_searches')[:10]
     
     # All Favorites
-    favorites = KeywordResult.objects.filter(is_favorite=True).order_by('-avg_searches')
+    favorites = KeywordResult.objects.filter(is_favorite=True, search__user=request.user).order_by('-avg_searches')
     
     context = {
         'total_files': total_files,
@@ -258,7 +258,7 @@ def overview_dashboard(request):
 def toggle_favorite(request):
     keyword_id = request.POST.get('keyword_id')
     try:
-        res = KeywordResult.objects.get(id=keyword_id)
+        res = KeywordResult.objects.get(id=keyword_id, search__user=request.user)
         res.is_favorite = not res.is_favorite
         res.save()
         return JsonResponse({'status': 'success', 'is_favorite': res.is_favorite})
@@ -267,12 +267,12 @@ def toggle_favorite(request):
 
 @login_required
 def saved_keywords(request):
-    favorites = KeywordResult.objects.filter(is_favorite=True).order_by('-opportunity_score', '-avg_searches')
+    favorites = KeywordResult.objects.filter(is_favorite=True, search__user=request.user).order_by('-opportunity_score', '-avg_searches')
     return render(request, 'keywords/saved.html', {'favorites': favorites})
 
 @login_required
 def delete_history(request, search_id):
-    search_obj = KeywordSearch.objects.filter(id=search_id).first()
+    search_obj = KeywordSearch.objects.filter(id=search_id, user=request.user).first()
     if search_obj:
         # Explicitly delete results to ensure clean up, though CASCADE usually handles it
         KeywordResult.objects.filter(search=search_obj).delete()
