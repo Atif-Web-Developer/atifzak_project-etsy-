@@ -1,0 +1,369 @@
+{% extends 'keywords/base.html' %}
+
+{% block title %}Analyzer | Atif-Zak Analytics{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <h2 class="fw-bold text-dark">Keyword Analyzer</h2>
+        <p class="text-muted">Uncover low-competition, high-demand niches with AI-powered market scraping.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-11 mx-auto">
+        <div class="upload-zone p-5 text-center">
+            <div class="upload-icon-box mb-4">
+                <i class="fas fa-cloud-upload-alt"></i>
+            </div>
+            <h2 class="fw-bold text-dark mb-2">Enterprise CSV Importer</h2>
+            <p class="text-muted mb-4 fs-5">Seamlessly sync your eRank data. We'll handle the analysis and color-coding for you.</p>
+            
+            <form id="upload-form" enctype="multipart/form-data" class="mx-auto" style="max-width: 500px;">
+                <div class="custom-file-upload">
+                    <label for="csv-file" class="file-label shadow-sm">
+                        <span id="file-name-display"><i class="fas fa-file-csv me-2"></i> Click to select eRank CSV file</span>
+                    </label>
+                    <input type="file" id="csv-file" class="d-none" accept=".csv" required>
+                </div>
+                <button type="submit" class="btn btn-pro-primary btn-lg w-100 mt-4 shadow-lg">
+                    <i class="fas fa-bolt me-2"></i> Launch Analysis
+                </button>
+            </form>
+            <div class="mt-4 d-flex justify-content-center gap-4 text-muted small opacity-75">
+                <span><i class="fas fa-check-circle text-success"></i> Auto-Coloring</span>
+                <span><i class="fas fa-check-circle text-success"></i> Priority Sorting</span>
+                <span><i class="fas fa-check-circle text-success"></i> Real-time eRank Processing</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Color Coding Guide (Legend) -->
+<div class="row mt-4">
+    <div class="col-md-11 mx-auto">
+        <div class="accordion" id="logicAccordion">
+            <div class="accordion-item border-0 shadow-sm" style="border-radius: 16px; overflow: hidden;">
+                <h2 class="accordion-header" id="headingOne">
+                    <button class="accordion-button collapsed fw-bold bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLogic" aria-expanded="false" aria-controls="collapseLogic">
+                        <i class="fas fa-book-open text-success me-2"></i> Color Coding Guide (Antigravity Logic)
+                    </button>
+                </h2>
+                <div id="collapseLogic" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#logicAccordion">
+                    <div class="accordion-body bg-light p-4">
+                        <div class="row g-4">
+                            <!-- Competition -->
+                            <div class="col-md-4">
+                                <h6 class="fw-bold mb-3"><i class="fas fa-trophy text-warning me-2"></i> Etsy Competition</h6>
+                                <div class="d-flex align-items-center mb-2"><span class="badge" style="background:#064e3b; width:70px;">< 5k</span> <small class="ms-2">Golden Nugget</small></div>
+                                <div class="d-flex align-items-center mb-2"><span class="badge" style="background:#22c55e; width:70px;">< 15k</span> <small class="ms-2">Easy to Rank</small></div>
+                                <div class="d-flex align-items-center mb-2"><span class="badge" style="background:#f59e0b; width:70px;">< 50k</span> <small class="ms-2">Moderate Effort</small></div>
+                                <div class="d-flex align-items-center"><span class="badge" style="background:#dc2626; width:70px;">50k+</span> <small class="ms-2">Extreme Competition</small></div>
+                            </div>
+                            <!-- Searches -->
+                            <div class="col-md-4">
+                                <h6 class="fw-bold mb-3"><i class="fas fa-search text-primary me-2"></i> Avg. Searches</h6>
+                                <div class="d-flex align-items-center mb-2"><span class="badge" style="background:#064e3b; width:70px;">1,000+</span> <small class="ms-2">High Demand</small></div>
+                                <div class="d-flex align-items-center mb-2"><span class="badge" style="background:#22c55e; width:70px;">500 - 999</span> <small class="ms-2">Good Demand</small></div>
+                                <div class="d-flex align-items-center mb-2"><span class="badge" style="background:#f59e0b; width:70px;">100 - 499</span> <small class="ms-2">Low Demand</small></div>
+                                <div class="d-flex align-items-center"><span class="badge" style="background:#dc2626; width:70px;">< 100</span> <small class="ms-2">Very Low Demand</small></div>
+                            </div>
+                            <!-- CTR -->
+                            <div class="col-md-4">
+                                <h6 class="fw-bold mb-3"><i class="fas fa-mouse-pointer text-info me-2"></i> Avg. CTR %</h6>
+                                <div class="d-flex align-items-center mb-2"><span class="badge" style="background:#064e3b; width:70px;">> 100%</span> <small class="ms-2">Best Engagement</small></div>
+                                <div class="d-flex align-items-center mb-2"><span class="badge" style="background:#22c55e; width:70px;">80% - 100%</span> <small class="ms-2">Healthy</small></div>
+                                <div class="d-flex align-items-center mb-2"><span class="badge" style="background:#f59e0b; width:70px;">50% - 79%</span> <small class="ms-2">Average</small></div>
+                                <div class="d-flex align-items-center"><span class="badge" style="background:#dc2626; width:70px;">< 50%</span> <small class="ms-2">Bad Match</small></div>
+                            </div>
+                            <!-- Opp Score -->
+                            <div class="col-12 mt-4">
+                                <div class="p-3 bg-white rounded-3 border">
+                                    <h6 class="fw-bold mb-1"><i class="fas fa-calculator text-success me-2"></i> Opportunity Score Formula</h6>
+                                    <p class="small text-muted mb-0"><code>(Avg. Searches / Etsy Competition) * 100</code> — Shows the exact gap between demand and supply. Higher is better.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .upload-zone {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        border: 2px dashed #cbd5e1;
+        border-radius: 24px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .upload-zone:hover {
+        border-color: var(--primary-pro);
+        background: #f8fafc;
+        transform: translateY(-5px);
+    }
+    .upload-icon-box {
+        width: 80px;
+        height: 80px;
+        background: #ecfdf5;
+        color: var(--primary-pro);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        border-radius: 20px;
+        margin: 0 auto;
+        box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.1);
+    }
+    .file-label {
+        display: block;
+        padding: 20px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 600;
+        color: #475569;
+        transition: all 0.2s;
+    }
+    .file-label:hover {
+        background: #f1f5f9;
+        border-color: #94a3b8;
+    }
+    .upload-zone::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 6px;
+        background: linear-gradient(90deg, #10b981, #34d399);
+    }
+
+    .cell-dark-green { background-color: #064e3b !important; color: #ffffff !important; font-weight: 800; border-radius: 6px; padding: 5px 12px; display: inline-block; min-width: 90px; text-align: center; border: 1px solid #064e3b;}
+    .cell-light-green { background-color: #22c55e !important; color: #ffffff !important; font-weight: 700; border-radius: 6px; padding: 5px 12px; display: inline-block; min-width: 90px; text-align: center;}
+    .cell-orange { background-color: #f59e0b !important; color: #ffffff !important; font-weight: 700; border-radius: 6px; padding: 5px 12px; display: inline-block; min-width: 90px; text-align: center;}
+    .cell-red { background-color: #dc2626 !important; color: #ffffff !important; font-weight: 700; border-radius: 6px; padding: 5px 12px; display: inline-block; min-width: 90px; text-align: center;}
+</style>
+
+<div class="row mt-4" id="results-container" style="display: none;">
+    <div class="col-12">
+        <div class="pro-card p-0">
+            <div class="d-flex justify-content-between align-items-center p-4 border-bottom">
+                <h5 class="mb-0 fw-bold">Analysis for: <span id="display-term" class="text-success"></span></h5>
+                <div id="stats-summary" class="d-flex gap-3">
+                    <!-- Quick stats summary here -->
+                </div>
+            </div>
+            <div class="p-4">
+                <div class="table-responsive">
+                    <table id="results-table" class="table table-hover align-middle w-100">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="d-none">Priority</th>
+                                <th class="py-3 px-3">KEYWORDS</th>
+                                <th class="py-3">AVG. SEARCHES</th>
+                                <th class="py-3">ETSY COMPETITION</th>
+                                <th class="py-3">OPPORTUNITY SCORE</th>
+                                <th class="py-3">AVG. CLICKS</th>
+                                <th class="py-3">AVG. CTR</th>
+                                <th class="py-3">KD</th>
+                            </tr>
+                        </thead>
+                        <tbody id="results-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function getCompClass(comp) {
+        if (comp <= 5000) return 'cell-dark-green';
+        if (comp <= 15000) return 'cell-light-green';
+        if (comp <= 50000) return 'cell-orange';
+        return 'cell-red';
+    }
+
+    function getSearchClass(searches) {
+        if (searches >= 1000) return 'cell-dark-green';
+        if (searches >= 500) return 'cell-light-green';
+        if (searches >= 100) return 'cell-orange';
+        return 'cell-red';
+    }
+
+    function getCtrClass(ctr) {
+        if (ctr > 100) return 'cell-dark-green';
+        if (ctr >= 80) return 'cell-light-green';
+        if (ctr >= 50) return 'cell-orange';
+        return 'cell-red';
+    }
+
+    function renderResults(data, term) {
+        $('#placeholder-container').hide();
+        $('#results-container').fadeIn();
+        $('#display-term').text(term);
+
+        if ($.fn.DataTable.isDataTable('#results-table')) {
+            $('#results-table').DataTable().destroy();
+        }
+
+        let html = '';
+        data.results.forEach(res => {
+            let compClass = getCompClass(res.competition);
+            let searchClass = getSearchClass(res.avg_searches);
+            let ctrClass = getCtrClass(res.avg_ctr);
+            
+            // Calculate Opportunity Score
+            let oppScore = 0;
+            if (res.competition > 0) {
+                oppScore = Math.round((res.avg_searches / res.competition) * 100);
+            } else if (res.avg_searches > 0) {
+                oppScore = 1000; // Arbitrary high score if no competition
+            }
+            
+            let oppClass = 'cell-red';
+            if (oppScore >= 10) oppClass = 'cell-dark-green';
+            else if (oppScore >= 5) oppClass = 'cell-light-green';
+            else if (oppScore >= 1) oppClass = 'cell-orange';
+
+            let favClass = res.is_favorite ? 'fas fa-star text-warning' : 'far fa-star text-muted';
+            
+            html += `
+                <tr>
+                    <td class="d-none">${res.priority}</td>
+                    <td class="px-3 fw-bold">
+                        <i class="${favClass} me-2 fav-btn" style="cursor: pointer;" data-id="${res.id}"></i> 
+                        ${res.keyword}
+                    </td>
+                    <td data-order="${res.avg_searches}">
+                        <div class="${searchClass}">${res.avg_searches.toLocaleString()}</div>
+                    </td>
+                    <td data-order="${res.competition}">
+                        <div class="${compClass}">${res.competition.toLocaleString()}</div>
+                    </td>
+                    <td data-order="${oppScore}">
+                        <div class="${oppClass}">${oppScore}</div>
+                    </td>
+                    <td data-order="${res.avg_clicks}">
+                        <div class="cell-light-green" style="background: #0ea5e9 !important; border-color: #0ea5e9;">${res.avg_clicks.toLocaleString()}</div>
+                    </td>
+                    <td data-order="${res.avg_ctr}">
+                        <div class="${ctrClass}">${res.avg_ctr}%</div>
+                    </td>
+                    <td class="text-center" data-order="${res.kd}">
+                        <span class="badge bg-light text-dark border">● ${res.kd}</span>
+                    </td>
+                </tr>
+            `;
+        });
+        $('#results-body').html(html);
+
+        $('#results-table').DataTable({
+            order: [[0, 'asc'], [4, 'desc']], // Sort by Priority, then by Opportunity Score (Highest first)
+            pageLength: 25,
+            columnDefs: [
+                { targets: [0], visible: false }, 
+                { targets: [2, 3, 4, 5, 7], type: 'num' }, 
+                { targets: [6], type: 'num-fmt' } 
+            ],
+            language: { 
+                search: "_INPUT_", 
+                searchPlaceholder: "Filter results..." 
+            },
+            drawCallback: function() {
+                $('#results-table thead th').css('background-color', '');
+                let sortedCol = this.api().order()[0][0];
+                $(this.api().column(sortedCol).header()).css('background-color', '#f1f5f9');
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        // AUTO-LOAD FROM HISTORY
+        const urlParams = new URLSearchParams(window.location.search);
+        const loadId = urlParams.get('load');
+        if (loadId) {
+            $('#loader-overlay').css('display', 'flex');
+            $.ajax({
+                url: `/load-results/${loadId}/`,
+                type: 'GET',
+                success: function(data) {
+                    $('#loader-overlay').hide();
+                    renderResults(data, data.term);
+                }
+            });
+        }
+
+        // Update filename on select
+        $('#csv-file').on('change', function() {
+            let fileName = $(this).val().split('\\').pop();
+            if (fileName) {
+                $('#file-name-display').html(`<i class="fas fa-file-csv me-2 text-success"></i> ${fileName}`);
+                $('.file-label').css('background', '#f0fdf4').css('border-color', '#22c55e');
+            }
+        });
+
+        $('#search-form').on('submit', function(e) {
+            e.preventDefault();
+            $('#loader-overlay').css('display', 'flex');
+            $.ajax({
+                url: "{% url 'analyze' %}",
+                type: 'POST',
+                data: { 'keyword': $('#keyword-input').val() },
+                success: function(data) {
+                    $('#loader-overlay').hide();
+                    renderResults(data, $('#keyword-input').val());
+                }
+            });
+        });
+
+        $('#upload-form').on('submit', function(e) {
+            e.preventDefault();
+            let formData = new FormData();
+            formData.append('csv_file', $('#csv-file')[0].files[0]);
+            
+            $('#loader-overlay').css('display', 'flex');
+            $.ajax({
+                url: "{% url 'upload_csv' %}",
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(data) {
+                    $('#loader-overlay').hide();
+                    renderResults(data, data.term);
+                },
+                error: function(err) {
+                    $('#loader-overlay').hide();
+                    alert(err.responseJSON.error || "File processing failed.");
+                }
+            });
+        });
+
+        // Toggle Favorite AJAX
+        $(document).on('click', '.fav-btn', function() {
+            let btn = $(this);
+            let keywordId = btn.data('id');
+            
+            $.ajax({
+                url: "{% url 'toggle_favorite' %}",
+                type: 'POST',
+                data: { 'keyword_id': keywordId },
+                success: function(data) {
+                    if (data.is_favorite) {
+                        btn.removeClass('far text-muted').addClass('fas text-warning');
+                    } else {
+                        btn.removeClass('fas text-warning').addClass('far text-muted');
+                    }
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

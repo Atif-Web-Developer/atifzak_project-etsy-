@@ -1,0 +1,341 @@
+{% extends "keywords/base.html" %}
+
+{% block title %}ProfitPulse - Etsy Fee Calculator{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">ProfitPulse <small class="text-muted fs-5">| Etsy Profit & Fee Calculator</small></h1>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Calculator Form -->
+    <div class="col-lg-5">
+        <div class="pro-card">
+            <h3 class="mb-4"><i class="fas fa-calculator me-2 text-success"></i>Calculator</h3>
+            
+            <div class="mb-3">
+                <label class="form-label fw-bold">Sale Price ($)</label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" id="salePrice" class="form-control" value="29.00" step="0.01">
+                </div>
+                <div class="form-text">What the customer pays for the item.</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Shipping Charged ($)</label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" id="shippingCharged" class="form-control" value="0.00" step="0.01">
+                </div>
+                <div class="form-text">Amount paid by customer for shipping.</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Item Cost ($)</label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" id="itemCost" class="form-control" value="13.00" step="0.01">
+                </div>
+                <div class="form-text">Your production or purchase cost.</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Shipping Cost ($)</label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" id="shippingCost" class="form-control" value="4.00" step="0.01">
+                </div>
+                <div class="form-text">What you pay to ship the item.</div>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="mb-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="offsiteAds">
+                    <label class="form-check-label fw-bold" for="offsiteAds">Offsite Ads (15%)</label>
+                </div>
+                <div class="form-text">Etsy's optional advertising fee.</div>
+            </div>
+
+            <div class="mb-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="currencyConversion" checked>
+                    <label class="form-check-label fw-bold" for="currencyConversion">Currency Conversion (2.5%)</label>
+                </div>
+                <div class="form-text">If you are outside the USA (e.g. Pakistan).</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Payment Processing Fee</label>
+                <select id="processingFeeType" class="form-select">
+                    <option value="us">USA (3% + $0.25)</option>
+                    <option value="pk" selected>Pakistan/Other (4% + $0.30)</option>
+                    <option value="high">High Rate (7% + $0.30)</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Panel -->
+    <div class="col-lg-7">
+        <div class="pro-card bg-light border-0 shadow-sm">
+            <h3 class="mb-4"><i class="fas fa-chart-pie me-2 text-primary"></i>Profit Analysis</h3>
+            
+            <div class="row text-center mb-4">
+                <div class="col-md-6 mb-3">
+                    <div class="p-4 rounded-4 bg-white border border-success border-2 shadow-sm">
+                        <span class="text-muted d-block small mb-1 uppercase fw-bold">NET PROFIT</span>
+                        <h2 class="text-success display-5 mb-0" id="netProfit">$0.00</h2>
+                        <span class="badge bg-success mt-2" id="profitMargin">0% Margin</span>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="p-4 rounded-4 bg-white border border-primary border-2 shadow-sm">
+                        <span class="text-muted d-block small mb-1 uppercase fw-bold">TOTAL FEES</span>
+                        <h2 class="text-primary display-5 mb-0" id="totalFees">$0.00</h2>
+                        <span class="text-muted small" id="totalFeesPercent">0% of Sale</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-borderless align-middle">
+                    <tbody>
+                        <tr>
+                            <td><i class="fas fa-list-ul text-muted me-2"></i> Listing Fee</td>
+                            <td class="text-end fw-bold text-danger" id="breakdownListing">-$0.20</td>
+                        </tr>
+                        <tr>
+                            <td><i class="fas fa-percent text-muted me-2"></i> Transaction Fee (6.5%)</td>
+                            <td class="text-end fw-bold text-danger" id="breakdownTransaction">-$0.00</td>
+                        </tr>
+                        <tr>
+                            <td><i class="fas fa-credit-card text-muted me-2"></i> Payment Processing</td>
+                            <td class="text-end fw-bold text-danger" id="breakdownProcessing">-$0.00</td>
+                        </tr>
+                        <tr id="rowOffsiteAds" style="display:none;">
+                            <td><i class="fas fa-ad text-muted me-2"></i> Offsite Ads (15%)</td>
+                            <td class="text-end fw-bold text-danger" id="breakdownAds">-$0.00</td>
+                        </tr>
+                        <tr id="rowCurrency" style="display:none;">
+                            <td><i class="fas fa-coins text-muted me-2"></i> Currency Conversion (2.5%)</td>
+                            <td class="text-end fw-bold text-danger" id="breakdownCurrency">-$0.00</td>
+                        </tr>
+                        <tr class="border-top">
+                            <td class="pt-3"><strong>Total Revenue</strong></td>
+                            <td class="text-end pt-3 fw-bold text-success" id="totalRevenue">$0.00</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total Expenses (COGS + Shipping)</strong></td>
+                            <td class="text-end fw-bold text-secondary" id="totalExpenses">-$0.00</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4 pt-4 border-top">
+                <h5 class="text-center mb-4" style="color: #1e293b; font-weight: 700; font-family: 'Inter', sans-serif;">% distribution of revenue</h5>
+                <div style="position: relative; height: 280px; width: 100%; display: flex; justify-content: center;">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-4 d-flex align-items-start border-0 shadow-sm" style="background-color: #f0f9ff;">
+                <i class="fas fa-info-circle mt-1 me-3 text-info"></i>
+                <div>
+                    <small>
+                        <strong>Note:</strong> This calculator uses the latest Etsy fee structure (updated 2024). 
+                        The $19 One-time Setup Fee is not included in individual per-sale profit as it's a fixed startup cost.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .pro-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .pro-card:hover {
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    .form-label {
+        font-size: 0.9rem;
+        color: #475569;
+    }
+    .form-text {
+        font-size: 0.75rem;
+    }
+    .display-5 {
+        font-weight: 800;
+        letter-spacing: -1px;
+    }
+    .rounded-4 {
+        border-radius: 1.25rem !important;
+    }
+    .table td {
+        padding: 12px 8px;
+    }
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let revenueChart = null;
+
+    function calculate() {
+        // Inputs
+        const salePrice = parseFloat($('#salePrice').val()) || 0;
+        const shippingCharged = parseFloat($('#shippingCharged').val()) || 0;
+        const itemCost = parseFloat($('#itemCost').val()) || 0;
+        const shippingCost = parseFloat($('#shippingCost').val()) || 0;
+        
+        const isOffsiteAds = $('#offsiteAds').is(':checked');
+        const isCurrencyConv = $('#currencyConversion').is(':checked');
+        const processingType = $('#processingFeeType').val();
+
+        // Calculations
+        const totalRevenue = salePrice + shippingCharged;
+        const totalExpenses = itemCost + shippingCost;
+
+        // Etsy Fees
+        const listingFee = 0.20;
+        const transactionFee = totalRevenue * 0.065;
+        
+        let procFeePercent = 0.04;
+        let procFeeFixed = 0.30;
+        
+        if (processingType === 'us') {
+            procFeePercent = 0.03;
+            procFeeFixed = 0.25;
+        } else if (processingType === 'high') {
+            procFeePercent = 0.07;
+            procFeeFixed = 0.30;
+        }
+
+        const processingFee = (totalRevenue * procFeePercent) + procFeeFixed;
+        
+        let offsiteAdsFee = 0;
+        if (isOffsiteAds) {
+            offsiteAdsFee = totalRevenue * 0.15;
+            $('#rowOffsiteAds').show();
+        } else {
+            $('#rowOffsiteAds').hide();
+        }
+
+        let currencyFee = 0;
+        if (isCurrencyConv) {
+            currencyFee = totalRevenue * 0.025;
+            $('#rowCurrency').show();
+        } else {
+            $('#rowCurrency').hide();
+        }
+
+        const totalEtsyFees = listingFee + transactionFee + processingFee + offsiteAdsFee + currencyFee;
+        const netProfit = totalRevenue - totalExpenses - totalEtsyFees;
+        const margin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+
+        // UI Updates
+        $('#netProfit').text('$' + netProfit.toFixed(2));
+        $('#profitMargin').text(margin.toFixed(1) + '% Margin');
+        $('#totalFees').text('$' + totalEtsyFees.toFixed(2));
+        $('#totalFeesPercent').text(((totalEtsyFees / totalRevenue) * 100 || 0).toFixed(1) + '% of Sale');
+        
+        $('#breakdownListing').text('-$' + listingFee.toFixed(2));
+        $('#breakdownTransaction').text('-$' + transactionFee.toFixed(2));
+        $('#breakdownProcessing').text('-$' + processingFee.toFixed(2));
+        $('#breakdownAds').text('-$' + offsiteAdsFee.toFixed(2));
+        $('#breakdownCurrency').text('-$' + currencyFee.toFixed(2));
+        
+        $('#totalRevenue').text('$' + totalRevenue.toFixed(2));
+        $('#totalExpenses').text('-$' + totalExpenses.toFixed(2));
+
+        // Color coding profit
+        if (netProfit < 0) {
+            $('#netProfit').removeClass('text-success').addClass('text-danger');
+            $('#profitMargin').removeClass('bg-success').addClass('bg-danger');
+        } else {
+            $('#netProfit').removeClass('text-danger').addClass('text-success');
+            $('#profitMargin').removeClass('bg-danger').addClass('bg-success');
+        }
+
+        // Update Chart
+        updateChart(netProfit, totalEtsyFees, totalExpenses);
+    }
+
+    function updateChart(profit, fees, cost) {
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        const displayProfit = profit > 0 ? profit : 0; // Don't chart negative profit as a segment
+        
+        if (revenueChart) {
+            revenueChart.data.datasets[0].data = [displayProfit, fees, cost];
+            revenueChart.update();
+        } else {
+            revenueChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Profit', 'Etsy fees', 'Prod. cost'],
+                    datasets: [{
+                        data: [displayProfit, fees, cost],
+                        backgroundColor: [
+                            '#527be6', // Blue for Profit
+                            '#8baeff', // Light Blue for Etsy fees
+                            '#d6dbdf'  // Gray for Prod. cost
+                        ],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: false,
+                                boxWidth: 35,
+                                boxHeight: 12,
+                                padding: 25,
+                                color: '#64748b',
+                                font: {
+                                    family: "'Inter', sans-serif",
+                                    size: 13,
+                                    weight: '500'
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.raw !== null) {
+                                        label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.raw);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    $(document).ready(function() {
+        $('input, select').on('input change', calculate);
+        calculate();
+    });
+</script>
+{% endblock %}

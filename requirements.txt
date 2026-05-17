@@ -1,0 +1,7 @@
+django>=4.2
+pandas
+beautifulsoup4
+requests
+django-bootstrap5
+whitenoise
+gunicorn

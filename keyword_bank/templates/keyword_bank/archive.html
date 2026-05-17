@@ -1,0 +1,241 @@
+{% extends 'keywords/base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<div class="elite-vault-wrapper">
+    <div class="container py-5">
+        <!-- Header Section -->
+        <header class="vault-hero mb-5 animate__animated animate__fadeIn">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="elite-title">THE <span class="text-gold">DATA HUB</span> <span class="archive-label">ARCHIVE</span></h1>
+                    <p class="elite-subtitle">Inventory of all Sanitized Research Logs</p>
+                </div>
+                <a href="{% url 'keyword_bank:keyword_vault' %}" class="btn-elite-action">
+                    <i class="fas fa-plus me-2"></i> NEW DEPOSIT
+                </a>
+            </div>
+        </header>
+
+        <div class="archive-container animate__animated animate__fadeInUp">
+            <div class="elite-card secondary">
+                <div class="card-header-elite">
+                    <div class="header-indicator blue"></div>
+                    <i class="fas fa-archive"></i>
+                    <h2>Stored Niches <span class="count-badge">{{ entries|length }}</span></h2>
+                </div>
+                <div class="card-body-elite p-0">
+                    <div class="table-responsive">
+                        <table class="table elite-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>PARENT KEYWORD</th>
+                                    <th>COLLECTED TAGS</th>
+                                    <th>LAST INDEXED</th>
+                                    <th class="text-end">ACTION</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry in entries %}
+                                    <tr class="elite-row-hover">
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="topic-icon"><i class="fas fa-hashtag"></i></div>
+                                                <span class="fw-bold ms-3">{{ entry.term }}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="tag-count-badge">{{ entry.results.count }} Tags</span>
+                                        </td>
+                                        <td>
+                                            <span class="text-muted small">{{ entry.last_updated|date:"M d, Y | H:i" }}</span>
+                                        </td>
+                                        <td class="text-end">
+                                            <a href="{% url 'keyword_bank:keyword_vault' %}?q={{ entry.term|urlencode }}" class="btn-view-roadmap">
+                                                RETRIEVE ROADMAP <i class="fas fa-chevron-right ms-2"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="4" class="text-center py-5">
+                                            <i class="fas fa-folder-open mb-3 d-block opacity-20" style="font-size: 3rem;"></i>
+                                            <p class="text-muted">The Hub Archive is currently empty.</p>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --elite-bg: #0a0b0e;
+        --elite-card: #12141c;
+        --elite-gold: #ffcc00;
+        --elite-blue: #00d2ff;
+        --elite-text: #e0e6ed;
+        --elite-border: rgba(255, 255, 255, 0.06);
+        --font-primary: 'Inter', sans-serif;
+        --font-display: 'Outfit', sans-serif;
+    }
+
+    .elite-vault-wrapper {
+        background: var(--elite-bg);
+        color: var(--elite-text);
+        font-family: var(--font-primary);
+        min-height: 100vh;
+    }
+
+    .elite-title {
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: 2.2rem;
+        letter-spacing: 1px;
+    }
+
+    .text-gold { color: var(--elite-gold); }
+
+    .archive-label {
+        font-size: 0.9rem;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--elite-text);
+        padding: 5px 15px;
+        border-radius: 30px;
+        vertical-align: middle;
+        margin-left: 15px;
+        letter-spacing: 2px;
+        opacity: 0.6;
+    }
+
+    .elite-subtitle {
+        font-weight: 300;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        opacity: 0.5;
+    }
+
+    .btn-elite-action {
+        background: var(--elite-gold);
+        color: black;
+        border: none;
+        padding: 12px 25px;
+        border-radius: 12px;
+        font-weight: 800;
+        font-family: var(--font-display);
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+
+    .btn-elite-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(255, 204, 0, 0.3);
+        color: black;
+    }
+
+    .elite-card {
+        background: var(--elite-card);
+        border: 1px solid var(--elite-border);
+        border-radius: 28px;
+        overflow: hidden;
+    }
+
+    .card-header-elite {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 25px 30px;
+        border-bottom: 1px solid var(--elite-border);
+    }
+
+    .card-header-elite h2 {
+        font-family: var(--font-display);
+        font-size: 1.2rem;
+        margin: 0;
+        text-transform: uppercase;
+    }
+
+    .header-indicator.blue { background: var(--elite-blue); width: 4px; height: 25px; border-radius: 4px; }
+
+    .count-badge {
+        font-size: 0.75rem;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 4px 12px;
+        border-radius: 8px;
+        margin-left: 10px;
+        opacity: 0.6;
+    }
+
+    /* Table Styling */
+    .elite-table {
+        color: var(--elite-text);
+    }
+
+    .elite-table thead th {
+        background: rgba(0,0,0,0.2);
+        border-bottom: 1px solid var(--elite-border);
+        color: var(--elite-gold);
+        font-family: var(--font-display);
+        letter-spacing: 1px;
+        padding: 20px 30px;
+        font-size: 0.8rem;
+    }
+
+    .elite-table tbody td {
+        padding: 25px 30px;
+        border-bottom: 1px solid var(--elite-border);
+        vertical-align: middle;
+    }
+
+    .elite-row-hover:hover {
+        background: rgba(255,255,255,0.02);
+    }
+
+    .topic-icon {
+        width: 35px;
+        height: 35px;
+        background: rgba(255, 204, 0, 0.1);
+        color: var(--elite-gold);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .tag-count-badge {
+        background: rgba(0, 210, 255, 0.1);
+        color: var(--elite-blue);
+        padding: 5px 12px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+
+    .btn-view-roadmap {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--elite-border);
+        color: var(--elite-text);
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.3s;
+    }
+
+    .btn-view-roadmap:hover {
+        background: var(--elite-gold);
+        color: black;
+        border-color: var(--elite-gold);
+    }
+</style>
+{% endblock %}

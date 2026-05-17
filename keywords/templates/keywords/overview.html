@@ -1,0 +1,154 @@
+{% extends 'keywords/base.html' %}
+
+{% block title %}System Overview | Atif-Zak Analytics{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="fw-bold text-dark">System Overview</h2>
+        <p class="text-muted">Global insights across all your uploaded eRank files.</p>
+    </div>
+</div>
+
+<!-- Key Metrics Cards -->
+<div class="row g-4 mb-5">
+    <div class="col-md-3">
+        <div class="pro-card text-center h-100" style="border-bottom: 4px solid #10b981;">
+            <i class="fas fa-file-csv fa-3x text-success opacity-50 mb-3"></i>
+            <h2 class="fw-bold mb-0">{{ total_files }}</h2>
+            <p class="text-muted mb-0">Total Files Uploaded</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="pro-card text-center h-100" style="border-bottom: 4px solid #3b82f6;">
+            <i class="fas fa-search fa-3x text-primary opacity-50 mb-3"></i>
+            <h2 class="fw-bold mb-0">{{ total_keywords }}</h2>
+            <p class="text-muted mb-0">Total Keywords Analyzed</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <a href="{% url 'saved_keywords' %}" class="text-decoration-none">
+            <div class="pro-card text-center h-100" style="border-bottom: 4px solid #f59e0b; transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                <i class="fas fa-star fa-3x text-warning opacity-50 mb-3"></i>
+                <h2 class="fw-bold mb-0 text-dark">{{ favorites_count }}</h2>
+                <p class="text-muted mb-0">Saved Favorites <i class="fas fa-arrow-right ms-1 small"></i></p>
+            </div>
+        </a>
+    </div>
+    <div class="col-md-3">
+        <div class="pro-card text-center h-100 bg-dark text-white" style="border-bottom: 4px solid #064e3b;">
+            <i class="fas fa-gem fa-3x text-success opacity-75 mb-3"></i>
+            <h2 class="fw-bold mb-0">{{ golden_nuggets.count }}</h2>
+            <p class="text-light mb-0">Golden Nuggets Found</p>
+        </div>
+    </div>
+</div>
+
+<!-- Extracted Keywords Sections -->
+<div class="row g-4">
+    <!-- Golden Nuggets -->
+    <div class="col-md-6">
+        <div class="pro-card h-100" style="border: 2px solid #064e3b;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold text-dark mb-0"><i class="fas fa-gem text-success me-2"></i> Golden Nuggets</h5>
+                <span class="badge" style="background: #064e3b;">High Demand + Low Comp</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Keyword</th>
+                            <th>Searches</th>
+                            <th>Competition</th>
+                            <th>Source</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in golden_nuggets %}
+                        <tr>
+                            <td class="fw-bold">{{ item.keyword }}</td>
+                            <td><span class="badge" style="background:#064e3b;">{{ item.avg_searches }}</span></td>
+                            <td><span class="badge" style="background:#064e3b;">{{ item.competition }}</span></td>
+                            <td class="small text-muted">{{ item.search.term|truncatechars:20 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted">Upload a CSV to find Golden Nuggets.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Easy to Rank -->
+    <div class="col-md-6">
+        <div class="pro-card h-100" style="border: 2px solid #22c55e;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold text-dark mb-0"><i class="fas fa-arrow-trend-up text-success me-2"></i> Easy to Rank</h5>
+                <span class="badge" style="background: #22c55e;">Good Demand + Med Comp</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Keyword</th>
+                            <th>Searches</th>
+                            <th>Competition</th>
+                            <th>Source</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in easy_to_rank %}
+                        <tr>
+                            <td class="fw-bold">{{ item.keyword }}</td>
+                            <td><span class="badge" style="background:#22c55e;">{{ item.avg_searches }}</span></td>
+                            <td><span class="badge" style="background:#22c55e;">{{ item.competition }}</span></td>
+                            <td class="small text-muted">{{ item.search.term|truncatechars:20 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted">Upload a CSV to find easy keywords.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Favorites Section -->
+{% if favorites %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="pro-card" style="border: 2px solid #f59e0b;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold text-dark mb-0"><i class="fas fa-star text-warning me-2"></i> Your Saved Favorites</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Keyword</th>
+                            <th>Searches</th>
+                            <th>Competition</th>
+                            <th>Opp. Score</th>
+                            <th>Source File</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in favorites %}
+                        <tr>
+                            <td class="fw-bold"><i class="fas fa-star text-warning me-2"></i> {{ item.keyword }}</td>
+                            <td>{{ item.avg_searches }}</td>
+                            <td>{{ item.competition }}</td>
+                            <td>{{ item.opportunity_score }}</td>
+                            <td class="text-muted"><i class="fas fa-file-csv me-1"></i> {{ item.search.term }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

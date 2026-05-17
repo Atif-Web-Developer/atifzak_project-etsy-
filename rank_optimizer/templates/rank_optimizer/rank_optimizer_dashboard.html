@@ -1,0 +1,462 @@
+{% extends 'keywords/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+/* Custom Dark Aesthetic to match project */
+.bg-dark-custom { background-color: #0f172a !important; }
+.card-dark { background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; }
+.text-orange { color: #10b981 !important; } /* Re-mapped to project green */
+.btn-orange { background-color: #10b981; color: white; border: none; font-weight: 600; padding: 8px 20px; border-radius: 8px; }
+.btn-orange:hover { background-color: #059669; color: white; }
+.text-muted { color: #94a3b8 !important; } /* Fix ALL text-muted inside dashboard */
+.dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; }
+.dot-green { background-color: #22c55e; }
+.dot-yellow { background-color: #eab308; }
+.dot-red { background-color: #ef4444; }
+.badge-golden { background-color: rgba(234, 179, 8, 0.1); color: #eab308; border: 1px solid #eab308; padding: 4px 10px; font-weight: 600; font-size: 0.75rem;}
+.badge-good { background-color: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid #22c55e; padding: 4px 10px; font-weight: 600; font-size: 0.75rem;}
+.badge-hard { background-color: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid #ef4444; padding: 4px 10px; font-weight: 600; font-size: 0.75rem;}
+
+/* Sidebar inputs */
+.filter-input { background-color: #0f172a !important; color: #fff !important; border: 1px solid #334155 !important; border-radius: 6px; }
+.filter-input:focus { border-color: #10b981 !important; box-shadow: none !important; }
+.filter-input::placeholder { color: #64748b !important; }
+
+/* Dashboard stat cards */
+.stat-card { position: relative; overflow: hidden; height: 100%; border: 1px solid #334155; }
+.stat-circle { position: absolute; bottom: -20px; right: -20px; width: 80px; height: 80px; border-radius: 50%; opacity: 0.8; }
+.stat-circle-brown { background-color: #8b5cf6; } 
+.stat-circle-olive { background-color: #eab308; } 
+.stat-circle-green { background-color: #22c55e; } 
+
+/* Table styles */
+.table-custom-dark th { border-bottom: 1px solid #334155 !important; color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; padding: 15px; }
+.table-custom-dark td { border-bottom: 1px solid #1e293b !important; color: #f8fafc; padding: 15px; vertical-align: middle; font-size: 0.9rem; }
+.table-custom-dark tr:hover td { background-color: #334155 !important; }
+
+/* Status Toggle buttons */
+.status-btn { padding: 4px 12px; font-size: 0.8rem; border-radius: 20px; transition: all 0.2s; cursor: pointer; border: 1px solid transparent; background: transparent; color: #94a3b8;}
+.status-btn.active { border-color: #10b981; color: #10b981; background: rgba(16, 185, 129, 0.1); }
+</style>
+
+<div class="container-fluid p-4 bg-dark-custom shadow" style="border-radius: 24px; min-height: calc(100vh - 140px);">
+
+    <!-- UPLOAD VIEW -->
+    <div id="uploadView" class="container-fluid text-center py-5" style="min-height: 60vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+        <div class="mb-4">
+            <span class="badge" style="color: #10b981; background-color: rgba(16,185,129,0.1); border: 1px solid #10b981; padding: 8px 16px; font-size: 0.85rem; letter-spacing: 1px;">
+                <i class="bi bi-stars"></i> FREE ETSY SEO TOOL
+            </span>
+        </div>
+        <h1 class="display-4 fw-bold text-white mb-0" style="font-family: 'Outfit', sans-serif;">Find Your</h1>
+        <h1 class="display-3 fw-bold text-orange mb-4" style="font-family: 'Outfit', sans-serif;">Golden Keywords</h1>
+        <p class="mb-5 fs-5" style="color: #a1a1aa;">Upload your keyword export from eRank, Marmalead, or EverBee<br>— instant smart ranking, zero API needed.</p>
+        
+        <div class="card card-dark p-4 mb-5 shadow-lg" style="width: 100%; max-width: 480px; border-style: dashed; border-width: 2px; border-color: #444; border-radius: 16px; cursor: pointer; transition: all 0.3s;" onclick="document.getElementById('fileUpload').click()" id="dropZone">
+            <input type="file" id="fileUpload" class="d-none" accept=".csv, .xlsx">
+            <i class="fas fa-folder-open text-warning mb-3" style="font-size: 3rem;"></i>
+            <h5 class="text-white fw-bold mb-2">Drop your keyword file here</h5>
+            <p class="mb-4" style="color: #9ca3af;">Click to browse or drag & drop</p>
+            <div class="d-flex justify-content-center gap-3">
+                <span class="badge bg-dark border border-secondary text-light p-2"><i class="fas fa-file-excel text-success me-1"></i> Excel</span>
+                <span class="badge bg-dark border border-secondary text-light p-2"><i class="fas fa-file-csv text-primary me-1"></i> CSV</span>
+                <span class="badge bg-dark border border-secondary text-warning p-2"><i class="fas fa-magic me-1"></i> Auto-detect columns</span>
+            </div>
+            
+            <!-- Upload progress -->
+            <div id="uploadProgress" class="mt-4" style="display: none;">
+                <div class="spinner-border text-orange mb-2" role="status"></div>
+                <p class="text-white">Analyzing Data...</p>
+            </div>
+        </div>
+
+        <!-- 3 feature cards below -->
+        <div class="row w-100 justify-content-center gap-4" style="max-width: 800px; margin: 0 auto;">
+            <div class="col-md-3 card card-dark p-4 text-center">
+                <i class="fas fa-medal text-danger fs-3 mb-3"></i>
+                <h6 class="text-white fw-bold mb-1">Golden Keywords</h6>
+                <small style="color: #9ca3af;">Competition <5,000 +<br>maximum volume</small>
+            </div>
+            <div class="col-md-3 card card-dark p-4 text-center">
+                <i class="fas fa-chart-line text-primary fs-3 mb-3"></i>
+                <h6 class="text-white fw-bold mb-1">Smart Ranking</h6>
+                <small style="color: #9ca3af;">Lower competition<br>always ranks higher</small>
+            </div>
+            <div class="col-md-3 card card-dark p-4 text-center">
+                <i class="fas fa-download text-info fs-3 mb-3"></i>
+                <h6 class="text-white fw-bold mb-1">Export Results</h6>
+                <small style="color: #9ca3af;">Download filtered Excel<br>instantly</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- DASHBOARD VIEW -->
+    <div id="dashboardView" class="container-fluid py-4" style="display: none;">
+        <!-- Top Bar -->
+        <div class="d-flex justify-content-between align-items-center mb-4 pb-3" style="border-bottom: 1px solid #333;">
+            <div>
+                <h3 class="text-white mb-0 fw-bold" style="font-family: 'Outfit', sans-serif;">Intelligence Dashboard</h3>
+                <small class="text-muted" id="showingCount">Showing 0 keywords</small>
+            </div>
+            <div class="d-flex gap-3 align-items-center">
+                <button class="btn btn-sm btn-dark border-secondary" data-bs-toggle="offcanvas" data-bs-target="#filterSidebar" style="color: #a1a1aa;"><i class="fas fa-sliders-h text-warning"></i> Advanced Filters</button>
+                <button class="btn btn-sm btn-outline-secondary text-light border-secondary" id="btnNewFile"><i class="fas fa-plus"></i> New File</button>
+                <button class="btn btn-sm btn-outline-warning text-warning border-warning" id="btnGoldenOnly"><i class="fas fa-star"></i> Golden Only</button>
+                <a href="{% url 'rank_optimizer_export' %}" class="btn btn-sm btn-orange" id="btnExportAll"><i class="fas fa-download"></i> Export All</a>
+            </div>
+        </div>
+
+        <!-- 3 Stat Cards -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card card-dark stat-card p-3 shadow-sm">
+                    <small class="text-muted fw-bold"><i class="fas fa-chart-bar me-1"></i> Total Keywords</small>
+                    <h1 class="text-white fw-bold mt-2 mb-0" id="statTotal" style="font-size: 2.5rem;">0</h1>
+                    <div class="stat-circle stat-circle-brown"></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-dark stat-card p-3 shadow-sm">
+                    <small class="text-warning fw-bold"><i class="fas fa-star me-1"></i> Golden Keywords <span style="color: #6b7280; font-weight: normal; font-size: 0.7rem; margin-left: 4px;">(Vol ≥ 2K, Comp ≤ 5K)</span></small>
+                    <h1 class="text-white fw-bold mt-2 mb-0" id="statGolden" style="font-size: 2.5rem;">0</h1>
+                    <div class="stat-circle stat-circle-olive"></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-dark stat-card p-3 shadow-sm">
+                    <small class="text-success fw-bold"><i class="fas fa-arrow-up me-1"></i> Low Competition</small>
+                    <h1 class="text-white fw-bold mt-2 mb-0" id="statLow" style="font-size: 2.5rem;">0</h1>
+                    <div class="stat-circle stat-circle-green"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="card card-dark p-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-dark table-borderless table-custom-dark mb-0 w-100">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">KEYWORD <i class="fas fa-sort text-muted ms-1"></i></th>
+                            <th>VOLUME <i class="fas fa-sort text-muted ms-1"></i></th>
+                            <th>COMPETITION <i class="fas fa-sort text-muted ms-1"></i></th>
+                            <th>COLOR</th>
+                            <th>STATUS <i class="fas fa-sort text-muted ms-1"></i></th>
+                        </tr>
+                    </thead>
+                    <tbody id="keywordTableBody">
+                        <!-- populated by js -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination footer -->
+            <div class="card-footer border-top border-secondary bg-transparent d-flex justify-content-between align-items-center py-3 px-4">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted small">Results per page:</span>
+                    <select class="form-select form-select-sm filter-input" style="width: 70px;" id="perPageSelect">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
+                <div class="text-muted small" id="pageInfo">1-10 of 0</div>
+                <div class="d-flex gap-3 align-items-center">
+                    <button class="btn btn-sm btn-link text-muted text-decoration-none p-0" id="btnPrev" disabled>&larr; Prev</button>
+                    <span class="text-white small fw-bold" id="pageCount">Page 1 / 1</span>
+                    <button class="btn btn-sm btn-link text-white text-decoration-none p-0" id="btnNext">Next &rarr;</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Offcanvas Filters Sidebar -->
+    <div class="offcanvas offcanvas-start bg-dark-custom text-white border-end border-secondary" tabindex="-1" id="filterSidebar" aria-labelledby="filterSidebarLabel">
+        <div class="offcanvas-header border-bottom border-secondary">
+            <h5 class="offcanvas-title fw-bold" id="filterSidebarLabel" style="font-family: 'Outfit', sans-serif;"><i class="fas fa-sliders-h text-orange me-2"></i> Advanced Filters</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body">
+            <h6 class="text-muted mb-3 fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;"><i class="fas fa-filter"></i> VOLUME & COMPETITION</h6>
+            <div class="mb-3">
+                <label class="form-label small text-muted mb-1">Minimum Search Volume</label>
+                <input type="number" class="form-control filter-input" id="minVolInput" value="500">
+            </div>
+            <div class="mb-4">
+                <label class="form-label small text-muted mb-1">Maximum Competition</label>
+                <input type="number" class="form-control filter-input" id="maxCompInput" placeholder="e.g. 50000 (optional)">
+            </div>
+
+            <h6 class="text-muted mb-2 mt-4 fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;"><i class="fas fa-palette"></i> DIFFICULTY COLOR RANGES</h6>
+            <small class="text-muted d-block mb-3" style="font-size: 0.7rem;">Set competition limits for each color.<br>Labels are editable too.</small>
+            
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="dot dot-green"></span>
+                    <span class="text-light small">Green (Low)</span>
+                </div>
+                <input type="number" class="form-control filter-input text-end" style="width: 80px; padding: 4px 8px; height: 30px;" id="greenLimit" value="15000">
+            </div>
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="dot dot-yellow"></span>
+                    <span class="text-light small">Yellow (Med)</span>
+                </div>
+                <input type="number" class="form-control filter-input text-end" style="width: 80px; padding: 4px 8px; height: 30px;" id="yellowLimit" value="50000">
+            </div>
+            <small class="text-danger d-block mb-4" style="font-size: 0.7rem;"><i class="fas fa-circle" style="font-size: 6px; vertical-align: middle;"></i> Above Yellow threshold = Red (Hard)</small>
+
+            <h6 class="text-muted mb-3 mt-4 fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;"><i class="fas fa-search"></i> KEYWORD FILTER</h6>
+            <div class="mb-3">
+                <label class="form-label small text-muted mb-1">Include words (comma)</label>
+                <input type="text" class="form-control filter-input" id="includeWords" placeholder="gift, custom...">
+            </div>
+            <div class="mb-4">
+                <label class="form-label small text-muted mb-1">Exclude words (comma)</label>
+                <input type="text" class="form-control filter-input" id="excludeWords" placeholder="digital, free...">
+            </div>
+
+            <h6 class="text-muted mb-3 mt-4 fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;"><i class="fas fa-check-circle"></i> STATUS FILTER</h6>
+            <div class="d-flex flex-wrap gap-2">
+                <button class="status-btn active" data-status="All">All</button>
+                <button class="status-btn" data-status="Golden">★ Golden</button>
+                <button class="status-btn text-success" data-status="Good" style="border-color: #22c55e;">Good</button>
+                <button class="status-btn text-danger" data-status="Hard" style="border-color: #ef4444;">Hard</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    let filterTimeout = null;
+    let allFilteredData = [];
+    let currentPage = 1;
+
+    // Drag and drop UI effects
+    const dropZone = document.getElementById('dropZone');
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#ff6b00';
+        dropZone.style.backgroundColor = '#222';
+    });
+    dropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#444';
+        dropZone.style.backgroundColor = 'transparent';
+    });
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#444';
+        dropZone.style.backgroundColor = 'transparent';
+        
+        if (e.dataTransfer.files.length) {
+            document.getElementById('fileUpload').files = e.dataTransfer.files;
+            handleFileUpload();
+        }
+    });
+
+    // File Upload handling
+    $('#fileUpload').on('change', handleFileUpload);
+    
+    function handleFileUpload() {
+        let file = $('#fileUpload')[0].files[0];
+        if (!file) return;
+
+        let formData = new FormData();
+        formData.append('file', file);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        // Show loading state
+        $('#uploadProgress').slideDown();
+        
+        $.ajax({
+            url: "{% url 'rank_optimizer_upload' %}",
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(res) {
+                if(res.message === 'success') {
+                    $('#uploadView').hide();
+                    $('#dashboardView').fadeIn();
+                    triggerFilter();
+                } else {
+                    alert('Error: ' + res.error);
+                    $('#uploadProgress').hide();
+                }
+            },
+            error: function(err) {
+                alert('An error occurred during upload.');
+                $('#uploadProgress').hide();
+            }
+        });
+        
+        $('#fileUpload').val('');
+    }
+
+    // New File Button
+    $('#btnNewFile').click(function() {
+        $('#dashboardView').hide();
+        $('#uploadProgress').hide();
+        $('#uploadView').fadeIn();
+    });
+
+    // Golden Only preset
+    $('#btnGoldenOnly').click(function() {
+        $('.status-btn').removeClass('active');
+        $('[data-status="Golden"]').addClass('active');
+        triggerFilter();
+    });
+
+    // Event listeners for filters
+    $('.filter-input').on('input change', function() {
+        clearTimeout(filterTimeout);
+        filterTimeout = setTimeout(triggerFilter, 400);
+    });
+
+    // Status Filter toggle
+    $('.status-btn').click(function() {
+        $('.status-btn').removeClass('active');
+        $(this).addClass('active');
+        triggerFilter();
+    });
+
+    // Pagination Listeners
+    $('#perPageSelect').change(function() {
+        currentPage = 1;
+        renderTablePage();
+    });
+
+    $('#btnPrev').click(function() {
+        if(currentPage > 1) {
+            currentPage--;
+            renderTablePage();
+        }
+    });
+
+    $('#btnNext').click(function() {
+        let perPage = parseInt($('#perPageSelect').val());
+        let totalPages = Math.ceil(allFilteredData.length / perPage);
+        if(currentPage < totalPages) {
+            currentPage++;
+            renderTablePage();
+        }
+    });
+
+    function triggerFilter() {
+        let minVol = $('#minVolInput').val();
+        let maxComp = $('#maxCompInput').val();
+        let greenLimit = $('#greenLimit').val();
+        let yellowLimit = $('#yellowLimit').val();
+        let include = $('#includeWords').val();
+        let exclude = $('#excludeWords').val();
+        let status = $('.status-btn.active').data('status') || 'All';
+
+        $.ajax({
+            url: "{% url 'rank_optimizer_filter' %}",
+            type: 'GET',
+            data: {
+                min_volume: minVol,
+                max_competition: maxComp,
+                green_limit: greenLimit,
+                yellow_limit: yellowLimit,
+                include: include,
+                exclude: exclude,
+                status: status
+            },
+            success: function(res) {
+                allFilteredData = res.data;
+                currentPage = 1;
+                
+                // Animate Stat numbers
+                animateValue("statTotal", parseInt($('#statTotal').text()), res.total, 600);
+                animateValue("statGolden", parseInt($('#statGolden').text()), res.golden_count, 600);
+                animateValue("statLow", parseInt($('#statLow').text()), res.low_comp_count, 600);
+                $('#showingCount').text(`Showing ${res.total.toLocaleString()} keywords`);
+                
+                renderTablePage();
+            }
+        });
+    }
+
+    function renderTablePage() {
+        let tbody = $('#keywordTableBody');
+        tbody.empty();
+
+        if (allFilteredData.length === 0) {
+            tbody.append('<tr><td colspan="5" class="text-center py-5 text-muted"><i class="fas fa-search fa-3x opacity-50 mb-3 d-block"></i><p>No keywords match your filters.</p></td></tr>');
+            $('#pageInfo').text('0 of 0');
+            $('#pageCount').text('Page 1 / 1');
+            $('#btnPrev, #btnNext').prop('disabled', true);
+            return;
+        }
+
+        let perPage = parseInt($('#perPageSelect').val());
+        let totalItems = allFilteredData.length;
+        let totalPages = Math.ceil(totalItems / perPage);
+        
+        let startIdx = (currentPage - 1) * perPage;
+        let endIdx = Math.min(startIdx + perPage, totalItems);
+        
+        let pageData = allFilteredData.slice(startIdx, endIdx);
+
+        let html = '';
+        pageData.forEach(function(item) {
+            let dotClass = '';
+            if(item.color === 'green') dotClass = 'dot-green';
+            else if(item.color === 'yellow') dotClass = 'dot-yellow';
+            else dotClass = 'dot-red';
+
+            let badgeHtml = '';
+            if (item.status === 'Golden') badgeHtml = '<span class="badge badge-golden"><i class="fas fa-star me-1"></i> GOLDEN</span>';
+            else if (item.status === 'Good') badgeHtml = '<span class="badge badge-good">GOOD</span>';
+            else badgeHtml = '<span class="badge badge-hard">HARD</span>';
+
+            html += `<tr>
+                <td class="ps-4 text-light" style="font-weight: 500;">${item.keyword}</td>
+                <td>${item.volume.toLocaleString()}</td>
+                <td>${item.competition.toLocaleString()}</td>
+                <td><span class="dot ${dotClass}"></span></td>
+                <td>${badgeHtml}</td>
+            </tr>`;
+        });
+        
+        tbody.html(html);
+        
+        // Update pagination UI
+        $('#pageInfo').text(`${startIdx + 1}-${endIdx} of ${totalItems}`);
+        $('#pageCount').text(`Page ${currentPage} / ${totalPages}`);
+        
+        $('#btnPrev').prop('disabled', currentPage === 1).toggleClass('text-muted', currentPage === 1).toggleClass('text-white', currentPage !== 1);
+        $('#btnNext').prop('disabled', currentPage === totalPages).toggleClass('text-muted', currentPage === totalPages).toggleClass('text-white', currentPage !== totalPages);
+    }
+    
+    // Helper function to animate numbers
+    function animateValue(id, start, end, duration) {
+        if (start === end) return;
+        var range = end - start;
+        var current = start;
+        var increment = end > start ? 1 : -1;
+        var stepTime = Math.abs(Math.floor(duration / range));
+        if (stepTime < 10) stepTime = 10;
+        var mult = Math.max(1, Math.floor(Math.abs(range) / (duration / stepTime)));
+        
+        var obj = document.getElementById(id);
+        var timer = setInterval(function() {
+            if (Math.abs(end - current) < mult) {
+                current = end;
+                obj.innerHTML = current.toLocaleString();
+                clearInterval(timer);
+            } else {
+                current += increment * mult;
+                obj.innerHTML = current.toLocaleString();
+            }
+        }, stepTime);
+    }
+});
+</script>
+{% endblock %}

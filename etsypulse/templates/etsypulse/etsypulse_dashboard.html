@@ -1,0 +1,271 @@
+{% extends 'keywords/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4" data-bs-theme="dark">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <h2 class="text-white mb-0"><i class="bi bi-radar"></i> EtsyPulse Keyword Intelligence</h2>
+            <div>
+                <input type="file" id="fileUpload" class="d-none" accept=".csv, .xlsx">
+                <button class="btn btn-primary" onclick="document.getElementById('fileUpload').click()">
+                    <i class="bi bi-upload"></i> Upload Data (CSV/Excel)
+                </button>
+                <a href="{% url 'etsypulse_export' %}" class="btn btn-success" id="exportBtn" style="display:none;">
+                    <i class="bi bi-download"></i> Export Filtered
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-dark border-secondary text-white shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title text-muted text-uppercase tracking-wide">Total Keywords</h6>
+                    <h3 id="totalKeywords" class="mb-0 fw-bold">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark border-warning text-white shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title text-warning text-uppercase tracking-wide">Golden Keywords</h6>
+                    <h3 id="goldenKeywords" class="mb-0 fw-bold">0</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-dark border-info text-white shadow-sm">
+                <div class="card-body">
+                    <h6 class="card-title text-info text-uppercase tracking-wide">Low Competition</h6>
+                    <h3 id="lowCompKeywords" class="mb-0 fw-bold">0</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Sidebar Filters -->
+        <div class="col-md-3">
+            <div class="card bg-dark border-secondary text-white sticky-top shadow-sm" style="top: 20px;">
+                <div class="card-body">
+                    <h5 class="card-title mb-4 border-bottom border-secondary pb-2"><i class="bi bi-funnel"></i> Dynamic Filters</h5>
+                    
+                    <div class="mb-4">
+                        <label class="form-label d-flex justify-content-between">
+                            <span>Min Search Volume</span>
+                            <span id="volVal" class="badge bg-secondary">0</span>
+                        </label>
+                        <input type="range" class="form-range filter-input" id="minVol" min="0" max="50000" step="100" value="0">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label d-flex justify-content-between">
+                            <span>Max Competition</span>
+                            <span id="compVal" class="badge bg-secondary">100000+</span>
+                        </label>
+                        <input type="range" class="form-range filter-input" id="maxComp" min="0" max="100000" step="1000" value="100000">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Status Filter</label>
+                        <select class="form-select bg-dark text-white border-secondary filter-input shadow-none" id="statusFilter">
+                            <option value="All">All Keywords</option>
+                            <option value="Golden">Golden Only</option>
+                            <option value="Good">Good</option>
+                            <option value="Hard">Hard</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Text Search</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary filter-input shadow-none" id="textSearch" placeholder="e.g. gift, -digital">
+                        <small class="text-muted d-block mt-1">Comma separated. Use - to exclude.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Area -->
+        <div class="col-md-9">
+            <div class="card bg-dark border-secondary text-white shadow-sm">
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 800px; overflow-y: auto;">
+                        <table class="table table-dark table-hover mb-0 align-middle">
+                            <thead class="table-secondary sticky-top">
+                                <tr>
+                                    <th class="ps-4 py-3">Keyword</th>
+                                    <th class="py-3">Search Volume</th>
+                                    <th class="py-3">Competition</th>
+                                    <th class="py-3">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="keywordTableBody">
+                                <tr>
+                                    <td colspan="4" class="text-center py-5 text-muted">
+                                        <i class="bi bi-cloud-arrow-up display-1 opacity-50 mb-3 d-block"></i>
+                                        <h5 class="fw-normal">No Data Loaded</h5>
+                                        <p class="mb-0">Upload a CSV or Excel file from eRank, Marmalead, or EverBee to begin analysis.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    let filterTimeout = null;
+
+    // File Upload handling
+    $('#fileUpload').on('change', function(e) {
+        let file = e.target.files[0];
+        if (!file) return;
+
+        let formData = new FormData();
+        formData.append('file', file);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        // Show loading state
+        $('#keywordTableBody').html(`
+            <tr>
+                <td colspan="4" class="text-center py-5">
+                    <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
+                    <h5 class="fw-normal text-muted">Processing Data...</h5>
+                </td>
+            </tr>
+        `);
+
+        $.ajax({
+            url: "{% url 'etsypulse_upload' %}",
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(res) {
+                if(res.message === 'success') {
+                    $('#exportBtn').fadeIn();
+                    triggerFilter();
+                } else {
+                    alert('Error: ' + res.error);
+                    $('#keywordTableBody').html('<tr><td colspan="4" class="text-center py-5 text-danger"><i class="bi bi-exclamation-triangle display-4 mb-3 d-block"></i><p>Error processing file</p></td></tr>');
+                }
+            },
+            error: function(err) {
+                alert('An error occurred during upload.');
+                $('#keywordTableBody').html('<tr><td colspan="4" class="text-center py-5 text-danger"><i class="bi bi-exclamation-triangle display-4 mb-3 d-block"></i><p>Error uploading file</p></td></tr>');
+            }
+        });
+        
+        // Reset input so the same file can be selected again
+        $(this).val('');
+    });
+
+    // Filter controls UI update
+    $('#minVol').on('input', function() {
+        $('#volVal').text($(this).val());
+    });
+    $('#maxComp').on('input', function() {
+        let val = $(this).val();
+        $('#compVal').text(val == 100000 ? '100000+' : val);
+    });
+
+    // Event listeners for filters
+    $('.filter-input').on('input change', function() {
+        clearTimeout(filterTimeout);
+        filterTimeout = setTimeout(triggerFilter, 300);
+    });
+
+    function triggerFilter() {
+        let minVol = $('#minVol').val();
+        let maxComp = $('#maxComp').val();
+        let status = $('#statusFilter').val();
+        let search = $('#textSearch').val();
+
+        $.ajax({
+            url: "{% url 'etsypulse_filter' %}",
+            type: 'GET',
+            data: {
+                min_volume: minVol,
+                max_competition: maxComp == 100000 ? 99999999 : maxComp,
+                status: status,
+                search: search
+            },
+            success: function(res) {
+                updateTable(res.data);
+                
+                // Animate numbers
+                animateValue("totalKeywords", parseInt($('#totalKeywords').text()), res.total, 500);
+                animateValue("goldenKeywords", parseInt($('#goldenKeywords').text()), res.golden_count, 500);
+                animateValue("lowCompKeywords", parseInt($('#lowCompKeywords').text()), res.low_comp_count, 500);
+            }
+        });
+    }
+
+    function updateTable(data) {
+        let tbody = $('#keywordTableBody');
+        tbody.empty();
+
+        if (data.length === 0) {
+            tbody.append('<tr><td colspan="4" class="text-center py-5 text-muted"><i class="bi bi-search display-4 opacity-50 mb-3 d-block"></i><p>No keywords match your filters.</p></td></tr>');
+            return;
+        }
+
+        let html = '';
+        data.forEach(function(item) {
+            let badgeClass = '';
+            if (item.status === 'Golden') badgeClass = 'bg-warning text-dark px-3 py-2 rounded-pill shadow-sm';
+            else if (item.status === 'Good') badgeClass = 'bg-success px-3 py-2 rounded-pill shadow-sm';
+            else badgeClass = 'bg-danger px-3 py-2 rounded-pill shadow-sm';
+
+            html += `<tr style="transition: all 0.2s;">
+                <td class="ps-4 fw-bold text-light">${item.keyword}</td>
+                <td><span class="text-white-50">${item.volume.toLocaleString()}</span></td>
+                <td><span class="text-white-50">${item.competition.toLocaleString()}</span></td>
+                <td><span class="badge ${badgeClass}">${item.status}</span></td>
+            </tr>`;
+        });
+        
+        tbody.html(html);
+        
+        // Add subtle animation to new rows
+        tbody.find('tr').css('opacity', 0).animate({opacity: 1}, 300);
+    }
+    
+    // Helper function to animate numbers
+    function animateValue(id, start, end, duration) {
+        if (start === end) return;
+        var range = end - start;
+        var current = start;
+        var increment = end > start ? 1 : -1;
+        // Make the step at least 1, max range/10
+        var stepTime = Math.abs(Math.floor(duration / range));
+        if (stepTime < 10) stepTime = 10;
+        
+        // Use a multiplier to animate faster for large numbers
+        var mult = Math.max(1, Math.floor(Math.abs(range) / (duration / stepTime)));
+        
+        var obj = document.getElementById(id);
+        var timer = setInterval(function() {
+            if (Math.abs(end - current) < mult) {
+                current = end;
+                obj.innerHTML = current;
+                clearInterval(timer);
+            } else {
+                current += increment * mult;
+                obj.innerHTML = current;
+            }
+        }, stepTime);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,473 @@
+{% extends 'keywords/base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<div class="elite-vault-wrapper">
+    <div class="container-fluid px-5 py-5">
+        <!-- Header Section -->
+        <header class="vault-hero text-center mb-5 animate__animated animate__fadeIn">
+            <div class="hero-icon-wrap mb-2">
+                <div class="sanitizer-status">
+                    <i class="fas fa-broom-sparkles me-2"></i> DATA SANITIZER ACTIVE
+                </div>
+            </div>
+            <h1 class="elite-title">THE <span class="text-gold">DATA HUB</span></h1>
+            <p class="elite-subtitle">High-Speed Keyword Retrieval & Research Archive</p>
+            
+            <div class="search-orchestrator mt-4">
+                <form method="GET" action="{% url 'keyword_bank:keyword_vault' %}" class="d-flex align-items-center justify-content-center gap-3">
+                    <div class="elite-search-input">
+                        <i class="fas fa-fingerprint search-icon"></i>
+                        <input type="text" name="q" placeholder="Enter Parent Niche..." value="{{ query }}" required>
+                    </div>
+                    <button type="submit" class="btn-elite-action">
+                        RETRIEVE LOGS
+                    </button>
+                    <button type="button" class="btn-elite-deposit ms-2" data-bs-toggle="modal" data-bs-target="#eliteDepositModal" title="Deposit New Log">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                    <a href="{% url 'keyword_bank:archive' %}" class="btn-elite-archive ms-4" title="The Research Archive">
+                        <i class="fas fa-database"></i>
+                    </a>
+                </form>
+            </div>
+        </header>
+
+        {% if results_found %}
+            <div class="roadmap-architecture">
+                {% if is_empty_log %}
+                    <div class="elite-alert-box animate__animated animate__shakeX">
+                        <i class="fas fa-ghost"></i>
+                        <div class="alert-content">
+                            <h3>Niche Analysis: Empty</h3>
+                            <p>Previous search yielded no results for this niche. No profitable leads found.</p>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="row g-4">
+                        <!-- Top Priority Column -->
+                        <div class="col-lg-6 animate__animated animate__fadeInUp">
+                            <div class="elite-card primary">
+                                <div class="card-header-elite">
+                                    <div class="header-indicator gold"></div>
+                                    <i class="fas fa-crown"></i>
+                                    <h2>Recommended Tags <span class="count-badge">{{ primary_tags|length }}</span></h2>
+                                </div>
+                                <div class="card-body-elite">
+                                    <div class="pill-cloud">
+                                        {% for item in primary_tags %}
+                                            <div class="elite-pill gold-pill animate__animated animate__zoomIn" style="animation-delay: {{ forloop.counter0|add:1 }}00ms;">
+                                                <span class="pill-text">{{ item.keyword }}</span>
+                                                <i class="fas fa-check-circle pill-check"></i>
+                                            </div>
+                                        {% empty %}
+                                            <div class="no-results">No specific matches found.</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Secondary Priority Column -->
+                        <div class="col-lg-6 animate__animated animate__fadeInUp" style="animation-delay: 200ms;">
+                            <div class="elite-card secondary">
+                                <div class="card-header-elite">
+                                    <div class="header-indicator blue"></div>
+                                    <i class="fas fa-database"></i>
+                                    <h2>Research History / Other Leads <span class="count-badge">{{ related_research|length }}</span></h2>
+                                </div>
+                                <div class="card-body-elite">
+                                    <div class="pill-cloud">
+                                        {% for item in related_research %}
+                                            <div class="elite-pill blue-pill animate__animated animate__zoomIn" style="animation-delay: {{ forloop.counter0|add:1 }}00ms;">
+                                                <span class="pill-text">{{ item.keyword }}</span>
+                                            </div>
+                                        {% empty %}
+                                            <div class="no-results">No peripheral leads detected.</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        {% elif query %}
+            <div class="empty-state-elite text-center py-5 animate__animated animate__fadeIn">
+                <i class="fas fa-search-minus mb-3" style="font-size: 3rem; opacity: 0.3;"></i>
+                <h3>Vault Record Empty</h3>
+                <p>Niche "<strong>{{ query }}</strong>" has not been sanitized yet.</p>
+            </div>
+        {% else %}
+            <div class="vault-idle text-center py-5 animate__animated animate__fadeIn">
+                <div class="idle-ring">
+                    <i class="fas fa-shield-halved"></i>
+                </div>
+                <h3>System Standby</h3>
+                <p>Awaiting Data Sanitization Protocol...</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Elite Deposit Modal -->
+<div class="modal fade" id="eliteDepositModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content elite-modal">
+            <div class="modal-header border-0 pb-0">
+                <h2 class="modal-title-elite"><i class="fas fa-broom-sparkles text-gold me-2"></i> SANITIZE & DEPOSIT</h2>
+                <button type="button" class="btn-close-elite" data-bs-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body pt-4">
+                <div class="elite-form">
+                    <div class="form-group mb-4">
+                        <label class="elite-label">PARENT KEYWORD (The Target)</label>
+                        <div class="elite-input-wrap">
+                            <i class="fas fa-bullseye"></i>
+                            <input type="text" id="parentKeyword" placeholder="e.g. Wifey T-Shirt" class="elite-control">
+                        </div>
+                    </div>
+                    <div class="form-group mb-4">
+                        <label class="elite-label">RESEARCH LOG (Symbols & Brackets will be removed)</label>
+                        <div class="elite-textarea-wrap">
+                            <textarea id="discoveredKeywords" placeholder="Paste Erank data here... (e.g. (wifey shirt), [bridal tee], etc.)" class="elite-control-text" rows="8"></textarea>
+                        </div>
+                    </div>
+                    <div id="eliteStatus" class="status-msg"></div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn-elite-cancel" data-bs-dismiss="modal">DISCARD</button>
+                <button type="button" class="btn-elite-deposit-save" onclick="submitEliteDeposit()">SANITIZE & SAVE</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --elite-bg: #0a0b0e;
+        --elite-card: #12141c;
+        --elite-gold: #ffcc00;
+        --elite-gold-soft: rgba(255, 204, 0, 0.05);
+        --elite-blue: #00d2ff;
+        --elite-text: #e0e6ed;
+        --elite-border: rgba(255, 255, 255, 0.06);
+        --font-primary: 'Inter', sans-serif;
+        --font-display: 'Outfit', sans-serif;
+    }
+
+    .elite-vault-wrapper {
+        background: var(--elite-bg);
+        color: var(--elite-text);
+        font-family: var(--font-primary);
+        min-height: 100vh;
+    }
+
+    .sanitizer-status {
+        background: rgba(0, 255, 127, 0.1);
+        color: #00ff7f;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+        display: inline-block;
+        border: 1px solid rgba(0, 255, 127, 0.2);
+    }
+
+    .elite-title {
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: 2.8rem;
+        letter-spacing: 2px;
+    }
+
+    .text-gold { color: var(--elite-gold); }
+
+    .elite-subtitle {
+        font-weight: 300;
+        letter-spacing: 5px;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        opacity: 0.5;
+    }
+
+    /* Search & Action */
+    .elite-search-input {
+        position: relative;
+        width: 100%;
+        max-width: 500px;
+    }
+
+    .elite-search-input input {
+        width: 100%;
+        background: #1a1d26;
+        border: 1px solid var(--elite-border);
+        padding: 18px 25px 18px 55px;
+        border-radius: 16px;
+        color: white;
+        outline: none;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--elite-gold);
+    }
+
+    .btn-elite-action {
+        background: var(--elite-gold);
+        color: black;
+        border: none;
+        padding: 18px 35px;
+        border-radius: 16px;
+        font-weight: 800;
+        font-family: var(--font-display);
+    }
+
+    .btn-elite-deposit {
+        width: 60px;
+        height: 60px;
+        background: #1a1d26;
+        border: 1px solid var(--elite-border);
+        color: var(--elite-gold);
+        border-radius: 16px;
+        font-size: 1.5rem;
+    }
+
+    .btn-elite-archive {
+        width: 60px;
+        height: 60px;
+        background: rgba(0, 210, 255, 0.05);
+        border: 1px solid rgba(0, 210, 255, 0.2);
+        color: var(--elite-blue);
+        border-radius: 16px;
+        font-size: 1.3rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+        text-decoration: none;
+    }
+
+    .btn-elite-archive:hover {
+        background: var(--elite-blue);
+        color: black;
+        box-shadow: 0 0 20px rgba(0, 210, 255, 0.4);
+        transform: translateY(-2px);
+    }
+
+    /* Roadmap Pills */
+    .pill-cloud {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .elite-pill {
+        padding: 12px 20px;
+        border-radius: 14px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        border: 1px solid transparent;
+        cursor: default;
+    }
+
+    .gold-pill {
+        background: rgba(255, 204, 0, 0.08);
+        border-color: rgba(255, 204, 0, 0.15);
+        color: var(--elite-gold);
+    }
+
+    .blue-pill {
+        background: rgba(0, 210, 255, 0.06);
+        border-color: rgba(0, 210, 255, 0.15);
+        color: var(--elite-blue);
+    }
+
+    .elite-pill:hover {
+        transform: scale(1.05) translateY(-2px);
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .pill-check { font-size: 0.8rem; }
+
+    /* Elite Card Styles */
+    .elite-card {
+        background: var(--elite-card);
+        border: 1px solid var(--elite-border);
+        border-radius: 28px;
+        height: 100%;
+        padding: 30px;
+    }
+
+    .card-header-elite {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 25px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--elite-border);
+    }
+
+    .card-header-elite h2 {
+        font-family: var(--font-display);
+        font-size: 1.2rem;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .header-indicator {
+        width: 4px;
+        height: 25px;
+        border-radius: 4px;
+    }
+
+    .header-indicator.gold { background: var(--elite-gold); box-shadow: 0 0 10px var(--elite-gold); }
+    .header-indicator.blue { background: var(--elite-blue); box-shadow: 0 0 10px var(--elite-blue); }
+
+    .count-badge {
+        font-size: 0.75rem;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 4px 12px;
+        border-radius: 8px;
+        margin-left: 10px;
+        opacity: 0.6;
+    }
+
+    /* Modal Styling */
+    .elite-modal {
+        background: #0f1118;
+        border: 1px solid var(--elite-border);
+        border-radius: 32px;
+    }
+
+    .elite-label {
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 0.75rem;
+        letter-spacing: 1.5px;
+        margin-bottom: 12px;
+        color: var(--elite-gold);
+    }
+
+    .elite-control, .elite-control-text {
+        width: 100%;
+        background: #1a1d26;
+        border: 1px solid var(--elite-border);
+        border-radius: 14px;
+        color: white;
+        padding: 15px 20px;
+        outline: none;
+        transition: border 0.3s;
+    }
+
+    .elite-control:focus, .elite-control-text:focus {
+        border-color: var(--elite-gold);
+    }
+
+    .btn-elite-deposit-save {
+        background: linear-gradient(135deg, var(--elite-gold), #ffb700);
+        color: black;
+        border: none;
+        padding: 16px 40px;
+        border-radius: 18px;
+        font-weight: 800;
+        font-family: var(--font-display);
+        letter-spacing: 1px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 15px rgba(255, 204, 0, 0.2);
+    }
+
+    .btn-elite-deposit-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(255, 204, 0, 0.4);
+    }
+
+    .btn-elite-cancel {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.5);
+        padding: 16px 35px;
+        border-radius: 18px;
+        font-weight: 700;
+        font-family: var(--font-display);
+        letter-spacing: 1px;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        cursor: pointer;
+    }
+
+    .btn-elite-cancel:hover {
+        background: rgba(255, 68, 68, 0.1);
+        border-color: rgba(255, 68, 68, 0.3);
+        color: #ff4444;
+        transform: translateY(-1px);
+    }
+
+    .status-msg { margin-top: 15px; font-weight: 600; font-size: 0.9rem; }
+
+    .idle-ring {
+        width: 80px;
+        height: 80px;
+        border: 2px dashed var(--elite-gold);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 2rem;
+        color: var(--elite-gold);
+        animation: rotate 10s linear infinite;
+    }
+
+    @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+</style>
+
+<script>
+function submitEliteDeposit() {
+    const parentKeyword = document.getElementById('parentKeyword').value;
+    const discoveredKeywords = document.getElementById('discoveredKeywords').value;
+    const statusDiv = document.getElementById('eliteStatus');
+    
+    if(!parentKeyword) {
+        statusDiv.innerHTML = '<span class="text-danger">Parent Niche is required for sanitization.</span>';
+        return;
+    }
+
+    statusDiv.innerHTML = '<span class="text-gold animate__animated animate__flash animate__infinite">Sanitizing Logs...</span>';
+
+    fetch("{% url 'keyword_bank:deposit_data' %}", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": "{{ csrf_token }}",
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: `parent_keyword=${encodeURIComponent(parentKeyword)}&discovered_keywords=${encodeURIComponent(discoveredKeywords)}`
+    })
+    .then(response => response.json())
+    .then(result => {
+        if(result.success) {
+            statusDiv.innerHTML = `<span class="text-success">${result.message}</span>`;
+            setTimeout(() => {
+                location.reload();
+            }, 800);
+        } else {
+            statusDiv.innerHTML = `<span class="text-danger">${result.message}</span>`;
+        }
+    });
+}
+</script>
+{% endblock %}
