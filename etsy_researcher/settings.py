@@ -22,7 +22,10 @@ INSTALLED_APPS = [
     'profit_pulse',
     'django_bootstrap5',
     'rank_optimizer.apps.RankOptimizerConfig',
+    'pinterest_seo',
+    'customer_detail.apps.CustomerDetailConfig',
 ]
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

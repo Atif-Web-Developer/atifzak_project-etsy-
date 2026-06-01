@@ -1,0 +1,98 @@
+{% extends 'keywords/base.html' %}
+
+{% block title %}{{ title }} - Atif-Zak Analytics{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-transparent p-0 mb-2">
+                <li class="breadcrumb-item"><a href="{% url 'customer_detail:customer_dashboard' %}" class="text-decoration-none">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'customer_detail:customer_list' %}" class="text-decoration-none">Customers</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ title }}</li>
+            </ol>
+        </nav>
+        <h2 class="m-0">{{ title }}</h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="pro-card">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <div class="row g-3">
+                    <div class="col-md-12 mb-2">
+                        <label for="{{ form.full_name.id_for_label }}" class="form-label fw-bold">Full Name <span class="text-danger">*</span></label>
+                        {{ form.full_name }}
+                        {% if form.full_name.errors %}
+                            <div class="text-danger small mt-1">{{ form.full_name.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-6 mb-2">
+                        <label for="{{ form.email.id_for_label }}" class="form-label fw-bold">Email Address</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="text-danger small mt-1">{{ form.email.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-6 mb-2">
+                        <label for="{{ form.phone_number.id_for_label }}" class="form-label fw-bold">Phone Number</label>
+                        {{ form.phone_number }}
+                        {% if form.phone_number.errors %}
+                            <div class="text-danger small mt-1">{{ form.phone_number.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-12 mb-2">
+                        <label for="{{ form.company_name.id_for_label }}" class="form-label fw-bold">Company Name</label>
+                        {{ form.company_name }}
+                        {% if form.company_name.errors %}
+                            <div class="text-danger small mt-1">{{ form.company_name.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-12 mb-2">
+                        <label for="{{ form.address.id_for_label }}" class="form-label fw-bold">Physical Address</label>
+                        {{ form.address }}
+                        {% if form.address.errors %}
+                            <div class="text-danger small mt-1">{{ form.address.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-12 mb-4">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label fw-bold">Additional Notes</label>
+                        {{ form.notes }}
+                        <div class="form-text">Internal notes regarding this customer.</div>
+                        {% if form.notes.errors %}
+                            <div class="text-danger small mt-1">{{ form.notes.errors|join:", " }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <hr class="my-4 text-muted">
+                
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'customer_detail:customer_list' %}" class="btn btn-light px-4">Cancel</a>
+                    <button type="submit" class="btn-pro-primary px-4"><i class="fas fa-save me-2"></i> Save Customer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="pro-card bg-light border-0">
+            <h5 class="mb-3"><i class="fas fa-info-circle text-primary me-2"></i> Tips</h5>
+            <p class="text-muted small">
+                Keep customer records detailed. Using full names and accurate email addresses helps when sending invoices or promotional materials.
+            </p>
+            <p class="text-muted small">
+                The <strong>Notes</strong> field is a great place to record customer preferences, past interactions, or specific requirements.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,451 @@
+{% extends 'keywords/base.html' %}
+{% load static %}
+
+{% block title %}Pinterest SEO Generator - Atif-Zak Analytics{% endblock %}
+
+{% block content %}
+<style>
+    /* Strict Layout Resets to eliminate any horizontal overflow/scrollbars */
+    html, body {
+        overflow-x: hidden !important;
+        max-width: 100%;
+    }
+    
+    /* Make the vertical scrollbar extremely thin, premium and Apple-like */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: rgba(16, 185, 129, 0.2);
+        border-radius: 99px;
+        transition: all 0.3s ease;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(16, 185, 129, 0.5);
+    }
+
+    .font-outfit { font-family: 'Outfit', sans-serif; }
+    .font-inter { font-family: 'Inter', sans-serif; }
+    .nav-pills .nav-link {
+        color: #64748b;
+        background-color: #f8fafc;
+        transition: all 0.3s ease;
+        border: 1px solid #e2e8f0;
+    }
+    .nav-pills .nav-link:hover {
+        background-color: #f1f5f9;
+        color: #1e293b;
+    }
+    .nav-pills .nav-link.active {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        color: #ffffff !important;
+        border-color: transparent;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    }
+    .btn-emerald-pin {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        color: white !important;
+        border: none !important;
+        transition: all 0.3s ease;
+    }
+    .btn-emerald-pin:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+    }
+    .output-card {
+        background-color: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 1.25rem;
+        transition: all 0.2s ease;
+    }
+    .output-card:hover {
+        border-color: #cbd5e1;
+        background-color: #ffffff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+    }
+    .char-badge {
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 4px 8px;
+        border-radius: 6px;
+        background-color: #e2e8f0;
+        color: #475569;
+    }
+    .char-badge.safe {
+        background-color: #dcfce7;
+        color: #15803d;
+    }
+    .char-badge.warning {
+        background-color: #fef3c7;
+        color: #b45309;
+    }
+    .char-badge.danger {
+        background-color: #fee2e2;
+        color: #b91c1c;
+    }
+    .hashtag {
+        color: #0ea5e9;
+        font-weight: 500;
+    }
+    @keyframes float {
+        0% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+        100% { transform: translateY(0); }
+    }
+</style>
+
+<div class="container-fluid py-2">
+    <!-- Header -->
+    <div class="d-flex align-items-center gap-3 mb-4">
+        <div class="text-white rounded-4 d-flex align-items-center justify-content-center" style="width: 52px; height: 52px; background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+            <i class="fab fa-pinterest-p fa-lg"></i>
+        </div>
+        <div>
+            <h2 class="text-dark mb-0 font-outfit fw-bold">Pinterest SEO Engine</h2>
+            <p class="text-muted mb-0 small">Instantly design viral, SEO-optimized titles, detailed descriptions, alt-text, and targeted hashtags from Etsy listings.</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Input Form -->
+        <div class="col-lg-5 col-12">
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+                <h5 class="font-outfit fw-bold mb-3 text-dark d-flex align-items-center gap-2">
+                    <i class="fas fa-link text-success"></i> Etsy Listing Details
+                </h5>
+                <form id="pinterestForm" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="listingUrl" class="form-label text-secondary small fw-semibold">Etsy Listing URL</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-shopping-bag small"></i></span>
+                            <input type="url" id="listingUrl" class="form-control bg-light border-start-0 font-inter text-sm shadow-none" placeholder="https://www.etsy.com/listing/..." required style="font-size: 0.875rem;">
+                            <div class="invalid-feedback">Please enter a valid Etsy listing URL.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="productNiche" class="form-label text-secondary small fw-semibold">Product Niche / Keywords <span class="text-muted">(Optional)</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 text-muted"><i class="fas fa-tag small"></i></span>
+                            <input type="text" id="productNiche" class="form-control bg-light border-start-0 font-inter text-sm shadow-none" placeholder="e.g., Diabetic Diet Chart, Bridesmaid Shirt" style="font-size: 0.875rem;">
+                        </div>
+                    </div>
+
+                    <button type="submit" id="btnSubmit" class="btn btn-emerald-pin w-100 py-3 rounded-3 fw-bold font-outfit d-flex align-items-center justify-content-center gap-2" style="font-size: 0.95rem;">
+                        <span id="btnText"><i class="fab fa-pinterest-p"></i> Generate Pinterest SEO</span>
+                        <div id="btnSpinner" class="spinner-border spinner-border-sm d-none" role="status"></div>
+                    </button>
+                </form>
+            </div>
+
+            <!-- SEO Strategy Card -->
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white" style="border-left: 4px solid #10b981 !important;">
+                <h6 class="font-outfit fw-bold text-dark mb-2"><i class="fas fa-bullseye text-success me-1"></i> Pinterest SEO Strategy</h6>
+                <p class="text-secondary mb-0 leading-relaxed" style="font-size: 0.85rem; line-height: 1.6;">
+                    Pinterest is a visual search engine, not a social platform. High-click keywords, clear visual explanations (Alt text), and buyer intent are crucial for visual ranking. This engine crafts high-indexing titles, natural-flow SEO descriptions with targeted hashtags, and accessible alt-text to double your organic reach.
+                </p>
+            </div>
+        </div>
+
+        <!-- Output Results -->
+        <div class="col-lg-7 col-12">
+            <!-- Empty State -->
+            <div id="emptyState" class="card border-0 shadow-sm rounded-4 p-5 bg-white text-center d-flex flex-column align-items-center justify-content-center" style="min-height: 480px;">
+                <div class="empty-icon-wrap mb-4" style="font-size: 4.5rem; animation: float 3s ease-in-out infinite;">📌</div>
+                <h4 class="font-outfit fw-bold text-dark mb-2">Pinterest SEO Generator</h4>
+                <p class="text-secondary mx-auto mb-0" style="max-width: 400px; font-size: 0.9rem; line-height: 1.6;">
+                    Paste your Etsy listing URL on the left. The engine will instantly fetch details, research key phrases, and build 3 custom Pinterest copywriting styles.
+                </p>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="card border-0 shadow-sm rounded-4 p-5 bg-white text-center d-none flex-column align-items-center justify-content-center" style="min-height: 480px;">
+                <div class="spinner-border text-success mb-4" role="status" style="width: 3.5rem; height: 3.5rem; border-width: 5px;"></div>
+                <h4 class="font-outfit fw-bold text-dark mb-2">Analyzing Listing & Generating Pinterest Content</h4>
+                <p class="text-secondary mx-auto mb-4" style="max-width: 380px; font-size: 0.9rem;">
+                    Connecting to the Gemini SEO platform, extracting product details, and structuring viral Pin configurations...
+                </p>
+                <div class="mx-auto text-start" style="width: 280px; font-size: 0.85rem;">
+                    <div class="d-flex align-items-center gap-2 mb-2 text-success">
+                        <i class="fas fa-check-circle"></i> <span>Parsing Listing URL...</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 mb-2 text-secondary" id="step-scrape">
+                        <i class="fas fa-spinner fa-spin me-1" id="step-scrape-icon"></i> <span id="step-scrape-text">Scraping page metadata...</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 text-secondary" id="step-gemini">
+                        <i class="far fa-circle me-1" id="step-gemini-icon"></i> <span id="step-gemini-text">Generating SEO content copies...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results State -->
+            <div id="resultsState" class="d-none">
+                <!-- Tab Controls -->
+                <div class="card border-0 shadow-sm rounded-4 p-3 bg-white mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="text-secondary small fw-bold uppercase mb-0 tracking-wide">COPYWRITING STYLE</h6>
+                        <span class="badge bg-success-subtle text-success font-outfit" id="badge-listing-name" style="font-size: 0.72rem; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Etsy Product</span>
+                    </div>
+                    <ul class="nav nav-pills nav-fill gap-2" id="pinStyleTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active rounded-3 py-2.5 font-outfit fw-bold" id="high-keyword-tab" data-bs-toggle="pill" data-bs-target="#high-keyword-pane" type="button" role="tab">
+                                <i class="fas fa-key me-1"></i> Keyword SEO
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link rounded-3 py-2.5 font-outfit fw-bold" id="high-ctr-tab" data-bs-toggle="pill" data-bs-target="#high-ctr-pane" type="button" role="tab">
+                                <i class="fas fa-fire me-1"></i> Viral CTR
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link rounded-3 py-2.5 font-outfit fw-bold" id="educational-tab" data-bs-toggle="pill" data-bs-target="#educational-pane" type="button" role="tab">
+                                <i class="fas fa-graduation-cap me-1"></i> Educational
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="pinStyleContent">
+                    <!-- Style 1: Keyword SEO Pane -->
+                    <div class="tab-pane fade show active" id="high-keyword-pane" role="tabpanel">
+                        <!-- Contents populated via JS -->
+                    </div>
+                    
+                    <!-- Style 2: High CTR Pane -->
+                    <div class="tab-pane fade" id="high-ctr-pane" role="tabpanel">
+                        <!-- Contents populated via JS -->
+                    </div>
+                    
+                    <!-- Style 3: Educational Pane -->
+                    <div class="tab-pane fade" id="educational-pane" role="tabpanel">
+                        <!-- Contents populated via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('pinterestForm');
+    const emptyState = document.getElementById('emptyState');
+    const loadingState = document.getElementById('loadingState');
+    const resultsState = document.getElementById('resultsState');
+    
+    const stepScrape = document.getElementById('step-scrape');
+    const stepScrapeIcon = document.getElementById('step-scrape-icon');
+    const stepScrapeText = document.getElementById('step-scrape-text');
+    
+    const stepGemini = document.getElementById('step-gemini');
+    const stepGeminiIcon = document.getElementById('step-gemini-icon');
+    const stepGeminiText = document.getElementById('step-gemini-text');
+    
+    const btnSubmit = document.getElementById('btnSubmit');
+    const btnText = document.getElementById('btnText');
+    const btnSpinner = document.getElementById('btnSpinner');
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const listingUrl = document.getElementById('listingUrl').value.trim();
+        const niche = document.getElementById('productNiche').value.trim();
+        
+        if (!listingUrl) {
+            form.classList.add('was-validated');
+            return;
+        }
+        
+        // UI states
+        emptyState.classList.add('d-none');
+        resultsState.classList.add('d-none');
+        loadingState.classList.remove('d-none');
+        loadingState.classList.add('d-flex');
+        
+        btnSubmit.disabled = true;
+        btnSpinner.classList.remove('d-none');
+        btnText.innerHTML = 'Analyzing Listing...';
+        
+        // Progress Steps Animations
+        resetProgressSteps();
+        
+        // Simulate step 1 to step 2 after 1 second
+        setTimeout(() => {
+            stepScrape.className = 'd-flex align-items-center gap-2 text-success';
+            stepScrapeIcon.className = 'fas fa-check-circle me-1';
+            
+            stepGemini.className = 'd-flex align-items-center gap-2 text-dark';
+            stepGeminiIcon.className = 'fas fa-spinner fa-spin me-1';
+        }, 1500);
+
+        // Fetch using jQuery AJAX (inherits global CSRF setup from base.html automatically)
+        $.ajax({
+            url: '{% url "generate_pinterest_seo" %}',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ listingUrl: listingUrl, niche: niche }),
+            success: function(res) {
+                if (res.status === 'success') {
+                    // Finalize step indicators
+                    stepGemini.className = 'd-flex align-items-center gap-2 text-success';
+                    stepGeminiIcon.className = 'fas fa-check-circle me-1';
+                    
+                    setTimeout(() => {
+                        loadingState.classList.remove('d-flex');
+                        loadingState.classList.add('d-none');
+                        resultsState.classList.remove('d-none');
+                        
+                        document.getElementById('badge-listing-name').textContent = res.listing_title;
+                        
+                        // Render the contents for the three panes
+                        renderPane('high-keyword-pane', res.pins.high_keyword, 'high_keyword');
+                        renderPane('high-ctr-pane', res.pins.high_ctr, 'high_ctr');
+                        renderPane('educational-pane', res.pins.educational, 'educational');
+                    }, 500);
+                } else {
+                    alert('Error generating content: ' + res.message);
+                    showEmptyState();
+                }
+            },
+            error: function(err) {
+                console.error(err);
+                alert('An unexpected error occurred. Please try again.');
+                showEmptyState();
+            },
+            complete: function() {
+                btnSubmit.disabled = false;
+                btnSpinner.classList.add('d-none');
+                btnText.innerHTML = '<i class="fab fa-pinterest-p"></i> Generate Pinterest SEO';
+            }
+        });
+    });
+
+    function showEmptyState() {
+        loadingState.classList.remove('d-flex');
+        loadingState.classList.add('d-none');
+        resultsState.classList.add('d-none');
+        emptyState.classList.remove('d-none');
+    }
+
+    function resetProgressSteps() {
+        stepScrape.className = 'd-flex align-items-center gap-2 text-dark';
+        stepScrapeIcon.className = 'fas fa-spinner fa-spin me-1';
+        
+        stepGemini.className = 'd-flex align-items-center gap-2 text-secondary';
+        stepGeminiIcon.className = 'far fa-circle me-1';
+    }
+
+    function renderPane(paneId, pinData, prefix) {
+        const pane = document.getElementById(paneId);
+        
+        const titleLen = pinData.title.length;
+        const descLen = pinData.description.length;
+        const altLen = pinData.alt_text.length;
+        
+        const titleBadgeClass = getBadgeClass(titleLen, 100);
+        const descBadgeClass = getBadgeClass(descLen, 800);
+        const altBadgeClass = getBadgeClass(altLen, 250);
+        
+        // Highlight hashtags in description
+        const highlightedDescription = pinData.description.replace(/(#\w+)/g, '<span class="hashtag">$1</span>');
+
+        pane.innerHTML = `
+            <div class="card border-0 shadow-sm rounded-4 p-4 bg-white d-flex flex-column gap-4">
+                <!-- Pin Title -->
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="section-title mb-0">Pin Title</span>
+                            <span class="char-badge ${titleBadgeClass}">${titleLen}/100 chars</span>
+                        </div>
+                        <button onclick="copyToClipboard('${prefix}_title_text', this)" class="copy-btn">
+                            <i class="far fa-copy me-1"></i> Copy
+                        </button>
+                    </div>
+                    <div class="output-card">
+                        <p id="${prefix}_title_text" class="text-dark fw-bold mb-0" style="font-size: 1.05rem; line-height: 1.4;">${pinData.title}</p>
+                    </div>
+                </div>
+
+                <!-- Pin Description -->
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="section-title mb-0">Pin Description</span>
+                            <span class="char-badge ${descBadgeClass}">${descLen}/800 chars</span>
+                        </div>
+                        <button onclick="copyToClipboard('${prefix}_desc_text', this)" class="copy-btn">
+                            <i class="far fa-copy me-1"></i> Copy
+                        </button>
+                    </div>
+                    <div class="output-card">
+                        <p id="${prefix}_desc_text" class="text-secondary mb-0" style="font-size: 0.9rem; line-height: 1.6; white-space: pre-wrap;">${highlightedDescription}</p>
+                    </div>
+                </div>
+
+                <!-- Alt Text -->
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="section-title mb-0">Alt Text (Accessibility)</span>
+                            <span class="char-badge ${altBadgeClass}">${altLen}/250 chars</span>
+                        </div>
+                        <button onclick="copyToClipboard('${prefix}_alt_text', this)" class="copy-btn">
+                            <i class="far fa-copy me-1"></i> Copy
+                        </button>
+                    </div>
+                    <div class="output-card">
+                        <p id="${prefix}_alt_text" class="text-secondary fst-italic mb-0" style="font-size: 0.88rem; line-height: 1.5;">"${pinData.alt_text}"</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function getBadgeClass(length, limit) {
+        const threshold = limit * 0.9;
+        if (length <= threshold) return 'safe';
+        if (length <= limit) return 'warning';
+        return 'danger';
+    }
+});
+
+function copyToClipboard(elementId, btn) {
+    const textEl = document.getElementById(elementId);
+    
+    // Extract plain text
+    const text = textEl.textContent || textEl.innerText;
+    
+    navigator.clipboard.writeText(text).then(() => {
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = `<i class="fas fa-check text-success"></i> <span class="text-success fw-bold">Copied!</span>`;
+        btn.disabled = true;
+        
+        // Show temporary highlight
+        const card = textEl.closest('.output-card');
+        if (card) {
+            card.style.borderColor = '#10b981';
+            card.style.boxShadow = '0 0 8px rgba(16, 185, 129, 0.15)';
+            setTimeout(() => {
+                card.style.borderColor = '';
+                card.style.boxShadow = '';
+            }, 1000);
+        }
+
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }, 1500);
+    }).catch(err => {
+        console.error('Could not copy text: ', err);
+    });
+}
+</script>
+{% endblock %}

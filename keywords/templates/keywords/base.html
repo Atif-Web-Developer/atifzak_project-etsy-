@@ -194,6 +194,12 @@
                 <a href="{% url 'design_lab' %}" class="nav-link-pro {% if request.resolver_match.url_name == 'design_lab' %}active{% endif %}">
                     <i class="fas fa-tshirt" style="color: #ec4899;"></i> Mockup Master Pro
                 </a>
+                <a href="{% url 'pinterest_tool' %}" class="nav-link-pro {% if request.resolver_match.url_name == 'pinterest_tool' %}active{% endif %}">
+                    <i class="fab fa-pinterest" style="color: #E60023;"></i> Pinterest SEO
+                </a>
+                <a href="{% url 'customer_detail:customer_dashboard' %}" class="nav-link-pro {% if 'customer_detail' in request.resolver_match.app_name %}active{% endif %}">
+                    <i class="fas fa-users" style="color: #8b5cf6;"></i> Customer Hub
+                </a>
                 <a href="#" class="nav-link-pro"><i class="fas fa-shield-alt"></i> Upgrade</a>
                 <div style="margin-top: auto; padding: 2rem 1.5rem;">
                     <hr class="opacity-10">
@@ -229,7 +235,9 @@
             e.preventDefault();
             $("#wrapper").toggleClass("toggled");
         });
-
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
         // CSRF Setup
         function getCookie(name) {
             let cookieValue = null;
@@ -252,6 +260,23 @@
                 }
             }
         });
+
+        // SweetAlert for Django Messages
+        {% if messages %}
+            document.addEventListener("DOMContentLoaded", function() {
+                {% for message in messages %}
+                    Swal.fire({
+                        title: '{% if message.tags == "success" %}Success!{% elif message.tags == "error" %}Error!{% else %}Notification{% endif %}',
+                        text: '{{ message }}',
+                        icon: '{% if message.tags == "error" %}error{% else %}{{ message.tags }}{% endif %}',
+                        confirmButtonColor: '#10b981',
+                        confirmButtonText: 'OK',
+                        timer: 3000,
+                        timerProgressBar: true
+                    });
+                {% endfor %}
+            });
+        {% endif %}
     </script>
     {% block extra_js %}{% endblock %}
 </body>

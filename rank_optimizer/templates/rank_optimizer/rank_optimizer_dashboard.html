@@ -38,6 +38,11 @@
 /* Status Toggle buttons */
 .status-btn { padding: 4px 12px; font-size: 0.8rem; border-radius: 20px; transition: all 0.2s; cursor: pointer; border: 1px solid transparent; background: transparent; color: #94a3b8;}
 .status-btn.active { border-color: #10b981; color: #10b981; background: rgba(16, 185, 129, 0.1); }
+
+/* Favorite Star Icon */
+.fav-btn { transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.fav-btn:hover { transform: scale(1.3); color: #f59e0b !important; }
+.fav-btn:active { transform: scale(0.9); }
 </style>
 
 <div class="container-fluid p-4 bg-dark-custom shadow" style="border-radius: 24px; min-height: calc(100vh - 140px);">
@@ -100,6 +105,10 @@
                 <small class="text-muted" id="showingCount">Showing 0 keywords</small>
             </div>
             <div class="d-flex gap-3 align-items-center">
+                <div class="position-relative" style="width: 250px;">
+                    <i class="fas fa-search position-absolute text-muted" style="left: 12px; top: 50%; transform: translateY(-50%); font-size: 0.85rem;"></i>
+                    <input type="text" class="form-control form-control-sm filter-input" id="globalSearchInput" placeholder="Search keyword..." style="padding-left: 32px; border-radius: 20px;">
+                </div>
                 <button class="btn btn-sm btn-dark border-secondary" data-bs-toggle="offcanvas" data-bs-target="#filterSidebar" style="color: #a1a1aa;"><i class="fas fa-sliders-h text-warning"></i> Advanced Filters</button>
                 <button class="btn btn-sm btn-outline-secondary text-light border-secondary" id="btnNewFile"><i class="fas fa-plus"></i> New File</button>
                 <button class="btn btn-sm btn-outline-warning text-warning border-warning" id="btnGoldenOnly"><i class="fas fa-star"></i> Golden Only</button>
@@ -313,7 +322,7 @@ $(document).ready(function() {
     });
 
     // Event listeners for filters
-    $('.filter-input').on('input change', function() {
+    $('.filter-input, #globalSearchInput').on('input change', function() {
         clearTimeout(filterTimeout);
         filterTimeout = setTimeout(triggerFilter, 400);
     });
@@ -354,6 +363,7 @@ $(document).ready(function() {
         let yellowLimit = $('#yellowLimit').val();
         let include = $('#includeWords').val();
         let exclude = $('#excludeWords').val();
+        let search = $('#globalSearchInput').val();
         let status = $('.status-btn.active').data('status') || 'All';
 
         $.ajax({
@@ -366,6 +376,7 @@ $(document).ready(function() {
                 yellow_limit: yellowLimit,
                 include: include,
                 exclude: exclude,
+                search: search,
                 status: status
             },
             success: function(res) {
@@ -416,8 +427,13 @@ $(document).ready(function() {
             else if (item.status === 'Good') badgeHtml = '<span class="badge badge-good">GOOD</span>';
             else badgeHtml = '<span class="badge badge-hard">HARD</span>';
 
+            let favClass = item.is_favorite ? 'fas fa-star text-warning' : 'far fa-star text-muted';
+
             html += `<tr>
-                <td class="ps-4 text-light" style="font-weight: 500;">${item.keyword}</td>
+                <td class="ps-4 text-light" style="font-weight: 500;">
+                    <i class="${favClass} me-2 fav-btn" style="cursor: pointer; font-size: 1.2rem; vertical-align: middle; padding-bottom: 2px;" data-id="${item.id}" title="Click to Favorite"></i> 
+                    ${item.keyword}
+                </td>
                 <td>${item.volume.toLocaleString()}</td>
                 <td>${item.competition.toLocaleString()}</td>
                 <td><span class="dot ${dotClass}"></span></td>
@@ -457,6 +473,55 @@ $(document).ready(function() {
             }
         }, stepTime);
     }
+
+    // Toggle Favorite AJAX
+    $(document).on('click', '.fav-btn', function() {
+        let btn = $(this);
+        let keywordId = btn.data('id');
+        if (!keywordId) return;
+        
+        // Optimistic UI update: change immediately so user doesn't click twice
+        let isCurrentlyFav = btn.hasClass('fas');
+        if (isCurrentlyFav) {
+            btn.removeClass('fas text-warning').addClass('far text-muted');
+        } else {
+            btn.removeClass('far text-muted').addClass('fas text-warning');
+        }
+        
+        // Temporarily disable pointer events to prevent spam clicks
+        btn.css('pointer-events', 'none');
+        
+        $.ajax({
+            url: "{% url 'toggle_favorite' %}",
+            type: 'POST',
+            data: { 
+                'keyword_id': keywordId,
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function(data) {
+                btn.css('pointer-events', 'auto');
+                // Sync state with server response
+                if (data.is_favorite) {
+                    btn.removeClass('far text-muted').addClass('fas text-warning');
+                    let item = allFilteredData.find(i => i.id == keywordId);
+                    if (item) item.is_favorite = true;
+                } else {
+                    btn.removeClass('fas text-warning').addClass('far text-muted');
+                    let item = allFilteredData.find(i => i.id == keywordId);
+                    if (item) item.is_favorite = false;
+                }
+            },
+            error: function() {
+                // Revert optimistic update on failure
+                btn.css('pointer-events', 'auto');
+                if (isCurrentlyFav) {
+                    btn.removeClass('far text-muted').addClass('fas text-warning');
+                } else {
+                    btn.removeClass('fas text-warning').addClass('far text-muted');
+                }
+            }
+        });
+    });
 });
 </script>
 {% endblock %}

@@ -1,486 +1,356 @@
 {% extends 'keywords/base.html' %}
 {% load static %}
 
-{% block title %}Mockup Master Pro - Elite T-Shirt Mockups{% endblock %}
+{% block title %}Etsy Mockup Generator - Atif-Zak Analytics{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4" style="background: #f1f5f9; min-height: 100vh;">
-    <!-- Header Section -->
-    <div class="row mb-4">
-        <div class="col-12 text-center">
-            <h1 class="display-4 fw-bold text-dark mb-2" style="letter-spacing: -1px;"><i class="fas fa-tshirt text-primary me-3"></i>Mockup Master Pro</h1>
-            <p class="text-muted lead fw-medium">Elite-grade e-commerce mockups with Gemini AI Neural Blending™</p>
-            <div class="d-inline-flex align-items-center bg-white px-4 py-2 rounded-pill shadow-sm border border-primary-subtle">
-                <span class="badge bg-primary me-2 pulse">AI ACTIVE</span>
-                <span class="small fw-bold text-uppercase tracking-widest text-primary">Neural Smart-Sync™ Enabled</span>
-            </div>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<div class="p-6 h-full min-h-[calc(100vh-80px)]" style="background: #fafafa;">
+  <div class="space-y-6 max-w-6xl mx-auto">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      
+      <!-- LEFT PANEL -->
+      <div class="space-y-6 bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
+        <div class="flex justify-between items-center">
+          <h2 class="text-2xl font-black text-gray-800 tracking-tight flex items-center gap-2">🛍️ Etsy Mockup Generator</h2>
         </div>
+        
+        <div class="space-y-5">
+          <!-- 1. Upload Design -->
+          <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider text-xs">1. Upload Design (PNG/JPG)</label>
+            <div class="flex items-center justify-center w-full">
+              <div id="dropzone" onclick="document.getElementById('file-input').click()" class="flex flex-col items-center justify-center w-full h-28 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 hover:border-[#F1641E] transition-all">
+                <div id="upload-placeholder" class="flex flex-col items-center justify-center w-full h-full">
+                  <span class="text-3xl mb-2">📁</span>
+                  <p class="text-xs text-gray-500 font-medium">Click to upload design</p>
+                </div>
+                <div id="upload-success" class="flex-col items-center justify-center w-full h-full" style="display: none;">
+                  <img id="preview-img" class="h-14 w-14 object-contain mb-2 rounded shadow-sm border border-gray-200" />
+                  <p class="text-xs text-green-600 font-bold">✓ Design ready</p>
+                </div>
+                <input type="file" id="file-input" style="display: none;" accept="image/*" />
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Product Type & 3. Variations -->
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider text-xs">2. Product Type</label>
+              <select id="product-type" class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#F1641E] focus:border-[#F1641E] text-sm font-medium text-gray-700 bg-white shadow-sm transition-all cursor-pointer">
+                <option value="t-shirt">👕 T-shirt</option>
+                <option value="mug">☕ Mug</option>
+                <option value="poster">🖼️ Poster</option>
+                <option value="hoodie">🧥 Hoodie</option>
+                <option value="pillow">🛋️ Pillow</option>
+                <option value="frame">🖼️ Frame</option>
+                <option value="tote bag">👜 Tote bag</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider text-xs">3. Variations</label>
+              <select id="variation-count" class="w-full px-4 py-3 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-[#F1641E] focus:border-[#F1641E] text-sm font-medium text-gray-700 bg-white shadow-sm transition-all cursor-pointer">
+                <option value="1">1 Variation</option>
+                <option value="2">2 Variations</option>
+                <option value="3">3 Variations</option>
+                <option value="4">4 Variations</option>
+                <option value="5">5 Variations</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 4. Customize Mockup Style -->
+          <div class="space-y-3">
+            <label class="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wider text-xs">4. Customize Mockup Style (Optional)</label>
+            <div id="configs-container" class="space-y-4 max-h-[280px] overflow-y-auto pr-2 custom-scrollbar">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <button id="generate-btn" disabled class="w-full bg-gradient-to-r from-[#F1641E] to-[#e05010] text-white py-4 rounded-xl font-black text-lg hover:shadow-lg hover:shadow-[#F1641E]/30 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 disabled:hover:shadow-none mt-4">
+            ✨ Generate 1 Pro Mockup
+          </button>
+        </div>
+      </div>
+
+      <!-- RIGHT PANEL -->
+      <div class="bg-white rounded-2xl border border-gray-100 p-6 overflow-y-auto max-h-[700px] shadow-inner custom-scrollbar relative min-h-[500px]" id="right-panel">
+        
+        <!-- Empty State -->
+        <div id="empty-state" class="h-full min-h-[450px] flex flex-col items-center justify-center text-gray-400 py-12">
+          <span class="text-6xl mb-6 drop-shadow-sm">🖼️</span>
+          <p class="text-center text-base font-bold text-gray-500">Your pro-grade mockups<br/>will appear here.</p>
+          <p class="text-xs mt-3 font-semibold text-gray-400 uppercase tracking-widest">Realistic • 1:1 Aspect Ratio • High Detail</p>
+        </div>
+
+        <!-- Mockups Container -->
+        <div id="mockups-container" class="space-y-6 hidden">
+          <!-- Dynamically populated -->
+        </div>
+
+      </div>
+
     </div>
-
-    <div class="row g-4">
-        <!-- Control Panel -->
-        <div class="col-xl-4">
-            <div class="card border-0 shadow-xl rounded-4 overflow-hidden sticky-top" style="top: 20px; z-index: 10;">
-                <div class="card-header bg-dark text-white py-3 border-0">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 small fw-bold text-uppercase tracking-widest"><i class="fas fa-layer-group me-2 text-warning"></i> Studio Controls</h5>
-                        <span class="badge bg-primary">Gemini 1.5</span>
-                    </div>
-                </div>
-                <div class="card-body p-4">
-                    <!-- Upload Zone -->
-                    <div class="upload-zone p-5 border-dashed rounded-4 text-center bg-light mb-4" id="drop-zone" style="cursor: pointer; transition: all 0.4s;">
-                        <div id="upload-prompt">
-                            <div class="icon-circle bg-white shadow-sm mx-auto mb-3" style="width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
-                                <i class="fas fa-file-upload fa-2x text-primary"></i>
-                            </div>
-                            <h5 class="fw-bold text-dark">Upload Design</h5>
-                            <p class="text-muted small mb-0">Gemini will analyze & auto-generate</p>
-                        </div>
-                        <div id="upload-preview" style="display: none;">
-                            <div class="position-relative d-inline-block">
-                                <img id="design-preview-img" src="" class="img-fluid rounded-3 mb-2 shadow-lg" style="max-height: 120px; border: 2px solid #fff;">
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary border border-white">
-                                    <i class="fas fa-robot"></i>
-                                </span>
-                            </div>
-                            <p class="small fw-bold text-primary mt-2 mb-0"><i class="fas fa-check-circle me-1"></i> AI Ready for Analysis</p>
-                        </div>
-                        <input type="file" id="design-upload" hidden accept="image/*">
-                    </div>
-
-                    <!-- AI Smart Sync Button -->
-                    <button class="btn btn-dark w-100 py-3 rounded-3 fw-bold shadow-lg mb-4" id="ai-smart-sync-btn">
-                        <i class="fas fa-brain me-2 text-info"></i> GEMINI AI SMART-SYNC™
-                    </button>
-
-                    <!-- Layout Presets -->
-                    <div class="mb-4">
-                        <label class="form-label fw-bold text-uppercase small text-muted mb-3 d-flex justify-content-between">
-                            <span>Scene Presets</span>
-                            <span class="text-primary">6 Premium Styles</span>
-                        </label>
-                        <div class="row g-2" id="mockup-selector">
-                            <div class="col-4">
-                                <div class="mockup-thumb active" data-id="1" data-src="https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=1200&q=95">
-                                    <img src="https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=300" class="img-fluid">
-                                    <div class="label">Male Pro</div>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="mockup-thumb" data-id="2" data-src="https://images.unsplash.com/photo-1554568218-0f1715e72254?w=1200&q=95">
-                                    <img src="https://images.unsplash.com/photo-1554568218-0f1715e72254?w=300" class="img-fluid">
-                                    <div class="label">Female</div>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="mockup-thumb" data-id="3" data-src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=1200&q=95">
-                                    <img src="https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=300" class="img-fluid">
-                                    <div class="label">Flat Lay</div>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="mockup-thumb" data-id="4" data-src="https://images.unsplash.com/photo-1562157873-818bc0726f68?w=1200&q=95">
-                                    <img src="https://images.unsplash.com/photo-1562157873-818bc0726f68?w=300" class="img-fluid">
-                                    <div class="label">Hanger</div>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="mockup-thumb" data-id="5" data-src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=1200&q=95">
-                                    <img src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=300" class="img-fluid">
-                                    <div class="label">Lifestyle</div>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="mockup-thumb" data-id="6" data-src="https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?w=1200&q=95">
-                                    <img src="https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?w=300" class="img-fluid">
-                                    <div class="label">Macro</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Adjustments -->
-                    <div class="p-3 bg-light rounded-4 border border-primary-subtle mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <span class="small fw-bold text-uppercase text-primary"><i class="fas fa-sliders-h me-1"></i> Manual Tweaks</span>
-                            <i class="fas fa-crosshairs text-muted small"></i>
-                        </div>
-                        
-                        <label class="form-label small fw-bold">Scale</label>
-                        <input type="range" class="form-range pro-range mb-3" id="size-slider" min="50" max="500" value="200">
-                        
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <label class="form-label small fw-bold">Horizontal</label>
-                                <input type="range" class="form-range pro-range" id="pos-x-slider" min="0" max="600" value="300">
-                            </div>
-                            <div class="col-6">
-                                <label class="form-label small fw-bold">Vertical</label>
-                                <input type="range" class="form-range pro-range" id="pos-y-slider" min="0" max="600" value="350">
-                            </div>
-                        </div>
-                    </div>
-
-                    <button class="btn btn-primary w-100 py-3 rounded-3 fw-bold shadow-lg" id="generate-btn">
-                        <i class="fas fa-bolt me-2"></i> GENERATE ALL 6 SCENES
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Preview Area -->
-        <div class="col-xl-8">
-            <div class="card border-0 shadow-2xl rounded-4 overflow-hidden h-100" style="background: #1e1e1e;">
-                <div class="card-header bg-dark text-white py-3 d-flex justify-content-between align-items-center border-0">
-                    <h5 class="mb-0 small fw-bold text-uppercase tracking-widest"><i class="fas fa-desktop me-2 text-primary"></i> Master Preview Viewport</h5>
-                    <div class="d-flex gap-2" id="ai-status-badge" style="display: none !important;">
-                        <span class="badge bg-primary rounded-pill"><i class="fas fa-sparkles me-1"></i> AI Optimized</span>
-                    </div>
-                </div>
-                <div class="card-body p-0 d-flex align-items-center justify-content-center" style="min-height: 700px; background: radial-gradient(circle, #333 0%, #000 100%);">
-                    <div class="preview-container p-4">
-                        <div class="canvas-wrapper position-relative">
-                            <canvas id="mockup-canvas" width="600" height="600" class="shadow-2xl rounded-3"></canvas>
-                            <div id="loading-spinner" class="position-absolute top-50 start-50 translate-middle" style="display: none;">
-                                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- AI Insights Section -->
-    <div class="row mt-5" id="ai-insights-row" style="display: none;">
-        <div class="col-12">
-            <div class="card border-0 shadow-xl rounded-5 bg-dark text-white p-5 overflow-hidden position-relative">
-                <div class="position-absolute top-0 end-0 p-4 opacity-10">
-                    <i class="fas fa-brain fa-10x"></i>
-                </div>
-                <div class="row position-relative" style="z-index: 1;">
-                    <div class="col-lg-8">
-                        <h2 class="display-6 fw-bold mb-4 text-gradient"><i class="fas fa-robot me-3 text-primary"></i>Gemini AI Design Insights</h2>
-                        
-                        <div class="row g-4">
-                            <div class="col-md-6">
-                                <div class="bg-secondary bg-opacity-25 p-4 rounded-4 border border-secondary">
-                                    <h6 class="text-primary fw-bold text-uppercase small mb-2">Target Niche</h6>
-                                    <p id="ai-niche-text" class="mb-0 fs-5 fw-bold">Analyzing...</p>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="bg-secondary bg-opacity-25 p-4 rounded-4 border border-secondary">
-                                    <h6 class="text-primary fw-bold text-uppercase small mb-2">Recommended Colors</h6>
-                                    <div id="ai-colors" class="d-flex gap-2"></div>
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <div class="bg-secondary bg-opacity-25 p-4 rounded-4 border border-secondary">
-                                    <h6 class="text-primary fw-bold text-uppercase small mb-2">AI Generated Etsy Caption</h6>
-                                    <p id="ai-caption-text" class="mb-0 italic lead text-light">Fetching from Gemini API...</p>
-                                </div>
-                            </div>
-                            <div class="col-12">
-                                <h6 class="text-primary fw-bold text-uppercase small mb-3">Suggested SEO Tags</h6>
-                                <div id="ai-tags" class="d-flex flex-wrap gap-2"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-4 d-flex align-items-center justify-content-center">
-                        <div class="text-center p-4 rounded-5 border border-primary border-opacity-25 bg-primary bg-opacity-10">
-                            <i class="fas fa-magic fa-4x text-primary mb-3"></i>
-                            <h4 class="fw-bold">Smart Sync</h4>
-                            <p class="small text-muted">Gemini has auto-adjusted coordinates for 100% realistic placement across all 6 scenes.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Results Section -->
-    <div class="row mt-5" id="results-section" style="display: none;">
-        <div class="col-12">
-            <div class="pro-card p-5 border-0 shadow-2xl bg-white rounded-5">
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5 gap-3">
-                    <div>
-                        <h2 class="fw-bold text-dark mb-1"><i class="fas fa-check-circle text-success me-2"></i>New Mockups Generated</h2>
-                        <p class="text-muted mb-0">Your collection is ready with 100% design fidelity and Gemini AI optimization.</p>
-                    </div>
-                    <button class="btn btn-dark rounded-pill px-5 py-3 fw-bold" onclick="window.print()">
-                        <i class="fas fa-cloud-download-alt me-2"></i> EXPORT COLLECTION
-                    </button>
-                </div>
-                <div class="row g-5" id="results-grid">
-                    <!-- Results will be injected here -->
-                </div>
-            </div>
-        </div>
-    </div>
+  </div>
 </div>
 
 <style>
-    :root {
-        --primary-pro: #2563eb;
-    }
-    .text-gradient {
-        background: linear-gradient(135deg, #fff 0%, #2563eb 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    .shadow-2xl {
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    }
-    .pulse {
-        animation: pulse-animation 2s infinite;
-    }
-    @keyframes pulse-animation {
-        0% { transform: scale(1); opacity: 1; }
-        50% { transform: scale(1.05); opacity: 0.8; }
-        100% { transform: scale(1); opacity: 1; }
-    }
-    .border-dashed {
-        border: 2px dashed #cbd5e1;
-    }
-    .border-dashed:hover {
-        border-color: var(--primary-pro);
-        background: #f8fafc !important;
-    }
-    .mockup-thumb {
-        cursor: pointer;
-        transition: all 0.3s;
-        border: 4px solid #fff;
-        border-radius: 16px;
-        overflow: hidden;
-        position: relative;
-        aspect-ratio: 1;
-    }
-    .mockup-thumb img {
-        width: 100%; height: 100%; object-fit: cover; opacity: 0.7;
-    }
-    .mockup-thumb .label {
-        position: absolute; bottom: 0; left: 0; right: 0;
-        background: rgba(0,0,0,0.6); color: white;
-        font-size: 9px; font-weight: 800; text-transform: uppercase;
-        padding: 6px; text-align: center;
-    }
-    .mockup-thumb.active {
-        border-color: var(--primary-pro); transform: scale(1.05);
-        box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.2);
-    }
-    .mockup-thumb.active img { opacity: 1; }
-    #mockup-canvas { max-width: 100%; height: auto; background: #fff; }
+  .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+  .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 8px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 8px; }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 </style>
-{% endblock %}
 
-{% block extra_js %}
 <script>
-    const canvas = document.getElementById('mockup-canvas');
-    const ctx = canvas.getContext('2d');
-    const uploadInput = document.getElementById('design-upload');
-    const dropZone = document.getElementById('drop-zone');
-    const sizeSlider = document.getElementById('size-slider');
-    const posXSlider = document.getElementById('pos-x-slider');
-    const posYSlider = document.getElementById('pos-y-slider');
-    const generateBtn = document.getElementById('generate-btn');
-    const smartSyncBtn = document.getElementById('ai-smart-sync-btn');
-    const spinner = document.getElementById('loading-spinner');
-    
-    let mockupImg = new Image();
-    let designImg = null;
+  let state = {
+    image: null,
+    productType: 't-shirt',
+    variationCount: 1,
+    configs: [
+      { label: 'Variation 1', instructions: 'Minimal studio lighting, neutral background' }
+    ],
+    mockups: [],
+    loading: false,
+    progress: 0
+  };
 
-    // Define Global Scene Coordinates
-    let sceneConfigs = {
-        1: { name: "Elite Male Studio", src: "https://images.unsplash.com/photo-1521572267360-ee0c2909d518", s: 180, x: 300, y: 380 },
-        2: { name: "Female Modern Portrait", src: "https://images.unsplash.com/photo-1554568218-0f1715e72254", s: 160, x: 300, y: 350 },
-        3: { name: "Professional Flat Lay", src: "https://images.unsplash.com/photo-1523381210434-271e8be1f52b", s: 200, x: 300, y: 300 },
-        4: { name: "Aesthetic Wall Hanger", src: "https://images.unsplash.com/photo-1562157873-818bc0726f68", s: 150, x: 300, y: 400 },
-        5: { name: "Outdoor Lifestyle", src: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c", s: 160, x: 300, y: 320 },
-        6: { name: "Macro Fabric Detail", src: "https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9", s: 280, x: 300, y: 300 }
-    };
-
-    function loadMockup(url) {
-        spinner.style.display = 'block';
-        mockupImg.crossOrigin = "anonymous";
-        mockupImg.src = url;
-        mockupImg.onload = () => {
-            spinner.style.display = 'none';
-            draw();
-        };
-    }
-
-    loadMockup(sceneConfigs[1].src + "?w=1200&q=100");
-
-    dropZone.onclick = () => uploadInput.click();
-    uploadInput.onchange = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (re) => {
-            designImg = new Image();
-            designImg.onload = () => {
-                document.getElementById('upload-prompt').style.display = 'none';
-                document.getElementById('upload-preview').style.display = 'block';
-                document.getElementById('design-preview-img').src = re.target.result;
-                draw();
-            };
-            designImg.src = re.target.result;
-        };
-        reader.readAsDataURL(file);
-    };
-
-    function draw() {
-        ctx.clearRect(0, 0, 600, 600);
-        ctx.drawImage(mockupImg, 0, 0, 600, 600);
-        
-        if (designImg) {
-            const s = parseInt(sizeSlider.value);
-            const x = parseInt(posXSlider.value) - s/2;
-            const y = parseInt(posYSlider.value) - s/2;
-            ctx.globalCompositeOperation = 'multiply';
-            ctx.globalAlpha = 0.88;
-            ctx.drawImage(designImg, x, y, s, s);
-            ctx.globalCompositeOperation = 'soft-light';
-            ctx.globalAlpha = 0.15;
-            ctx.drawImage(designImg, x, y, s, s);
-            ctx.globalCompositeOperation = 'source-over';
-            ctx.globalAlpha = 1.0;
+  const getCookie = (name) => {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
         }
+      }
     }
+    return cookieValue;
+  };
 
-    [sizeSlider, posXSlider, posYSlider].forEach(s => s.oninput = draw);
+  const fileInput = document.getElementById('file-input');
+  const uploadPlaceholder = document.getElementById('upload-placeholder');
+  const uploadSuccess = document.getElementById('upload-success');
+  const previewImg = document.getElementById('preview-img');
+  const generateBtn = document.getElementById('generate-btn');
+  const configsContainer = document.getElementById('configs-container');
+  const productTypeSelect = document.getElementById('product-type');
+  const variationCountSelect = document.getElementById('variation-count');
+  const mockupsContainer = document.getElementById('mockups-container');
+  const emptyState = document.getElementById('empty-state');
 
-    smartSyncBtn.onclick = async () => {
-        if (!designImg) return alert("Upload design first!");
-        
-        smartSyncBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Gemini Analyzing Design...';
-        smartSyncBtn.disabled = true;
+  function renderConfigs() {
+    configsContainer.innerHTML = '';
+    state.configs.forEach((config, index) => {
+      const configHtml = `
+        <div class="p-4 bg-[#f8fafc] rounded-xl border border-gray-200 space-y-3 transition-colors hover:border-gray-300">
+          <div class="flex items-center gap-3">
+            <span class="text-[10px] font-black bg-[#F1641E] text-white w-6 h-6 rounded-full flex items-center justify-center shrink-0 shadow-sm">${index + 1}</span>
+            <input
+              type="text"
+              placeholder="Label (e.g., Front View)"
+              class="flex-1 px-3 py-2 text-xs font-semibold text-gray-700 rounded-lg border border-gray-200 outline-none focus:ring-2 focus:ring-[#F1641E]/30 focus:border-[#F1641E] transition-all bg-white"
+              value="${config.label}"
+              oninput="updateConfig(${index}, 'label', this.value)"
+            />
+          </div>
+          <textarea
+            placeholder="Custom instructions (color, style, lighting...)"
+            class="w-full px-3 py-2 text-xs font-medium text-gray-600 rounded-lg border border-gray-200 outline-none focus:ring-2 focus:ring-[#F1641E]/30 focus:border-[#F1641E] transition-all h-20 resize-none bg-white"
+            oninput="updateConfig(${index}, 'instructions', this.value)"
+          >${config.instructions}</textarea>
+        </div>
+      `;
+      configsContainer.insertAdjacentHTML('beforeend', configHtml);
+    });
+  }
 
-        fetch("{% url 'ai_smart_generate' %}", {
-            method: 'POST',
-            headers: { 
-                'X-CSRFToken': getCookie('csrftoken'),
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                image_data: designImg.src // This is the base64 string from FileReader
-            })
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === 'success') {
-                const insights = data.ai_insights;
-                
-                // 1. Update Preview coordinates from Real Gemini Analysis
-                sizeSlider.value = insights.recommended_placement.scale;
-                posXSlider.value = insights.recommended_placement.x;
-                posYSlider.value = insights.recommended_placement.y;
-                
-                // 2. Display Insights
-                document.getElementById('ai-insights-row').style.display = 'block';
-                document.getElementById('ai-niche-text').innerText = insights.niche;
-                document.getElementById('ai-caption-text').innerText = insights.ai_caption;
-                
-                const tagsCont = document.getElementById('ai-tags');
-                tagsCont.innerHTML = '';
-                insights.seo_tags.forEach(tag => {
-                    tagsCont.innerHTML += `<span class="badge bg-primary px-3 py-2 rounded-pill small">#${tag}</span>`;
-                });
+  window.updateConfig = (index, field, value) => {
+    state.configs[index][field] = value;
+  };
 
-                const colorsCont = document.getElementById('ai-colors');
-                colorsCont.innerHTML = '';
-                insights.color_palette.forEach(color => {
-                    colorsCont.innerHTML += `<div style="width:30px; height:30px; border-radius:50%; background:${color}; border:2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.2);"></div>`;
-                });
+  function updateGenerateBtn() {
+    if (state.loading) {
+      generateBtn.disabled = true;
+      generateBtn.innerHTML = `
+        <div class="w-5 h-5 border-[3px] border-white/30 border-t-white rounded-full animate-spin"></div>
+        Processing (${Math.round(state.progress)}%)
+      `;
+    } else {
+      generateBtn.disabled = !state.image;
+      generateBtn.innerHTML = `✨ Generate ${state.configs.length} Pro Mockup${state.configs.length > 1 ? 's' : ''}`;
+    }
+  }
 
-                document.getElementById('ai-status-badge').style.setProperty('display', 'flex', 'important');
-                draw();
-                
-                smartSyncBtn.innerHTML = '<i class="fas fa-check-circle me-2 text-success"></i> ANALYSIS COMPLETE';
-                window.scrollTo({ top: document.getElementById('ai-insights-row').offsetTop - 20, behavior: 'smooth' });
-            } else {
-                alert("Gemini Error: " + data.message);
-                smartSyncBtn.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i> Try Again';
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            alert("Connection Error. Please check your internet or API key.");
-            smartSyncBtn.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i> Try Again';
-        })
-        .finally(() => {
-            smartSyncBtn.disabled = false;
-        });
-    };
+  function renderMockups() {
+    if (state.mockups.length === 0 && !state.loading) {
+      emptyState.style.display = 'flex';
+      mockupsContainer.style.display = 'none';
+      return;
+    }
+    
+    emptyState.style.display = 'none';
+    mockupsContainer.style.display = 'block';
+    
+    let mockupsHtml = '';
+    state.mockups.forEach((m) => {
+      mockupsHtml += `
+        <div class="bg-white p-4 rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] border border-gray-100 group transition-all hover:shadow-md">
+          <div class="relative overflow-hidden rounded-xl aspect-square mb-3 bg-gray-50 border border-gray-100 flex items-center justify-center">
+            <!-- The AI-generated blank, photorealistic mockup background -->
+            <img src="${m.imageUrl}" alt="${m.label}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]" />
+            
+            <!-- The exact user design perfectly overlaid on the fabric -->
+            <img src="${state.image}" class="relative w-[45%] h-[45%] object-contain mix-blend-multiply opacity-[0.85] drop-shadow-sm pointer-events-none transition-transform duration-500 group-hover:scale-[1.02] z-10" />
 
-    document.querySelectorAll('.mockup-thumb').forEach(t => {
-        t.onclick = function() {
-            const id = this.dataset.id;
-            document.querySelectorAll('.mockup-thumb').forEach(tm => tm.classList.remove('active'));
-            this.classList.add('active');
-            sizeSlider.value = sceneConfigs[id].s;
-            posXSlider.value = sceneConfigs[id].x;
-            posYSlider.value = sceneConfigs[id].y;
-            loadMockup(sceneConfigs[id].src + "?w=1200&q=100");
-        };
+            <div class="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity z-20"></div>
+            <button 
+              onclick="downloadImage('${m.imageUrl}', '${m.label}')"
+              class="absolute bottom-3 right-3 bg-white text-[#F1641E] px-4 py-2 rounded-lg text-xs font-black opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 shadow-lg hover:bg-[#F1641E] hover:text-white z-30"
+            >
+              DOWNLOAD
+            </button>
+          </div>
+          <div class="flex justify-between items-center px-2">
+            <div>
+                <p class="text-[11px] font-black text-gray-800 uppercase tracking-wider">${state.productType}</p>
+                <p class="text-[10px] font-bold text-gray-400 mt-0.5">${m.label}</p>
+            </div>
+            <span class="text-[9px] bg-green-50 border border-green-100 text-green-600 px-2.5 py-1 rounded-full font-black tracking-widest shadow-sm">READY</span>
+          </div>
+        </div>
+      `;
     });
 
-    generateBtn.onclick = async () => {
-        if (!designImg) return alert("Please upload your design first!");
-        const grid = document.getElementById('results-grid');
-        document.getElementById('results-section').style.display = 'block';
-        grid.innerHTML = '<div class="col-12 text-center p-5"><div class="spinner-border text-primary"></div></div>';
-
-        setTimeout(async () => {
-            grid.innerHTML = '';
-            for (let i = 1; i <= 6; i++) {
-                const config = sceneConfigs[i];
-                const col = document.createElement('div');
-                col.className = 'col-md-6 col-lg-4';
-                col.innerHTML = `
-                    <div class="card border-0 shadow-lg rounded-5 overflow-hidden bg-white">
-                        <canvas id="c-${i}" width="600" height="600" style="width:100%"></canvas>
-                        <div class="p-4 d-flex justify-content-between">
-                            <h6 class="fw-bold mb-0">${config.name}</h6>
-                            <i class="fas fa-sparkles text-primary small"></i>
-                        </div>
-                    </div>
-                `;
-                grid.appendChild(col);
-                const bc = document.getElementById(`c-${i}`);
-                const bctx = bc.getContext('2d');
-                const bm = new Image();
-                bm.crossOrigin = "anonymous";
-                bm.src = config.src + "?w=1200&q=100";
-                await new Promise(r => {
-                    bm.onload = () => {
-                        bctx.drawImage(bm, 0, 0, 600, 600);
-                        bctx.globalCompositeOperation = 'multiply';
-                        bctx.drawImage(designImg, config.x - config.s/2, config.y - config.s/2, config.s, config.s);
-                        bctx.globalCompositeOperation = 'source-over';
-                        r();
-                    };
-                });
-            }
-            window.scrollTo({ top: document.getElementById('results-section').offsetTop - 20, behavior: 'smooth' });
-        }, 1500);
-    };
-
-    function getCookie(name) {
-        let cookieValue = null;
-        if (document.cookie && document.cookie !== '') {
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i].trim();
-                if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                    break;
-                }
-            }
-        }
-        return cookieValue;
+    if (state.loading) {
+      mockupsHtml += `
+        <div class="animate-pulse bg-gray-50 p-4 rounded-2xl h-64 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center text-gray-400 mt-6">
+          <div class="w-8 h-8 border-[3px] border-gray-300 border-t-[#F1641E] rounded-full animate-spin mb-3"></div>
+          <span class="text-sm font-bold text-gray-500">Generating variation ${state.mockups.length + 1}...</span>
+        </div>
+      `;
     }
+    
+    mockupsContainer.innerHTML = mockupsHtml;
+  }
+
+  window.downloadImage = (url, label) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `mockup-${label.toLowerCase().replace(/\s+/g, '-')}.png`;
+    link.click();
+  };
+
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        state.image = reader.result;
+        uploadPlaceholder.style.display = 'none';
+        uploadSuccess.style.display = 'flex';
+        previewImg.src = state.image;
+        updateGenerateBtn();
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  productTypeSelect.addEventListener('change', (e) => {
+    state.productType = e.target.value;
+    renderMockups(); // Re-render to update labels if any exist
+  });
+
+  variationCountSelect.addEventListener('change', (e) => {
+    const count = parseInt(e.target.value);
+    state.variationCount = count;
+    let newConfigs = [...state.configs];
+    
+    if (count > newConfigs.length) {
+      for (let i = newConfigs.length; i < count; i++) {
+        newConfigs.push({
+          label: `Variation ${i + 1}`,
+          instructions: i === 1 ? 'Lifestyle setting, natural light' : i === 2 ? 'Close-up detail, focus on texture' : 'Flat lay style'
+        });
+      }
+    } else {
+      newConfigs = newConfigs.slice(0, count);
+    }
+    state.configs = newConfigs;
+    renderConfigs();
+    updateGenerateBtn();
+  });
+
+  generateBtn.addEventListener('click', async () => {
+    if (!state.image) return;
+
+    state.loading = true;
+    state.mockups = [];
+    state.progress = 0;
+    updateGenerateBtn();
+    renderMockups();
+
+    try {
+      const results = [];
+      const total = state.configs.length;
+
+      for (let i = 0; i < total; i++) {
+        const config = state.configs[i];
+        
+        try {
+          const response = await fetch('/mockups/generate-mockup/', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+              image_data: state.image,
+              product_type: state.productType,
+              custom_instructions: config.instructions,
+              label: config.label
+            })
+          });
+          
+          const data = await response.json();
+          if (data.status === 'success') {
+            results.push({
+              imageUrl: data.image_url,
+              label: data.label || config.label
+            });
+          } else {
+            console.error('Generation failed:', data.message);
+            // push fallback or error message mock
+            results.push({
+              imageUrl: state.image, // fallback to uploaded design
+              label: config.label + ' (Failed)'
+            });
+          }
+        } catch (err) {
+          console.error(err);
+        }
+
+        state.mockups = [...results];
+        state.progress = ((i + 1) / total) * 100;
+        updateGenerateBtn();
+        renderMockups();
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Failed to generate mockups.');
+    } finally {
+      state.loading = false;
+      updateGenerateBtn();
+      renderMockups();
+    }
+  });
+
+  // Init
+  renderConfigs();
+  updateGenerateBtn();
+  renderMockups();
 </script>
 {% endblock %}

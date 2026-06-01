@@ -8,4 +8,6 @@ urlpatterns = [
     path('bank/', include('keyword_bank.urls')),
     path('profit/', include('profit_pulse.urls')),
     path('optimizer/', include('rank_optimizer.urls')),
+    path('pinterest/', include('pinterest_seo.urls')),
+    path('customers/', include('customer_detail.urls')),
 ]

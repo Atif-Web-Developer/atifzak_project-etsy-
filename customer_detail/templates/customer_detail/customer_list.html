@@ -1,0 +1,119 @@
+{% extends 'keywords/base.html' %}
+
+{% block title %}Customer Directory - Atif-Zak Analytics{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-6">
+        <h2 class="m-0"><i class="fas fa-address-book text-primary me-2"></i>Customer Directory</h2>
+        <p class="text-muted mt-1 mb-0">Manage and view all your customer contacts</p>
+    </div>
+    <div class="col-md-6 text-end">
+        <a href="{% url 'customer_detail:customer_create' %}" class="btn-pro-primary">
+            <i class="fas fa-plus me-2"></i> Add New Customer
+        </a>
+    </div>
+</div>
+
+<div class="pro-card">
+    <div class="row mb-4">
+        <div class="col-md-9">
+            <form method="get" action="{% url 'customer_detail:customer_list' %}" class="d-flex gap-2 align-items-center flex-wrap">
+                <div class="input-group" style="max-width: 250px;">
+                    <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-search"></i></span>
+                    <input type="text" name="q" class="form-control border-start-0" placeholder="Search customers..." value="{{ query }}">
+                </div>
+                
+                <div class="input-group" style="max-width: 180px;">
+                    <span class="input-group-text bg-white text-muted"><i class="fas fa-calendar-alt"></i></span>
+                    <input type="date" name="start_date" class="form-control" value="{{ start_date }}" title="Start Date">
+                </div>
+                <span class="text-muted">to</span>
+                <div class="input-group" style="max-width: 150px;">
+                    <input type="date" name="end_date" class="form-control" value="{{ end_date }}" title="End Date">
+                </div>
+
+                <button type="submit" class="btn btn-primary px-3">Filter</button>
+                {% if query or start_date or end_date %}
+                    <a href="{% url 'customer_detail:customer_list' %}" class="btn btn-outline-secondary border" title="Clear search">
+                        <i class="fas fa-times"></i> Clear
+                    </a>
+                {% endif %}
+            </form>
+        </div>
+        <div class="col-md-3 text-end text-muted d-flex align-items-center justify-content-end">
+            <small>Showing {{ total_results }} result{{ total_results|pluralize }}</small>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Customer Name</th>
+                    <th>Email Address</th>
+                    <th>Phone Number</th>
+                    <th>Company</th>
+                    <th>Date Added</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for customer in customers %}
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-primary bg-opacity-10 text-primary me-3 d-flex align-items-center justify-content-center fw-bold" style="width: 36px; height: 36px;">
+                                {{ customer.full_name|first|upper }}
+                            </div>
+                            <span class="fw-semibold">{{ customer.full_name }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        {% if customer.email %}
+                            <a href="mailto:{{ customer.email }}" class="text-decoration-none">{{ customer.email }}</a>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ customer.phone_number|default:"-" }}</td>
+                    <td>
+                        {% if customer.company_name %}
+                            <span class="badge bg-light text-dark border"><i class="fas fa-building me-1 text-muted"></i> {{ customer.company_name }}</span>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ customer.created_date|date:"M d, Y" }}</td>
+                    <td class="text-end">
+                        <div class="btn-group">
+                            <a href="{% url 'customer_detail:customer_view' customer.pk %}" class="btn btn-sm btn-light" title="View">
+                                <i class="fas fa-eye text-primary"></i>
+                            </a>
+                            <a href="{% url 'customer_detail:customer_update' customer.pk %}" class="btn btn-sm btn-light" title="Edit">
+                                <i class="fas fa-edit text-warning"></i>
+                            </a>
+                            <a href="{% url 'customer_detail:customer_delete' customer.pk %}" class="btn btn-sm btn-light" title="Delete">
+                                <i class="fas fa-trash text-danger"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-5 text-muted">
+                        <i class="fas fa-search fa-3x mb-3 text-light"></i>
+                        {% if query %}
+                            <p class="mb-0">No customers found matching "{{ query }}".</p>
+                        {% else %}
+                            <p class="mb-0">No customers in your database yet.</p>
+                            <a href="{% url 'customer_detail:customer_create' %}" class="btn btn-sm btn-primary mt-2">Add First Customer</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

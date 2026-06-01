@@ -16,9 +16,11 @@ def dashboard_view(request):
             data_list = []
             for r in results:
                 data_list.append({
+                    'id': r.id,
                     'keyword': r.keyword,
                     'volume': r.avg_searches,
-                    'competition': r.competition
+                    'competition': r.competition,
+                    'is_favorite': r.is_favorite
                 })
             request.session['rank_optimizer_data'] = data_list
             request.session['rank_optimizer_filename'] = search_obj.term
@@ -84,12 +86,10 @@ def upload_file_view(request):
                 'competition': comp
             })
 
-        request.session['rank_optimizer_data'] = data_list
-        request.session['rank_optimizer_filename'] = f"[Opt] {file.name}"
-        request.session.modified = True
-
-        # Save to global File History database
+        # Save to global File History database and preserve favorites
         search_obj, _ = KeywordSearch.objects.get_or_create(user=request.user, term=f"[Opt] {file.name}")
+        existing_favs = set(KeywordResult.objects.filter(search=search_obj, is_favorite=True).values_list('keyword', flat=True))
+        
         KeywordResult.objects.filter(search=search_obj).delete()
         
         results_to_create = []
@@ -99,11 +99,28 @@ def upload_file_view(request):
                 keyword=d['keyword'],
                 avg_searches=d['volume'],
                 competition=d['competition'],
-                category='Optimizer'
+                category='Optimizer',
+                is_favorite=(d['keyword'] in existing_favs)
             ))
         KeywordResult.objects.bulk_create(results_to_create)
 
-        return JsonResponse({'message': 'success', 'total': len(data_list)})
+        # Fetch to get IDs
+        created_results = KeywordResult.objects.filter(search=search_obj)
+        final_data_list = []
+        for r in created_results:
+            final_data_list.append({
+                'id': r.id,
+                'keyword': r.keyword,
+                'volume': r.avg_searches,
+                'competition': r.competition,
+                'is_favorite': r.is_favorite
+            })
+
+        request.session['rank_optimizer_data'] = final_data_list
+        request.session['rank_optimizer_filename'] = f"[Opt] {file.name}"
+        request.session.modified = True
+
+        return JsonResponse({'message': 'success', 'total': len(final_data_list)})
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
@@ -119,6 +136,7 @@ def filter_keywords_ajax(request):
     status_filter = request.GET.get('status', 'All')
     include_words = request.GET.get('include', '').lower().strip()
     exclude_words = request.GET.get('exclude', '').lower().strip()
+    search_query = request.GET.get('search', '').lower().strip()
     
     green_limit = request.GET.get('green_limit', 15000)
     yellow_limit = request.GET.get('yellow_limit', 50000)
@@ -167,6 +185,8 @@ def filter_keywords_ajax(request):
             continue
 
         k_lower = item['keyword'].lower()
+        if search_query and search_query not in k_lower:
+            continue
         if inc_words_list and not any(w in k_lower for w in inc_words_list):
             continue
         if exc_words_list and any(w in k_lower for w in exc_words_list):

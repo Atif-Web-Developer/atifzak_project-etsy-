@@ -49,6 +49,7 @@ def upload_csv(request):
         
         results = []
         search_obj, _ = KeywordSearch.objects.get_or_create(user=request.user, term=f"Upload_{csv_file.name}")
+        existing_favs = set(KeywordResult.objects.filter(search=search_obj, is_favorite=True).values_list('keyword', flat=True))
         KeywordResult.objects.filter(search=search_obj).delete()
 
         for index, row in data.iterrows():
@@ -96,7 +97,8 @@ def upload_csv(request):
                 avg_ctr=ctr,
                 competition=comp,
                 kd=kd,
-                category=cat
+                category=cat,
+                is_favorite=(keyword in existing_favs)
             )
             results.append({
                 'id': res_obj.id,
@@ -243,6 +245,9 @@ def overview_dashboard(request):
     # All Favorites
     favorites = KeywordResult.objects.filter(is_favorite=True, search__user=request.user).order_by('-avg_searches')
     
+    from customer_detail.models import Customer
+    total_customers_db = Customer.objects.count()
+    
     context = {
         'total_files': total_files,
         'total_keywords': total_keywords,
@@ -250,6 +255,7 @@ def overview_dashboard(request):
         'golden_nuggets': golden_nuggets,
         'easy_to_rank': easy_to_rank,
         'favorites': favorites,
+        'total_customers_db': total_customers_db,
     }
     return render(request, 'keywords/overview.html', context)
 
@@ -261,6 +267,25 @@ def toggle_favorite(request):
         res = KeywordResult.objects.get(id=keyword_id, search__user=request.user)
         res.is_favorite = not res.is_favorite
         res.save()
+        
+        # Sync with Rank Optimizer session data
+        ro_data = request.session.get('rank_optimizer_data', [])
+        modified = False
+        for item in ro_data:
+            if item.get('id') == res.id:
+                item['is_favorite'] = res.is_favorite
+                modified = True
+                break
+        if modified:
+            request.session['rank_optimizer_data'] = ro_data
+            ro_filtered = request.session.get('rank_optimizer_filtered', [])
+            for item in ro_filtered:
+                if item.get('id') == res.id:
+                    item['is_favorite'] = res.is_favorite
+                    break
+            request.session['rank_optimizer_filtered'] = ro_filtered
+            request.session.modified = True
+            
         return JsonResponse({'status': 'success', 'is_favorite': res.is_favorite})
     except KeywordResult.DoesNotExist:
         return JsonResponse({'error': 'Keyword not found'}, status=404)

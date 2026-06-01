@@ -11,22 +11,39 @@
 </div>
 
 <!-- Key Metrics Cards -->
-<div class="row g-4 mb-5">
-    <div class="col-md-3">
-        <div class="pro-card text-center h-100" style="border-bottom: 4px solid #10b981;">
-            <i class="fas fa-file-csv fa-3x text-success opacity-50 mb-3"></i>
-            <h2 class="fw-bold mb-0">{{ total_files }}</h2>
-            <p class="text-muted mb-0">Total Files Uploaded</p>
-        </div>
+<div class="row row-cols-1 row-cols-md-3 row-cols-xl-5 g-4 mb-5">
+    <!-- Customers Card -->
+    <div class="col">
+        <a href="{% url 'customer_detail:customer_dashboard' %}" class="text-decoration-none">
+            <div class="pro-card text-center h-100" style="border-bottom: 4px solid #8b5cf6; transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                <i class="fas fa-users fa-3x mb-3 opacity-50" style="color: #8b5cf6;"></i>
+                <h2 class="fw-bold mb-0 text-dark">{{ total_customers_db }}</h2>
+                <p class="text-muted mb-0">Total Customers <i class="fas fa-arrow-right ms-1 small"></i></p>
+            </div>
+        </a>
     </div>
-    <div class="col-md-3">
-        <div class="pro-card text-center h-100" style="border-bottom: 4px solid #3b82f6;">
-            <i class="fas fa-search fa-3x text-primary opacity-50 mb-3"></i>
-            <h2 class="fw-bold mb-0">{{ total_keywords }}</h2>
-            <p class="text-muted mb-0">Total Keywords Analyzed</p>
-        </div>
+    <!-- Files Uploaded -->
+    <div class="col">
+        <a href="{% url 'view_history' %}" class="text-decoration-none">
+            <div class="pro-card text-center h-100" style="border-bottom: 4px solid #10b981; transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                <i class="fas fa-file-csv fa-3x text-success opacity-50 mb-3"></i>
+                <h2 class="fw-bold mb-0 text-dark">{{ total_files }}</h2>
+                <p class="text-muted mb-0">Total Files Uploaded <i class="fas fa-arrow-right ms-1 small"></i></p>
+            </div>
+        </a>
     </div>
-    <div class="col-md-3">
+    <!-- Keywords Analyzed -->
+    <div class="col">
+        <a href="{% url 'dashboard' %}" class="text-decoration-none">
+            <div class="pro-card text-center h-100" style="border-bottom: 4px solid #3b82f6; transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                <i class="fas fa-search fa-3x text-primary opacity-50 mb-3"></i>
+                <h2 class="fw-bold mb-0 text-dark">{{ total_keywords }}</h2>
+                <p class="text-muted mb-0">Total Keywords <i class="fas fa-arrow-right ms-1 small"></i></p>
+            </div>
+        </a>
+    </div>
+    <!-- Saved Favorites -->
+    <div class="col">
         <a href="{% url 'saved_keywords' %}" class="text-decoration-none">
             <div class="pro-card text-center h-100" style="border-bottom: 4px solid #f59e0b; transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
                 <i class="fas fa-star fa-3x text-warning opacity-50 mb-3"></i>
@@ -35,17 +52,20 @@
             </div>
         </a>
     </div>
-    <div class="col-md-3">
-        <div class="pro-card text-center h-100 bg-dark text-white" style="border-bottom: 4px solid #064e3b;">
-            <i class="fas fa-gem fa-3x text-success opacity-75 mb-3"></i>
-            <h2 class="fw-bold mb-0">{{ golden_nuggets.count }}</h2>
-            <p class="text-light mb-0">Golden Nuggets Found</p>
-        </div>
+    <!-- Golden Nuggets -->
+    <div class="col">
+        <a href="#golden-nuggets-section" class="text-decoration-none">
+            <div class="pro-card text-center h-100 bg-dark text-white" style="border-bottom: 4px solid #064e3b; transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
+                <i class="fas fa-gem fa-3x text-success opacity-75 mb-3"></i>
+                <h2 class="fw-bold mb-0">{{ golden_nuggets.count }}</h2>
+                <p class="text-light mb-0">Golden Nuggets <i class="fas fa-arrow-down ms-1 small"></i></p>
+            </div>
+        </a>
     </div>
 </div>
 
 <!-- Extracted Keywords Sections -->
-<div class="row g-4">
+<div class="row g-4" id="golden-nuggets-section">
     <!-- Golden Nuggets -->
     <div class="col-md-6">
         <div class="pro-card h-100" style="border: 2px solid #064e3b;">

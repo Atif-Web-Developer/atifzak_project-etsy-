@@ -1,0 +1,40 @@
+{% extends 'keywords/base.html' %}
+
+{% block title %}Delete Customer - Atif-Zak Analytics{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="pro-card text-center border-danger border-2">
+            <div class="text-danger mb-4">
+                <i class="fas fa-exclamation-triangle fa-4x"></i>
+            </div>
+            
+            <h3 class="mb-3">Delete Customer Record?</h3>
+            <p class="text-muted mb-4">
+                Are you sure you want to permanently delete <strong>{{ customer.full_name }}</strong>? 
+                This action cannot be undone and all data associated with this customer will be lost.
+            </p>
+            
+            <div class="bg-light p-3 rounded mb-4 text-start">
+                <div class="row">
+                    <div class="col-sm-4 text-muted small">Name</div>
+                    <div class="col-sm-8 fw-bold">{{ customer.full_name }}</div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-sm-4 text-muted small">Email</div>
+                    <div class="col-sm-8">{{ customer.email|default:"-" }}</div>
+                </div>
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="{% url 'customer_detail:customer_list' %}" class="btn btn-light px-4">Cancel</a>
+                    <button type="submit" class="btn btn-danger px-4"><i class="fas fa-trash me-2"></i> Yes, Delete Customer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends 'keywords/base.html' %}
+
+{% block title %}View Customer: {{ customer.full_name }} - Atif-Zak Analytics{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb bg-transparent p-0 mb-2">
+                    <li class="breadcrumb-item"><a href="{% url 'customer_detail:customer_dashboard' %}" class="text-decoration-none">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'customer_detail:customer_list' %}" class="text-decoration-none">Customers</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ customer.full_name }}</li>
+                </ol>
+            </nav>
+            <h2 class="m-0 d-flex align-items-center gap-3">
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center shadow-sm" style="width: 48px; height: 48px; font-size: 1.5rem;">
+                    {{ customer.full_name|first|upper }}
+                </div>
+                {{ customer.full_name }}
+            </h2>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{% url 'customer_detail:customer_update' customer.pk %}" class="btn btn-outline-primary px-4 rounded-pill">
+                <i class="fas fa-edit me-2"></i> Edit Profile
+            </a>
+            <a href="{% url 'customer_detail:customer_delete' customer.pk %}" class="btn btn-outline-danger px-4 rounded-pill">
+                <i class="fas fa-trash me-2"></i> Delete
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="pro-card h-100">
+            <h5 class="border-bottom pb-3 mb-4"><i class="fas fa-id-card text-muted me-2"></i> Contact Information</h5>
+            
+            <div class="row mb-4">
+                <div class="col-sm-4 text-muted">Email Address</div>
+                <div class="col-sm-8 fw-medium">
+                    {% if customer.email %}
+                        <a href="mailto:{{ customer.email }}" class="text-decoration-none">{{ customer.email }}</a>
+                    {% else %}
+                        <span class="text-muted fst-italic">Not provided</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-sm-4 text-muted">Phone Number</div>
+                <div class="col-sm-8 fw-medium">
+                    {% if customer.phone_number %}
+                        <a href="tel:{{ customer.phone_number }}" class="text-decoration-none text-dark">{{ customer.phone_number }}</a>
+                    {% else %}
+                        <span class="text-muted fst-italic">Not provided</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-sm-4 text-muted">Company Name</div>
+                <div class="col-sm-8 fw-medium">
+                    {{ customer.company_name|default:"<span class='text-muted fst-italic'>Not provided</span>"|safe }}
+                </div>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-sm-4 text-muted">Physical Address</div>
+                <div class="col-sm-8 fw-medium">
+                    {% if customer.address %}
+                        {{ customer.address|linebreaksbr }}
+                    {% else %}
+                        <span class="text-muted fst-italic">Not provided</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-4">
+        <div class="pro-card bg-light border-0 mb-4">
+            <h6 class="text-muted mb-3 text-uppercase small fw-bold">System Info</h6>
+            <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted small">Customer ID</span>
+                <span class="small fw-bold">#{{ customer.pk|stringformat:"05d" }}</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+                <span class="text-muted small">Created On</span>
+                <span class="small">{{ customer.created_date|date:"M d, Y" }}</span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span class="text-muted small">Last Updated</span>
+                <span class="small">{{ customer.updated_date|date:"M d, Y" }}</span>
+            </div>
+        </div>
+        
+        <div class="pro-card">
+            <h5 class="border-bottom pb-3 mb-3"><i class="fas fa-sticky-note text-warning me-2"></i> Notes</h5>
+            {% if customer.notes %}
+                <div class="text-dark bg-warning bg-opacity-10 p-3 rounded text-break">
+                    {{ customer.notes|linebreaks }}
+                </div>
+            {% else %}
+                <p class="text-muted mb-0 fst-italic text-center py-3">No notes added yet.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

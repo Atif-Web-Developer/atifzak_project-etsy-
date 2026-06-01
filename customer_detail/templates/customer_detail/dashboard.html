@@ -1,0 +1,115 @@
+{% extends 'keywords/base.html' %}
+
+{% block title %}Customer Dashboard - Atif-Zak Analytics{% endblock %}
+
+{% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col-md-6">
+        <h2 class="m-0"><i class="fas fa-users text-primary me-2"></i>Customer Dashboard</h2>
+        <p class="text-muted mt-1 mb-0">Overview of your customer database</p>
+    </div>
+    <div class="col-md-6 text-end">
+        <a href="{% url 'customer_detail:customer_create' %}" class="btn-pro-primary">
+            <i class="fas fa-plus me-2"></i> Add New Customer
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Stat Cards -->
+    <div class="col-md-4 mb-4">
+        <div class="pro-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="text-muted m-0">Total Customers</h5>
+                <div class="bg-primary bg-opacity-10 text-primary rounded-circle p-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-user-friends"></i>
+                </div>
+            </div>
+            <h2 class="fw-bold mb-0">{{ total_customers }}</h2>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="pro-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="text-muted m-0">New This Week</h5>
+                <div class="bg-success bg-opacity-10 text-success rounded-circle p-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-user-plus"></i>
+                </div>
+            </div>
+            <h2 class="fw-bold mb-0">{{ new_this_week }}</h2>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="pro-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="text-muted m-0">New This Month</h5>
+                <div class="bg-info bg-opacity-10 text-info rounded-circle p-2" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+            </div>
+            <h2 class="fw-bold mb-0">{{ new_this_month }}</h2>
+        </div>
+    </div>
+</div>
+
+<div class="pro-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="m-0">Recently Added Customers</h4>
+        <a href="{% url 'customer_detail:customer_list' %}" class="btn btn-sm btn-outline-primary rounded-pill px-3">View All</a>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Customer</th>
+                    <th>Contact</th>
+                    <th>Company</th>
+                    <th>Added On</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for customer in recent_customers %}
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-secondary bg-opacity-10 text-secondary me-3 d-flex align-items-center justify-content-center fw-bold" style="width: 40px; height: 40px;">
+                                {{ customer.full_name|first|upper }}
+                            </div>
+                            <div>
+                                <h6 class="m-0 fw-semibold">{{ customer.full_name }}</h6>
+                                <small class="text-muted">{{ customer.email|default:"No email" }}</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>{{ customer.phone_number|default:"-" }}</td>
+                    <td>
+                        {% if customer.company_name %}
+                            <span class="badge bg-light text-dark border">{{ customer.company_name }}</span>
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ customer.created_date|date:"M d, Y" }}</td>
+                    <td class="text-end">
+                        <a href="{% url 'customer_detail:customer_view' customer.pk %}" class="btn btn-sm btn-light rounded-circle" title="View Details">
+                            <i class="fas fa-eye text-primary"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-4 text-muted">
+                        <i class="fas fa-inbox fa-3x mb-3 text-light"></i>
+                        <p class="mb-0">No customers found. Start by adding one!</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
