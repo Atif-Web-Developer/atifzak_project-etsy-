@@ -1,0 +1,726 @@
+{% extends 'keywords/base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+/* Custom Dark Aesthetic to match project */
+.bg-dark-custom { background-color: #0f172a !important; }
+.card-dark { background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; }
+.text-orange { color: #10b981 !important; }
+.btn-orange { background-color: #10b981; color: white; border: none; font-weight: 600; padding: 8px 20px; border-radius: 8px; }
+.btn-orange:hover { background-color: #059669; color: white; }
+.text-muted { color: #94a3b8 !important; }
+.filter-input { background-color: #0f172a !important; color: #fff !important; border: 1px solid #334155 !important; border-radius: 6px; }
+.filter-input:focus { border-color: #10b981 !important; box-shadow: none !important; }
+.filter-input::placeholder { color: #64748b !important; }
+.sidebar-link { color: #f8fafc; text-decoration: none; padding: 8px 12px; display: block; border-radius: 6px; margin-bottom: 4px; transition: 0.2s; }
+.sidebar-link:hover { background-color: #334155; }
+.sidebar-link.active { background-color: #1d4ed8; color: #fff; }
+.sidebar-category { font-weight: bold; color: #94a3b8; margin-top: 15px; margin-bottom: 5px; padding-left: 10px; font-size: 0.85rem; text-transform: uppercase; }
+.shop-card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 20px; transition: 0.2s; cursor: pointer; }
+.shop-card:hover { border-color: #10b981; background: #1a2e24; }
+
+/* Rank Optimizer Styles */
+.dot { height: 12px; width: 12px; border-radius: 50%; display: inline-block; }
+.dot-green { background-color: #22c55e; }
+.dot-yellow { background-color: #eab308; }
+.dot-red { background-color: #ef4444; }
+.badge-golden { background-color: rgba(234, 179, 8, 0.1); color: #eab308; border: 1px solid #eab308; padding: 4px 10px; font-weight: 600; font-size: 0.75rem;}
+.badge-good { background-color: rgba(34, 197, 94, 0.1); color: #22c55e; border: 1px solid #22c55e; padding: 4px 10px; font-weight: 600; font-size: 0.75rem;}
+.badge-hard { background-color: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid #ef4444; padding: 4px 10px; font-weight: 600; font-size: 0.75rem;}
+
+.stat-card { position: relative; overflow: hidden; height: 100%; border: 1px solid #334155; }
+.stat-circle { position: absolute; bottom: -20px; right: -20px; width: 80px; height: 80px; border-radius: 50%; opacity: 0.8; }
+.stat-circle-brown { background-color: #8b5cf6; } 
+.stat-circle-olive { background-color: #eab308; } 
+.stat-circle-green { background-color: #22c55e; } 
+
+.table-custom-dark th { border-bottom: 1px solid #334155 !important; color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; padding: 15px; }
+.table-custom-dark td { border-bottom: 1px solid #1e293b !important; color: #f8fafc; padding: 15px; vertical-align: middle; font-size: 0.9rem; }
+.table-custom-dark tr:hover td { background-color: #334155 !important; }
+
+.status-btn { padding: 4px 12px; font-size: 0.8rem; border-radius: 20px; transition: all 0.2s; cursor: pointer; border: 1px solid transparent; background: transparent; color: #94a3b8;}
+.status-btn.active { border-color: #10b981; color: #10b981; background: rgba(16, 185, 129, 0.1); }
+
+.fav-btn { transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.fav-btn:hover { transform: scale(1.3); color: #f59e0b !important; }
+.fav-btn:active { transform: scale(0.9); }
+</style>
+
+<div class="container-fluid p-4 bg-dark-custom shadow" style="border-radius: 24px; min-height: calc(100vh - 140px);">
+    <div class="row">
+        <!-- Left Sidebar -->
+        <div class="col-md-3">
+            <div class="card card-dark p-3 shadow-sm">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="text-white fw-bold m-0"><i class="fas fa-store text-orange me-2"></i>My Shops</h5>
+                    <div class="d-flex gap-1">
+                        <button class="btn btn-sm btn-outline-secondary text-light" data-bs-toggle="modal" data-bs-target="#manageDataModal" title="Manage Data">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary text-light" data-bs-toggle="modal" data-bs-target="#addCategoryModal" title="Add Category">
+                            <i class="fas fa-folder-plus"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary text-light" data-bs-toggle="modal" data-bs-target="#addShopModal" title="Add Shop">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                <hr class="border-secondary mt-0">
+                
+                <div style="max-height: 75vh; overflow-y: auto;">
+                    {% for cat in categories %}
+                        <div class="sidebar-category"><i class="fas fa-folder text-warning me-2"></i>{{ cat.name }}</div>
+                        {% for shop in cat.shops.all %}
+                            <a href="?shop_id={{ shop.id }}" class="sidebar-link {% if active_shop and active_shop.id == shop.id %}active{% endif %}" style="padding-left: 30px;">
+                                <i class="fas fa-shopping-bag me-2 text-info"></i>{{ shop.name }}
+                            </a>
+                        {% empty %}
+                            <small class="text-muted" style="padding-left: 30px; display: block;">No shops yet.</small>
+                        {% endfor %}
+                    {% empty %}
+                        <p class="text-muted text-center mt-4">No categories added yet.<br>Click the folder icon to add one.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            {% if active_shop %}
+                <!-- Intelligence Dashboard View -->
+                <div id="dashboardView" class="container-fluid p-0">
+                    <!-- Top Bar -->
+                    <div class="d-flex justify-content-between align-items-center mb-4 pb-3" style="border-bottom: 1px solid #333;">
+                        <div>
+                            <h3 class="text-white mb-0 fw-bold" style="font-family: 'Outfit', sans-serif;">{{ active_shop.name }} Data</h3>
+                            <small class="text-muted" id="showingCount">Showing 0 keywords</small>
+                        </div>
+                        <div class="d-flex gap-3 align-items-center">
+                            <div class="position-relative" style="width: 250px;">
+                                <i class="fas fa-search position-absolute text-muted" style="left: 12px; top: 50%; transform: translateY(-50%); font-size: 0.85rem;"></i>
+                                <input type="text" class="form-control form-control-sm filter-input" id="globalSearchInput" placeholder="Search keyword..." style="padding-left: 32px; border-radius: 20px;">
+                            </div>
+                            <button class="btn btn-sm btn-dark border-secondary" data-bs-toggle="offcanvas" data-bs-target="#filterSidebar" style="color: #a1a1aa;"><i class="fas fa-sliders-h text-warning"></i> Advanced Filters</button>
+                            <button class="btn btn-sm btn-outline-warning text-warning border-warning" id="btnGoldenOnly"><i class="fas fa-star"></i> Golden Only</button>
+                            <a href="{% url 'competitor_export_csv' %}" class="btn btn-sm btn-orange" id="btnExportAll"><i class="fas fa-download"></i> Export All</a>
+                        </div>
+                    </div>
+
+                    <!-- 3 Stat Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card card-dark stat-card p-3 shadow-sm">
+                                <small class="text-muted fw-bold"><i class="fas fa-chart-bar me-1"></i> Total Keywords</small>
+                                <h1 class="text-white fw-bold mt-2 mb-0" id="statTotal" style="font-size: 2.5rem;">0</h1>
+                                <div class="stat-circle stat-circle-brown"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card card-dark stat-card p-3 shadow-sm">
+                                <small class="text-warning fw-bold"><i class="fas fa-star me-1"></i> Golden Keywords <span style="color: #6b7280; font-weight: normal; font-size: 0.7rem; margin-left: 4px;">(Vol ≥ 2K, Comp ≤ 5K)</span></small>
+                                <h1 class="text-white fw-bold mt-2 mb-0" id="statGolden" style="font-size: 2.5rem;">0</h1>
+                                <div class="stat-circle stat-circle-olive"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card card-dark stat-card p-3 shadow-sm">
+                                <small class="text-success fw-bold"><i class="fas fa-arrow-up me-1"></i> Low Competition</small>
+                                <h1 class="text-white fw-bold mt-2 mb-0" id="statLow" style="font-size: 2.5rem;">0</h1>
+                                <div class="stat-circle stat-circle-green"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="card card-dark p-0 shadow-sm">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-borderless table-custom-dark mb-0 w-100">
+                                <thead>
+                                    <tr>
+                                        <th class="ps-4">KEYWORD <i class="fas fa-sort text-muted ms-1"></i></th>
+                                        <th>VOLUME <i class="fas fa-sort text-muted ms-1"></i></th>
+                                        <th>COMPETITION <i class="fas fa-sort text-muted ms-1"></i></th>
+                                        <th>COLOR</th>
+                                        <th>STATUS <i class="fas fa-sort text-muted ms-1"></i></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="keywordTableBody">
+                                    <!-- populated by js -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Pagination footer -->
+                        <div class="card-footer border-top border-secondary bg-transparent d-flex justify-content-between align-items-center py-3 px-4">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="text-muted small">Results per page:</span>
+                                <select class="form-select form-select-sm filter-input" style="width: 70px;" id="perPageSelect">
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                            </div>
+                            <div class="text-muted small" id="pageInfo">1-10 of 0</div>
+                            <div class="d-flex gap-3 align-items-center">
+                                <button class="btn btn-sm btn-link text-muted text-decoration-none p-0" id="btnPrev" disabled>&larr; Prev</button>
+                                <span class="text-white small fw-bold" id="pageCount">Page 1 / 1</span>
+                                <button class="btn btn-sm btn-link text-white text-decoration-none p-0" id="btnNext">Next &rarr;</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Offcanvas Filters Sidebar -->
+                <div class="offcanvas offcanvas-start bg-dark-custom text-white border-end border-secondary" tabindex="-1" id="filterSidebar" aria-labelledby="filterSidebarLabel">
+                    <div class="offcanvas-header border-bottom border-secondary">
+                        <h5 class="offcanvas-title fw-bold" id="filterSidebarLabel" style="font-family: 'Outfit', sans-serif;"><i class="fas fa-sliders-h text-orange me-2"></i> Advanced Filters</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+                    </div>
+                    <div class="offcanvas-body">
+                        <h6 class="text-muted mb-3 fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;"><i class="fas fa-filter"></i> VOLUME & COMPETITION</h6>
+                        <div class="mb-3">
+                            <label class="form-label small text-muted mb-1">Minimum Search Volume</label>
+                            <input type="number" class="form-control filter-input" id="minVolInput" value="500">
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label small text-muted mb-1">Maximum Competition</label>
+                            <input type="number" class="form-control filter-input" id="maxCompInput" placeholder="e.g. 50000 (optional)">
+                        </div>
+
+                        <h6 class="text-muted mb-2 mt-4 fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;"><i class="fas fa-palette"></i> DIFFICULTY COLOR RANGES</h6>
+                        <small class="text-muted d-block mb-3" style="font-size: 0.7rem;">Set competition limits for each color.<br>Labels are editable too.</small>
+                        
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="dot dot-green"></span>
+                                <span class="text-light small">Green (Low)</span>
+                            </div>
+                            <input type="number" class="form-control filter-input text-end" style="width: 80px; padding: 4px 8px; height: 30px;" id="greenLimit" value="15000">
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="dot dot-yellow"></span>
+                                <span class="text-light small">Yellow (Med)</span>
+                            </div>
+                            <input type="number" class="form-control filter-input text-end" style="width: 80px; padding: 4px 8px; height: 30px;" id="yellowLimit" value="50000">
+                        </div>
+                        <small class="text-danger d-block mb-4" style="font-size: 0.7rem;"><i class="fas fa-circle" style="font-size: 6px; vertical-align: middle;"></i> Above Yellow threshold = Red (Hard)</small>
+
+                        <h6 class="text-muted mb-3 mt-4 fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;"><i class="fas fa-search"></i> KEYWORD FILTER</h6>
+                        <div class="mb-3">
+                            <label class="form-label small text-muted mb-1">Include words (comma)</label>
+                            <input type="text" class="form-control filter-input" id="includeWords" placeholder="gift, custom...">
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label small text-muted mb-1">Exclude words (comma)</label>
+                            <input type="text" class="form-control filter-input" id="excludeWords" placeholder="digital, free...">
+                        </div>
+
+                        <h6 class="text-muted mb-3 mt-4 fw-bold" style="font-size: 0.75rem; letter-spacing: 1px;"><i class="fas fa-check-circle"></i> STATUS FILTER</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button class="status-btn active" data-status="All">All</button>
+                            <button class="status-btn" data-status="Golden">★ Golden</button>
+                            <button class="status-btn text-success" data-status="Good" style="border-color: #22c55e;">Good</button>
+                            <button class="status-btn text-danger" data-status="Hard" style="border-color: #ef4444;">Hard</button>
+                        </div>
+                    </div>
+                </div>
+
+            {% else %}
+                <!-- Welcome State -->
+                <div class="d-flex flex-column justify-content-center align-items-center text-center" style="min-height: 60vh;">
+                    <i class="fas fa-chart-pie text-secondary opacity-50 mb-4" style="font-size: 5rem;"></i>
+                    <h3 class="text-white fw-bold">Competitor Shop Analysis</h3>
+                    <p class="text-muted mb-4">Select a shop from the sidebar to view details,<br>or add a new category and shop to get started.</p>
+                    <div class="d-flex gap-3">
+                        <button class="btn btn-orange" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                            <i class="fas fa-folder-plus me-2"></i>Add Category
+                        </button>
+                        <button class="btn btn-outline-secondary text-light" data-bs-toggle="modal" data-bs-target="#addShopModal">
+                            <i class="fas fa-plus me-2"></i>Add Shop
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Add Category Modal -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark-custom border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-white"><i class="fas fa-folder-plus text-warning me-2"></i>Add New Category</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{% url 'competitor_add_category' %}" method="POST">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <label class="text-muted small fw-bold">Category Name (e.g. Leather, Jewelry, Glass)</label>
+                    <input type="text" name="category_name" class="form-control filter-input mt-2" placeholder="e.g. Leather" required>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-orange">Save Category</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Shop Modal -->
+<div class="modal fade" id="addShopModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark-custom border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-white"><i class="fas fa-store text-info me-2"></i>Add New Shop</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{% url 'competitor_add_shop' %}" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <label class="text-muted small fw-bold">Select Category</label>
+                    <select name="category_id" class="form-control filter-input mt-1 mb-3" required>
+                        <option value="">-- Select Category --</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <label class="text-muted small fw-bold">Shop Name</label>
+                    <input type="text" name="shop_name" class="form-control filter-input mt-1 mb-3" placeholder="e.g. MrsnBoutique" required>
+                    
+                    <label class="text-muted small fw-bold">Upload Shop Document (CSV/Excel)</label>
+                    <input type="file" name="file" class="form-control filter-input mt-1" accept=".csv, .xlsx">
+                    <small class="text-muted">Optional: Upload keyword data for this shop.</small>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-orange">Save Shop</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Manage Data Modal -->
+<div class="modal fade" id="manageDataModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content bg-dark-custom border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-white"><i class="fas fa-cog text-orange me-2"></i>Manage Categories & Shops</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0" style="max-height: 60vh; overflow-y: auto;">
+                {% if categories %}
+                    <ul class="list-group list-group-flush">
+                        {% for cat in categories %}
+                            <!-- Category Item -->
+                            <li class="list-group-item bg-dark-custom border-secondary p-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h6 class="text-warning m-0 fw-bold"><i class="fas fa-folder me-2"></i>{{ cat.name }}</h6>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-sm btn-outline-warning edit-cat-btn"
+                                            data-cat-id="{{ cat.id }}" data-cat-name="{{ cat.name }}"
+                                            data-bs-toggle="modal" data-bs-target="#editCategoryModal" data-bs-dismiss="modal" title="Edit Category">
+                                            <i class="fas fa-pencil-alt"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger delete-cat-btn"
+                                            data-cat-id="{{ cat.id }}" data-cat-name="{{ cat.name }}"
+                                            data-bs-toggle="modal" data-bs-target="#deleteCategoryModal" data-bs-dismiss="modal" title="Delete Category">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Shops inside Category -->
+                                {% if cat.shops.all %}
+                                    <ul class="list-group list-group-flush mt-2 rounded" style="border: 1px solid #334155;">
+                                        {% for shop in cat.shops.all %}
+                                            <li class="list-group-item d-flex justify-content-between align-items-center" style="background-color: #1e293b; border-color: #334155;">
+                                                <div>
+                                                    <span class="text-white"><i class="fas fa-shopping-bag text-info me-2"></i>{{ shop.name }}</span>
+                                                    <span class="badge bg-secondary ms-2" title="Keywords Uploaded"><i class="fas fa-key me-1"></i>{{ shop.data.count }}</span>
+                                                </div>
+                                                <div class="d-flex gap-2">
+                                                    <button class="btn btn-sm btn-outline-info edit-shop-btn"
+                                                        data-shop-id="{{ shop.id }}" data-shop-name="{{ shop.name }}" data-shop-cat="{{ cat.id }}" data-count="{{ shop.data.count }}"
+                                                        data-bs-toggle="modal" data-bs-target="#editShopModal" data-bs-dismiss="modal" title="Edit Shop">
+                                                        <i class="fas fa-pencil-alt"></i>
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger delete-shop-btn"
+                                                        data-shop-id="{{ shop.id }}" data-shop-name="{{ shop.name }}"
+                                                        data-bs-toggle="modal" data-bs-target="#deleteShopModal" data-bs-dismiss="modal" title="Delete Shop">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </div>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <div class="text-muted small mt-2 ms-4">No shops in this category.</div>
+                                {% endif %}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="text-center p-5 text-muted">
+                        <i class="fas fa-folder-open mb-3" style="font-size: 3rem; opacity: 0.5;"></i>
+                        <h5>No Data Available</h5>
+                        <p>You haven't added any categories or shops yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Category Modal -->
+<div class="modal fade" id="editCategoryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark-custom border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-white"><i class="fas fa-pencil-alt text-warning me-2"></i>Edit Category</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editCategoryForm" method="POST">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <label class="text-muted small fw-bold">Category Name</label>
+                    <input type="text" name="category_name" id="editCatNameInput" class="form-control filter-input mt-2" required>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-orange"><i class="fas fa-save me-1"></i>Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Category Modal -->
+<div class="modal fade" id="deleteCategoryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark-custom border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-white text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Delete Category</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="deleteCategoryForm" method="POST">
+                {% csrf_token %}
+                <div class="modal-body text-center py-3">
+                    <i class="fas fa-folder text-warning" style="font-size: 3rem;"></i>
+                    <p class="text-white mt-3 mb-1">Are you sure you want to delete category:</p>
+                    <h5 class="text-warning fw-bold" id="deleteCatNameDisplay"></h5>
+                    <small class="text-danger">⚠️ All shops inside this category will also be deleted!</small>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger"><i class="fas fa-trash me-1"></i>Yes, Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Shop Modal -->
+<div class="modal fade" id="editShopModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark-custom border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-white"><i class="fas fa-pencil-alt text-info me-2"></i>Edit Shop</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editShopForm" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <label class="text-muted small fw-bold">Move to Category</label>
+                    <select name="category_id" id="editShopCatSelect" class="form-control filter-input mt-1 mb-3" required>
+                        {% for cat in categories %}
+                            <option value="{{ cat.id }}">{{ cat.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <label class="text-muted small fw-bold">Shop Name</label>
+                    <input type="text" name="shop_name" id="editShopNameInput" class="form-control filter-input mt-1 mb-3" required>
+                    
+                    <label class="text-muted small fw-bold">Update Document (Optional)</label>
+                    <input type="file" name="file" class="form-control filter-input mt-1" accept=".csv, .xlsx">
+                    <small class="text-muted mt-2 d-block" id="editShopDataCount"><i class="fas fa-info-circle me-1"></i>Existing Keywords: 0</small>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-orange"><i class="fas fa-save me-1"></i>Update Shop</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Shop Modal -->
+<div class="modal fade" id="deleteShopModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark-custom border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-danger"><i class="fas fa-exclamation-triangle me-2"></i>Delete Shop</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="deleteShopForm" method="POST">
+                {% csrf_token %}
+                <div class="modal-body text-center py-3">
+                    <i class="fas fa-shopping-bag text-info" style="font-size: 3rem;"></i>
+                    <p class="text-white mt-3 mb-1">Are you sure you want to delete shop:</p>
+                    <h5 class="text-info fw-bold" id="deleteShopNameDisplay"></h5>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger"><i class="fas fa-trash me-1"></i>Yes, Delete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    // Edit Category: populate modal with category data
+    $(document).on('click', '.edit-cat-btn', function() {
+        let catId = $(this).data('cat-id');
+        let catName = $(this).data('cat-name');
+        $('#editCatNameInput').val(catName);
+        $('#editCategoryForm').attr('action', '/competitor_shops/category/' + catId + '/edit/');
+    });
+
+    // Delete Category: populate modal with category name
+    $(document).on('click', '.delete-cat-btn', function() {
+        let catId = $(this).data('cat-id');
+        let catName = $(this).data('cat-name');
+        $('#deleteCatNameDisplay').text(catName);
+        $('#deleteCategoryForm').attr('action', '/competitor_shops/category/' + catId + '/delete/');
+    });
+
+    // Edit Shop: populate modal with shop data
+    $(document).on('click', '.edit-shop-btn', function() {
+        let shopId = $(this).data('shop-id');
+        let shopName = $(this).data('shop-name');
+        let shopCat = $(this).data('shop-cat');
+        let dataCount = $(this).data('count') || '0';
+        $('#editShopNameInput').val(shopName);
+        $('#editShopCatSelect').val(shopCat);
+        $('#editShopDataCount').html('<i class="fas fa-info-circle me-1"></i>Existing Keywords: ' + dataCount);
+        $('#editShopForm').attr('action', '/competitor_shops/shop/' + shopId + '/edit/');
+    });
+
+    // Delete Shop: populate modal with shop name
+    $(document).on('click', '.delete-shop-btn', function() {
+        let shopId = $(this).data('shop-id');
+        let shopName = $(this).data('shop-name');
+        $('#deleteShopNameDisplay').text(shopName);
+        $('#deleteShopForm').attr('action', '/competitor_shops/shop/' + shopId + '/delete/');
+    });
+
+    {% if active_shop %}
+    // Rank Optimizer specific JS logic
+    let filterTimeout = null;
+    let allFilteredData = [];
+    let currentPage = 1;
+
+    function animateValue(id, start, end, duration) {
+        if (start === end) return;
+        var range = end - start;
+        var current = start;
+        var increment = end > start ? 1 : -1;
+        var stepTime = Math.abs(Math.floor(duration / range));
+        if (stepTime < 1) stepTime = 1;
+        var obj = document.getElementById(id);
+        var timer = setInterval(function() {
+            current += increment;
+            obj.innerHTML = current.toLocaleString();
+            if (current == end) {
+                clearInterval(timer);
+            }
+        }, stepTime);
+    }
+
+    // Golden Only preset
+    $('#btnGoldenOnly').click(function() {
+        $('.status-btn').removeClass('active');
+        $('[data-status="Golden"]').addClass('active');
+        triggerFilter();
+    });
+
+    // Event listeners for filters
+    $('.filter-input, #globalSearchInput').on('input change', function() {
+        clearTimeout(filterTimeout);
+        filterTimeout = setTimeout(triggerFilter, 400);
+    });
+
+    // Status Filter toggle
+    $('.status-btn').click(function() {
+        $('.status-btn').removeClass('active');
+        $(this).addClass('active');
+        triggerFilter();
+    });
+
+    // Pagination Listeners
+    $('#perPageSelect').change(function() {
+        currentPage = 1;
+        renderTablePage();
+    });
+
+    $('#btnPrev').click(function() {
+        if(currentPage > 1) {
+            currentPage--;
+            renderTablePage();
+        }
+    });
+
+    $('#btnNext').click(function() {
+        let perPage = parseInt($('#perPageSelect').val());
+        let totalPages = Math.ceil(allFilteredData.length / perPage);
+        if(currentPage < totalPages) {
+            currentPage++;
+            renderTablePage();
+        }
+    });
+
+    function triggerFilter() {
+        let minVol = $('#minVolInput').val();
+        let maxComp = $('#maxCompInput').val();
+        let greenLimit = $('#greenLimit').val();
+        let yellowLimit = $('#yellowLimit').val();
+        let include = $('#includeWords').val();
+        let exclude = $('#excludeWords').val();
+        let search = $('#globalSearchInput').val();
+        let status = $('.status-btn.active').data('status') || 'All';
+
+        $.ajax({
+            url: "{% url 'competitor_filter_ajax' %}",
+            type: 'GET',
+            data: {
+                min_volume: minVol,
+                max_competition: maxComp,
+                green_limit: greenLimit,
+                yellow_limit: yellowLimit,
+                include: include,
+                exclude: exclude,
+                search: search,
+                status: status
+            },
+            success: function(res) {
+                allFilteredData = res.data;
+                currentPage = 1;
+                
+                // Animate Stat numbers
+                animateValue("statTotal", parseInt($('#statTotal').text().replace(/,/g, '') || 0), res.total, 600);
+                animateValue("statGolden", parseInt($('#statGolden').text().replace(/,/g, '') || 0), res.golden_count, 600);
+                animateValue("statLow", parseInt($('#statLow').text().replace(/,/g, '') || 0), res.low_comp_count, 600);
+                $('#showingCount').text(`Showing ${res.total.toLocaleString()} keywords`);
+                
+                renderTablePage();
+            }
+        });
+    }
+
+    function renderTablePage() {
+        let tbody = $('#keywordTableBody');
+        tbody.empty();
+
+        if (allFilteredData.length === 0) {
+            tbody.append('<tr><td colspan="5" class="text-center py-5 text-muted"><i class="fas fa-search fa-3x opacity-50 mb-3 d-block"></i><p>No keywords match your filters.</p></td></tr>');
+            $('#pageInfo').text('0 of 0');
+            $('#pageCount').text('Page 1 / 1');
+            $('#btnPrev, #btnNext').prop('disabled', true);
+            return;
+        }
+
+        let perPage = parseInt($('#perPageSelect').val());
+        let totalItems = allFilteredData.length;
+        let totalPages = Math.ceil(totalItems / perPage);
+        
+        let startIdx = (currentPage - 1) * perPage;
+        let endIdx = Math.min(startIdx + perPage, totalItems);
+        
+        let pageData = allFilteredData.slice(startIdx, endIdx);
+
+        let html = '';
+        pageData.forEach(function(item) {
+            let dotClass = '';
+            if(item.color === 'green') dotClass = 'dot-green';
+            else if(item.color === 'yellow') dotClass = 'dot-yellow';
+            else dotClass = 'dot-red';
+
+            let badgeHtml = '';
+            if (item.status === 'Golden') badgeHtml = '<span class="badge badge-golden"><i class="fas fa-star me-1"></i> GOLDEN</span>';
+            else if (item.status === 'Good') badgeHtml = '<span class="badge badge-good">GOOD</span>';
+            else badgeHtml = '<span class="badge badge-hard">HARD</span>';
+
+            let favClass = item.is_favorite ? 'fas fa-star text-warning' : 'far fa-star text-muted';
+
+            html += `<tr>
+                <td class="ps-4 text-light" style="font-weight: 500;">
+                    <i class="${favClass} me-2 fav-btn" style="cursor: pointer; font-size: 1.2rem; vertical-align: middle; padding-bottom: 2px;" data-id="${item.id}" title="Click to Favorite"></i> 
+                    ${item.keyword}
+                </td>
+                <td>${item.volume.toLocaleString()}</td>
+                <td>${item.competition.toLocaleString()}</td>
+                <td><span class="dot ${dotClass}"></span></td>
+                <td>${badgeHtml}</td>
+            </tr>`;
+        });
+        
+        tbody.html(html);
+        
+        // Update pagination UI
+        $('#pageInfo').text(`${startIdx + 1}-${endIdx} of ${totalItems}`);
+        $('#pageCount').text(`Page ${currentPage} / ${totalPages}`);
+        
+        $('#btnPrev').prop('disabled', currentPage === 1).toggleClass('text-muted', currentPage === 1).toggleClass('text-white', currentPage !== 1);
+        $('#btnNext').prop('disabled', currentPage === totalPages).toggleClass('text-muted', currentPage === totalPages).toggleClass('text-white', currentPage !== totalPages);
+    }
+
+    // Toggle Favorite AJAX
+    $(document).on('click', '.fav-btn', function() {
+        let btn = $(this);
+        let id = btn.data('id');
+        
+        $.ajax({
+            url: "{% url 'competitor_toggle_favorite' %}",
+            type: "POST",
+            data: {
+                'id': id,
+                'csrfmiddlewaretoken': '{{ csrf_token }}'
+            },
+            success: function(data) {
+                if (data.status === 'success') {
+                    // Find the item in our local array to update state without full refresh
+                    let item = allFilteredData.find(i => i.id == id);
+                    if (data.is_favorite) {
+                        btn.removeClass('far text-muted').addClass('fas text-warning');
+                        if (item) item.is_favorite = true;
+                    } else {
+                        btn.removeClass('fas text-warning').addClass('far text-muted');
+                        if (item) item.is_favorite = false;
+                    }
+                } else {
+                    alert('Error updating favorite status.');
+                }
+            },
+            error: function() {
+                alert('Something went wrong.');
+            }
+        });
+    });
+
+    // Initial load
+    triggerFilter();
+    {% endif %}
+});
+</script>
+
+{% endblock %}

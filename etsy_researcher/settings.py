@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     'rank_optimizer.apps.RankOptimizerConfig',
     'pinterest_seo',
     'customer_detail.apps.CustomerDetailConfig',
+    'competitor_shop_analysis.apps.CompetitorShopAnalysisConfig',
 ]
 
 

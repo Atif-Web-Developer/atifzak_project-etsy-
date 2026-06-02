@@ -44,7 +44,7 @@
                             </td>
                             <td class="text-muted small"><i class="fas fa-file-csv me-1"></i> {{ item.search.term|truncatechars:30 }}</td>
                             <td class="text-end px-4">
-                                <a href="{% url 'dashboard' %}?load={{ item.search.id }}" class="btn btn-sm btn-pro-primary" title="Go to File">
+                                <a href="{% url 'rank_optimizer_dashboard' %}?load={{ item.search.id }}" class="btn btn-sm btn-pro-primary" title="Optimize Rank">
                                     <i class="fas fa-external-link-alt"></i>
                                 </a>
                             </td>

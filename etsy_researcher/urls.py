@@ -10,4 +10,5 @@ urlpatterns = [
     path('optimizer/', include('rank_optimizer.urls')),
     path('pinterest/', include('pinterest_seo.urls')),
     path('customers/', include('customer_detail.urls')),
+    path('competitor_shops/', include('competitor_shop_analysis.urls')),
 ]

@@ -179,6 +179,9 @@
                 <a href="{% url 'rank_optimizer_dashboard' %}" class="nav-link-pro {% if request.resolver_match.url_name == 'rank_optimizer_dashboard' %}active{% endif %}">
                     <i class="fas fa-rocket" style="color: #0ea5e9;"></i> Rank Optimizer
                 </a>
+                <a href="{% url 'competitor_shop_dashboard' %}" class="nav-link-pro {% if 'competitor_shop' in request.resolver_match.url_name %}active{% endif %}">
+                    <i class="fas fa-store-alt" style="color: #f59e0b;"></i> Competitor Shops
+                </a>
                 <a href="{% url 'view_history' %}" class="nav-link-pro {% if request.resolver_match.url_name == 'view_history' %}active{% endif %}">
                     <i class="fas fa-history"></i> File History
                 </a>
