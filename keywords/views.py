@@ -185,7 +185,7 @@ def export_csv(request):
         return HttpResponse("Search results not found", status=404)
     
     results = KeywordResult.objects.filter(search=search_obj).values(
-        'keyword', 'competition', 'demand_score', 'opportunity_score', 'category'
+        'keyword', 'avg_searches', 'avg_clicks', 'avg_ctr', 'competition', 'kd', 'opportunity_score', 'category'
     )
     
     df = pd.DataFrame(list(results))

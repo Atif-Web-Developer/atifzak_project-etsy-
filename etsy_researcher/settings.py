@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'pinterest_seo',
     'customer_detail.apps.CustomerDetailConfig',
     'competitor_shop_analysis.apps.CompetitorShopAnalysisConfig',
+    'forecaster.apps.ForecasterConfig',
 ]
 
 

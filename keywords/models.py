@@ -1,10 +1,19 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 class User(AbstractUser):
     """Custom user model for future scaling (e.g., Premium features)."""
     is_premium = models.BooleanField(default=False)
     is_approved = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        # Superuser is always auto-approved and staff
+        if self.is_superuser:
+            self.is_approved = True
+            self.is_staff = True
+        super().save(*args, **kwargs)
 
 class KeywordSearch(models.Model):
     """Stores the main search term, linked to the user, and when it was last updated."""

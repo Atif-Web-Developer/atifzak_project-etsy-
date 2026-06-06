@@ -1,0 +1,601 @@
+{% extends 'keywords/base.html' %}
+{% load static %}
+
+{% block title %}Trend Forecaster | Atif-Zak Analytics{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 text-light" style="background-color: #0f172a; min-height: 100vh;">
+    <!-- Header -->
+    <div class="row align-items-center mb-4 g-3">
+        <div class="col-md-8">
+            <h2 class="text-white mb-1 fw-bold"><i class="fas fa-calendar-alt text-info me-2"></i> Trend Forecaster</h2>
+            <p class="text-muted mb-0">Global E-Commerce Trend Forecasting, Production Calendars & Production Roadmap</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <button class="btn btn-info text-dark fw-bold px-4 py-2" data-bs-toggle="modal" data-bs-target="#addEventModal" style="border-radius: 10px; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);">
+                <i class="fas fa-plus me-2"></i> Add Custom Event
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 h-100 shadow-sm" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-left: 4px solid #ef4444 !important; border-radius: 12px;">
+                <div class="card-body py-4">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <h6 class="text-danger text-uppercase tracking-wider fw-bold mb-1" style="font-size: 0.75rem;">Critical Deadlines</h6>
+                            <h3 class="mb-0 fw-bold text-white fs-2">{{ critical_count }}</h3>
+                            <p class="text-muted small mt-2 mb-0">Action required within 30 days</p>
+                        </div>
+                        <div class="bg-danger bg-opacity-10 text-danger rounded-3 p-3">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 h-100 shadow-sm" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-left: 4px solid #38bdf8 !important; border-radius: 12px;">
+                <div class="card-body py-4">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <h6 class="text-info text-uppercase tracking-wider fw-bold mb-1" style="font-size: 0.75rem;">Sourcing Window Open</h6>
+                            <h3 class="mb-0 fw-bold text-white fs-2">{{ upcoming_sourcing_count }}</h3>
+                            <p class="text-muted small mt-2 mb-0">Active sourcing (next 60 days)</p>
+                        </div>
+                        <div class="bg-info bg-opacity-10 text-info rounded-3 p-3">
+                            <i class="fas fa-ship fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 h-100 shadow-sm" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-left: 4px solid #10b981 !important; border-radius: 12px;">
+                <div class="card-body py-4">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <h6 class="text-success text-uppercase tracking-wider fw-bold mb-1" style="font-size: 0.75rem;">Completed Goals</h6>
+                            <h3 class="mb-0 fw-bold text-white fs-2">{{ completed_count }} / {{ total_active_count }}</h3>
+                            <p class="text-muted small mt-2 mb-0">Campaign checklists finalized</p>
+                        </div>
+                        <div class="bg-success bg-opacity-10 text-success rounded-3 p-3">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 h-100 shadow-sm" style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-left: 4px solid #8b5cf6 !important; border-radius: 12px;">
+                <div class="card-body py-4">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <h6 class="text-purple text-uppercase tracking-wider fw-bold mb-1" style="font-size: 0.75rem; color: #a78bfa;">Total Campaigns</h6>
+                            <h3 class="mb-0 fw-bold text-white fs-2">{{ total_active_count }}</h3>
+                            <p class="text-muted small mt-2 mb-0">System & Custom Events combined</p>
+                        </div>
+                        <div class="bg-purple bg-opacity-10 rounded-3 p-3" style="color: #a78bfa; background-color: rgba(139, 92, 246, 0.1);">
+                            <i class="fas fa-globe-americas fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters & Action Plan Side-by-Side -->
+    <div class="row g-4 mb-5">
+        <!-- Search & Filter Controls -->
+        <div class="col-lg-4">
+            <div class="card border-secondary h-100 text-white shadow-sm" style="background: #1e293b; border-radius: 12px;">
+                <div class="card-header border-secondary bg-transparent py-3">
+                    <h5 class="mb-0 fw-bold text-white"><i class="fas fa-sliders-h text-info me-2"></i> Filter Intelligence</h5>
+                </div>
+                <div class="card-body">
+                    <form method="GET" action="" id="filterForm">
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold">Search Keywords / Events</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark border-secondary text-muted"><i class="fas fa-search"></i></span>
+                                <input type="text" name="q" value="{{ query }}" class="form-control bg-dark border-secondary text-white" placeholder="Search title or keywords...">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-muted small fw-bold">Target Region</label>
+                            <select name="region" class="form-select bg-dark border-secondary text-white">
+                                <option value="">All Regions</option>
+                                <option value="US" {% if region_filter == 'US' %}selected{% endif %}>United States (US)</option>
+                                <option value="UK" {% if region_filter == 'UK' %}selected{% endif %}>United Kingdom (UK)</option>
+                                <option value="EU" {% if region_filter == 'EU' %}selected{% endif %}>European Union (EU)</option>
+                                <option value="CA" {% if region_filter == 'CA' %}selected{% endif %}>Canada (CA)</option>
+                                <option value="Global" {% if region_filter == 'Global' %}selected{% endif %}>Global Markets</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label text-muted small fw-bold">Sort By</label>
+                            <select name="sort" class="form-select bg-dark border-secondary text-white">
+                                <option value="target_date" {% if sort_by == 'target_date' %}selected{% endif %}>Event Date (Ascending)</option>
+                                <option value="-target_date" {% if sort_by == '-target_date' %}selected{% endif %}>Event Date (Descending)</option>
+                                <option value="sourcing_deadline" {% if sort_by == 'sourcing_deadline' %}selected{% endif %}>Sourcing Deadline</option>
+                                <option value="design_deadline" {% if sort_by == 'design_deadline' %}selected{% endif %}>Design Deadline</option>
+                            </select>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-info text-dark fw-bold"><i class="fas fa-filter me-2"></i> Apply Filters</button>
+                            <a href="{% url 'forecaster_dashboard' %}" class="btn btn-outline-secondary text-white"><i class="fas fa-undo me-2"></i> Reset</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Priority Actions Calendar -->
+        <div class="col-lg-8">
+            <div class="card border-secondary h-100 text-white shadow-sm" style="background: #1e293b; border-radius: 12px;">
+                <div class="card-header border-secondary bg-transparent py-3">
+                    <h5 class="mb-0 fw-bold text-white"><i class="fas fa-hourglass-half text-warning me-2"></i> High Priority Task Roadmap</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush" style="border-radius: 12px;">
+                        {% for action in priority_actions %}
+                        <div class="list-group-item bg-transparent text-white border-secondary d-flex align-items-center justify-content-between p-3" style="transition: background 0.2s;">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-opacity-10 text-white rounded-circle p-2 me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background-color: rgba(56, 189, 248, 0.1);">
+                                    <i class="fas fa-clipboard-check text-info"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 fw-bold text-white">{{ action.action_text }}</h6>
+                                    <p class="mb-0 small text-muted"><i class="far fa-calendar-alt me-1"></i> Deadlines: {{ action.deadline_text }}</p>
+                                </div>
+                            </div>
+                            <span class="badge {{ action.badge_class }} rounded-pill px-3 py-2 fw-bold">{{ action.urgency }}</span>
+                        </div>
+                        {% empty %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="fas fa-check-double fa-3x mb-3 text-success"></i>
+                            <p class="mb-0">All events are fully structured or complete!</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forecasted Events List -->
+    <h3 class="text-white mb-4"><i class="fas fa-calendar-week text-info me-2"></i> Active Trend Campaigns</h3>
+    
+    <div class="row g-4">
+        {% for event in events %}
+        <div class="col-xl-6 col-xxl-4">
+            <div class="card border-0 h-100 shadow-sm event-card" style="background: #1e293b; transition: transform 0.2s, border-color 0.2s; border: 1px solid #334155 !important; border-radius: 12px;">
+                <div class="card-header border-secondary bg-transparent d-flex justify-content-between align-items-center py-3">
+                    <div>
+                        <h5 class="mb-0 fw-bold text-white d-flex align-items-center">
+                            {{ event.title }}
+                            {% if event.is_critical %}
+                            <span class="badge bg-danger ms-2" style="font-size: 0.65rem;"><i class="fas fa-fire"></i> Critical</span>
+                            {% endif %}
+                        </h5>
+                        <small class="text-muted">Target: <strong class="text-white">{{ event.target_date_label }}</strong></small>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-secondary text-white px-2 py-1" style="font-size: 0.75rem;"><i class="fas fa-globe-americas me-1"></i> {{ event.regions }}</span>
+                        {% if not event.is_system_default %}
+                        <button class="btn btn-sm btn-outline-danger border-0 text-danger p-1" onclick="deleteEvent({{ event.id }}, '{{ event.title }}')" title="Delete Custom Event">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <!-- Progress Bar -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small class="text-muted fw-bold">Roadmap Completion</small>
+                            <small class="text-info fw-bold" id="progress-text-{{ event.id }}">{{ event.progress_percentage }}%</small>
+                        </div>
+                        <div class="progress bg-dark" style="height: 8px; border-radius: 4px;">
+                            <div class="progress-bar bg-info progress-bar-striped progress-bar-animated" role="progressbar" id="progress-bar-{{ event.id }}" style="width: {{ event.progress_percentage }}%;" aria-valuenow="{{ event.progress_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+
+                    <!-- Deadlines -->
+                    <div class="row g-2 mb-4 bg-dark bg-opacity-50 p-3 rounded-3 border border-secondary border-opacity-50">
+                        <div class="col-6 border-end border-secondary border-opacity-50">
+                            <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Sourcing Deadline</small>
+                            <span class="fw-bold {% if event.days_to_sourcing <= 15 and event.progress_percentage < 100 %}text-danger{% else %}text-white{% endif %}" style="font-size: 0.85rem;">
+                                <i class="fas fa-ship me-1"></i> {{ event.sourcing_deadline|date:"M d, Y" }}
+                            </span>
+                            <small class="d-block text-muted" style="font-size: 0.7rem;">
+                                {% if event.days_to_sourcing < 0 %}
+                                Overdue by {{ event.days_to_sourcing_abs }} days
+                                {% elif event.days_to_sourcing == 0 %}
+                                Due Today!
+                                {% else %}
+                                {{ event.days_to_sourcing }} days left
+                                {% endif %}
+                            </small>
+                        </div>
+                        <div class="col-6 ps-3">
+                            <small class="text-muted d-block text-uppercase fw-bold" style="font-size: 0.65rem;">Design/SEO Deadline</small>
+                            <span class="fw-bold {% if event.days_to_design <= 30 and event.progress_percentage < 100 %}text-warning{% else %}text-white{% endif %}" style="font-size: 0.85rem;">
+                                <i class="fas fa-palette me-1"></i> {{ event.design_deadline|date:"M d, Y" }}
+                            </span>
+                            <small class="d-block text-muted" style="font-size: 0.7rem;">
+                                {% if event.days_to_design < 0 %}
+                                Overdue by {{ event.days_to_design_abs }} days
+                                {% elif event.days_to_design == 0 %}
+                                Due Today!
+                                {% else %}
+                                {{ event.days_to_design }} days left
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Tabs/Collapsible subsections -->
+                    <div class="mb-4">
+                        <h6 class="text-warning fw-bold mb-2"><i class="fas fa-fire-alt me-1"></i> Sourcing Niche Categories</h6>
+                        <div class="d-flex flex-wrap gap-1 mb-3">
+                            {% for cat in event.categories_list %}
+                            <span class="badge bg-secondary bg-opacity-30 border border-secondary text-light fw-normal py-1 px-2" style="font-size: 0.75rem;">{{ cat }}</span>
+                            {% endfor %}
+                        </div>
+
+                        <h6 class="text-info fw-bold mb-2 d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-hashtag me-1"></i> High-Intent SEO Keywords</span>
+                            <small class="text-muted text-lowercase" style="font-size: 0.65rem;">Click to copy</small>
+                        </h6>
+                        <div class="d-flex flex-wrap gap-1 mb-3">
+                            {% for kw in event.keywords_list %}
+                            <span class="badge bg-dark text-info border border-info border-opacity-50 fw-normal py-1 px-2 keyword-badge" style="font-size: 0.75rem; cursor: pointer; transition: background 0.2s;" onclick="copyKeyword(this, '{{ kw }}')">
+                                <i class="far fa-copy me-1"></i> {{ kw }}
+                            </span>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Collapsible Vibe & Buyer profile -->
+                        <div class="collapse" id="details-{{ event.id }}">
+                            <hr class="border-secondary my-3">
+                            
+                            <h6 class="text-white fw-bold mb-1"><i class="fas fa-paint-brush me-1 text-light"></i> Aesthetic Guidelines</h6>
+                            <p class="small text-muted mb-3">{{ event.aesthetic_vibe }}</p>
+
+                            {% if event.target_buyer_profile %}
+                            <h6 class="text-white fw-bold mb-1"><i class="fas fa-user-friends me-1 text-light"></i> Target Buyer Profile</h6>
+                            <p class="small text-muted mb-0">{{ event.target_buyer_profile }}</p>
+                            {% endif %}
+                        </div>
+
+                        <div class="text-center mt-2">
+                            <button class="btn btn-sm btn-link text-info p-0 text-decoration-none" type="button" data-bs-toggle="collapse" data-bs-target="#details-{{ event.id }}" aria-expanded="false" aria-controls="details-{{ event.id }}" onclick="toggleChevron(this)">
+                                View Details & Vibe <i class="fas fa-chevron-down ms-1"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Checklist -->
+                    <hr class="border-secondary">
+                    <h6 class="text-white fw-bold mb-2"><i class="fas fa-tasks text-success me-1"></i> Production Checklists</h6>
+                    <div class="list-group list-group-flush bg-transparent">
+                        {% for task in event.tasks_list %}
+                        <label class="list-group-item bg-transparent text-white-50 border-0 p-1 d-flex align-items-center cursor-pointer" style="cursor: pointer;">
+                            <input class="form-check-input bg-dark border-secondary me-2 task-checkbox" type="checkbox" data-event-id="{{ event.id }}" data-task-name="{{ task.task_name }}" {% if task.is_completed %}checked{% endif %} style="width: 1.1rem; height: 1.1rem;">
+                            <span class="small {% if task.is_completed %}text-decoration-line-through text-muted{% endif %}">{{ task.task_name }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <div class="bg-dark p-5 rounded-4 d-inline-block text-center border border-secondary">
+                <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
+                <h4 class="text-white fw-bold">No Forecasted Campaigns Found</h4>
+                <p class="text-muted">Adjust your filters or add a custom campaign using the button above.</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Add Event Modal -->
+<div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content text-white border-secondary" style="background-color: #1e293b; border-radius: 12px;">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title fw-bold text-white" id="addEventModalLabel"><i class="fas fa-calendar-plus text-info me-2"></i> Add Custom Trend Campaign</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addEventForm">
+                    {% csrf_token %}
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">Campaign / Event Name</label>
+                            <input type="text" name="title" class="form-control bg-dark border-secondary text-white" required placeholder="e.g. Autumn Equinox, Graduation Season">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">Region Coverage</label>
+                            <input type="text" name="regions" class="form-control bg-dark border-secondary text-white" placeholder="e.g. US/UK/EU, Global" default="Global">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">Target Date Label (Text)</label>
+                            <input type="text" name="target_date_label" class="form-control bg-dark border-secondary text-white" required placeholder="e.g. Late Sept, Nov 15">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">Target Date Picker</label>
+                            <input type="date" name="target_date" class="form-control bg-dark border-secondary text-white" required>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">Sourcing Deadline</label>
+                            <input type="date" name="sourcing_deadline" class="form-control bg-dark border-secondary text-white" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small fw-bold">Design/SEO Deadline</label>
+                            <input type="date" name="design_deadline" class="form-control bg-dark border-secondary text-white" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Target Buyer Profile</label>
+                        <textarea name="target_buyer_profile" rows="2" class="form-control bg-dark border-secondary text-white" placeholder="Describe the ideal customer buyer profile..."></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Trending Physical Categories (Comma-separated)</label>
+                        <input type="text" name="trending_categories" class="form-control bg-dark border-secondary text-white" required placeholder="e.g. Embroidered sweaters, Custom wooden signs, Acrylic keychains">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">SEO Keyword Strategy (Comma-separated)</label>
+                        <input type="text" name="seo_keywords" class="form-control bg-dark border-secondary text-white" required placeholder="e.g. cozy knitwear, wedding decoration, personalized gifts">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Aesthetic Guidelines & Color Vibe</label>
+                        <textarea name="aesthetic_vibe" rows="2" class="form-control bg-dark border-secondary text-white" required placeholder="Describe theme, mood, texture, and color palettes..."></textarea>
+                    </div>
+
+                    <div class="text-end pt-2">
+                        <button type="button" class="btn btn-outline-secondary text-white me-2" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-info text-dark fw-bold px-4">Create Campaign</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Copy Keyword Utility
+    function copyKeyword(badge, keyword) {
+        navigator.clipboard.writeText(keyword).then(() => {
+            const originalHTML = badge.innerHTML;
+            badge.classList.remove('text-info', 'border-info');
+            badge.classList.add('text-success', 'border-success');
+            badge.innerHTML = '<i class="fas fa-check me-1"></i> Copied!';
+            
+            setTimeout(() => {
+                badge.classList.remove('text-success', 'border-success');
+                badge.classList.add('text-info', 'border-info');
+                badge.innerHTML = originalHTML;
+            }, 1500);
+        }).catch(err => {
+            console.error('Failed to copy keyword: ', err);
+        });
+    }
+
+    // Toggle chevron helper
+    function toggleChevron(btn) {
+        const icon = btn.querySelector('i');
+        if (icon.classList.contains('fa-chevron-down')) {
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-up');
+            btn.innerHTML = 'Hide Details <i class="fas fa-chevron-up ms-1"></i>';
+        } else {
+            icon.classList.remove('fa-chevron-up');
+            icon.classList.add('fa-chevron-down');
+            btn.innerHTML = 'View Details & Vibe <i class="fas fa-chevron-down ms-1"></i>';
+        }
+    }
+
+    // Checkbox toggling AJAX
+    document.querySelectorAll('.task-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const eventId = this.getAttribute('data-event-id');
+            const taskName = this.getAttribute('data-task-name');
+            const labelText = this.nextElementSibling;
+            
+            // Toggle strike-through class
+            if (this.checked) {
+                labelText.classList.add('text-decoration-line-through', 'text-muted');
+            } else {
+                labelText.classList.remove('text-decoration-line-through', 'text-muted');
+            }
+
+            // Post action
+            fetch('{% url "forecaster_toggle_task" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    event_id: eventId,
+                    task_name: taskName
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update progress bar & percentage text
+                    const progressBar = document.getElementById(`progress-bar-${eventId}`);
+                    const progressText = document.getElementById(`progress-text-${eventId}`);
+                    
+                    progressBar.style.width = `${data.progress_percentage}%`;
+                    progressBar.setAttribute('aria-valuenow', data.progress_percentage);
+                    progressText.innerText = `${data.progress_percentage}%`;
+
+                    // Quick micro-interaction color feedback on text
+                    progressText.classList.add('text-success');
+                    setTimeout(() => {
+                        progressText.classList.remove('text-success');
+                    }, 1000);
+                } else {
+                    // Revert state on error
+                    this.checked = !this.checked;
+                    if (this.checked) {
+                        labelText.classList.add('text-decoration-line-through', 'text-muted');
+                    } else {
+                        labelText.classList.remove('text-decoration-line-through', 'text-muted');
+                    }
+                    Swal.fire('Error', 'Could not update task progress: ' + data.error, 'error');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                this.checked = !this.checked;
+                labelText.classList.toggle('text-decoration-line-through');
+                labelText.classList.toggle('text-muted');
+                Swal.fire('Error', 'Communication with the server failed.', 'error');
+            });
+        });
+    });
+
+    // Add custom event form AJAX submission
+    document.getElementById('addEventForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        
+        fetch('{% url "forecaster_add_event" %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    title: 'Success!',
+                    text: 'Custom campaign added successfully.',
+                    icon: 'success',
+                    confirmButtonColor: '#38bdf8'
+                }).then(() => {
+                    location.reload();
+                });
+            } else {
+                Swal.fire('Error', 'Could not create campaign: ' + data.error, 'error');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            Swal.fire('Error', 'Failed to submit form.', 'error');
+        });
+    });
+
+    // Delete custom event AJAX
+    function deleteEvent(eventId, title) {
+        Swal.fire({
+            title: 'Delete Campaign?',
+            text: `Are you sure you want to delete the custom campaign "${title}"? This cannot be undone.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#475569',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/forecaster/delete-event/${eventId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            title: 'Deleted!',
+                            text: 'Your campaign has been deleted.',
+                            icon: 'success',
+                            confirmButtonColor: '#38bdf8'
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire('Error', 'Could not delete: ' + data.error, 'error');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    Swal.fire('Error', 'Communication with the server failed.', 'error');
+                });
+            }
+        });
+    }
+</script>
+
+<style>
+    .event-card:hover {
+        transform: translateY(-4px);
+        border-color: #38bdf8 !important;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4) !important;
+    }
+    .keyword-badge:hover {
+        background-color: #0c4a6e !important;
+        color: #38bdf8 !important;
+    }
+    .tracking-wider {
+        letter-spacing: 0.05em;
+    }
+    .bg-purple {
+        background-color: rgba(139, 92, 246, 0.1);
+    }
+    .text-purple {
+        color: #a78bfa;
+    }
+    .form-label {
+        color: #e2e8f0 !important;
+        font-size: 0.85rem;
+        margin-bottom: 0.4rem;
+    }
+    .form-control, .form-select {
+        background-color: #0f172a !important;
+        border: 1px solid #475569 !important;
+        color: #ffffff !important;
+    }
+    .form-control::placeholder {
+        color: #64748b !important;
+        opacity: 1;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #38bdf8 !important;
+        background-color: #0f172a !important;
+        color: #ffffff !important;
+        box-shadow: 0 0 0 0.25rem rgba(56, 189, 248, 0.25) !important;
+    }
+    .modal-content {
+        background-color: #1e293b !important;
+        border: 1px solid #475569 !important;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.5) !important;
+    }
+</style>
+{% endblock %}

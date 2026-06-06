@@ -45,12 +45,16 @@
                                         <i class="fas fa-eye"></i>
                                     </a>
                                 {% endif %}
-                                <a href="{% url 'export' %}?term={{ search.term }}" class="btn btn-sm btn-outline-dark" title="Export CSV">
+                                <a href="{% url 'export' %}?term={{ search.term|urlencode }}" class="btn btn-sm btn-outline-dark" title="Export CSV" download>
                                     <i class="fas fa-download"></i>
                                 </a>
-                                <a href="{% url 'delete_history' search.id %}" class="btn btn-sm btn-outline-danger ms-2" onclick="return confirm('Are you sure you want to completely delete this file and all its keywords?');" title="Delete File">
+                                <button
+                                    class="btn btn-sm btn-outline-danger ms-1"
+                                    title="Delete File"
+                                    onclick="openDeleteModal('{{ search.id }}', '{{ search.term|escapejs }}')"
+                                >
                                     <i class="fas fa-trash-alt"></i>
-                                </a>
+                                </button>
                             </td>
                         </tr>
                         {% empty %}
@@ -68,4 +72,69 @@
         </div>
     </div>
 </div>
+
+<!-- ===== DELETE CONFIRMATION MODAL ===== -->
+<div class="modal fade" id="deleteHistoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 420px;">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; background: #1a1f2e;">
+            <div class="modal-body text-center p-4">
+                <!-- Icon -->
+                <div class="mb-3">
+                    <div style="width:64px;height:64px;background:rgba(220,53,69,0.15);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto;">
+                        <i class="fas fa-trash-alt" style="font-size:28px;color:#ef4444;"></i>
+                    </div>
+                </div>
+                <!-- Title -->
+                <h5 class="fw-bold text-white mb-2">Delete History Entry</h5>
+                <p class="text-secondary mb-1" style="font-size:0.9rem;">Are you sure you want to delete:</p>
+                <p class="fw-semibold mb-4" style="color:#60a5fa;font-size:0.95rem;" id="deleteHistoryTermLabel">-</p>
+                <p class="text-secondary mb-4" style="font-size:0.82rem;">This will permanently remove the entry and <strong class="text-warning">all its keywords</strong>. This action cannot be undone.</p>
+
+                <!-- Buttons -->
+                <div class="d-flex gap-3 justify-content-center">
+                    <button type="button" class="btn px-4 py-2 fw-semibold" onclick="closeDeleteModal()"
+                        style="background:#2d3548;color:#adb5bd;border-radius:10px;border:none;">
+                        Cancel
+                    </button>
+                    <a id="deleteHistoryConfirmBtn" href="#"
+                        class="btn px-4 py-2 fw-semibold text-white"
+                        style="background:linear-gradient(135deg,#dc3545,#b02a37);border-radius:10px;border:none;">
+                        <i class="fas fa-trash-alt me-2"></i>Yes, Delete
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-backdrop fade" id="deleteBackdrop" style="display:none;"></div>
+
+<script>
+function openDeleteModal(searchId, termName) {
+    document.getElementById('deleteHistoryTermLabel').textContent = termName;
+    document.getElementById('deleteHistoryConfirmBtn').href = "/history/delete/" + searchId + "/";
+
+    const modal = document.getElementById('deleteHistoryModal');
+    const backdrop = document.getElementById('deleteBackdrop');
+
+    modal.classList.add('show');
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    backdrop.style.display = 'block';
+    backdrop.classList.add('show');
+    document.body.classList.add('modal-open');
+}
+
+function closeDeleteModal() {
+    const modal = document.getElementById('deleteHistoryModal');
+    const backdrop = document.getElementById('deleteBackdrop');
+
+    modal.classList.remove('show');
+    modal.style.display = 'none';
+    backdrop.classList.remove('show');
+    backdrop.style.display = 'none';
+    document.body.classList.remove('modal-open');
+}
+</script>
+
 {% endblock %}
