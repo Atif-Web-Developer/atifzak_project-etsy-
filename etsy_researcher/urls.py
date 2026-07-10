@@ -12,4 +12,5 @@ urlpatterns = [
     path('customers/', include('customer_detail.urls')),
     path('competitor_shops/', include('competitor_shop_analysis.urls')),
     path('forecaster/', include('forecaster.urls')),
+    path('suppliers/', include('supplier_management.urls')),
 ]

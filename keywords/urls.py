@@ -5,8 +5,6 @@ from . import views
 urlpatterns = [
     path('', views.overview_dashboard, name='overview'),
     path('analyzer/', views.dashboard_view, name='dashboard'),
-    path('signup/', views.signup_view, name='signup'),
-    path('pending/', views.pending_approval_view, name='pending_approval'),
     path('login/', auth_views.LoginView.as_view(template_name='keywords/login.html'), name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('analyze/', views.analyze_keyword, name='analyze'),

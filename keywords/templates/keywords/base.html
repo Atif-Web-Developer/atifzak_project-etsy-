@@ -206,6 +206,9 @@
                 <a href="{% url 'forecaster_dashboard' %}" class="nav-link-pro {% if request.resolver_match.url_name == 'forecaster_dashboard' %}active{% endif %}">
                     <i class="fas fa-calendar-alt" style="color: #38bdf8;"></i> Trend Forecaster
                 </a>
+                <a href="{% url 'supplier_management:supplier_list' %}" class="nav-link-pro {% if request.resolver_match.app_name == 'supplier_management' %}active{% endif %}">
+                    <i class="fas fa-truck" style="color: #f97316;"></i> Supplier Hub
+                </a>
                 <a href="#" class="nav-link-pro"><i class="fas fa-shield-alt"></i> Upgrade</a>
                 <div style="margin-top: auto; padding: 2rem 1.5rem;">
                     <hr class="opacity-10">

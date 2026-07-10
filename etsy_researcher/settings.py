@@ -1,5 +1,10 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables from .env (project root)
+load_dotenv()
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -24,10 +29,12 @@ INSTALLED_APPS = [
     'rank_optimizer.apps.RankOptimizerConfig',
     'pinterest_seo',
     'customer_detail.apps.CustomerDetailConfig',
-    'competitor_shop_analysis.apps.CompetitorShopAnalysisConfig',
     'forecaster.apps.ForecasterConfig',
-]
 
+    'django_extensions',
+    'competitor_shop_analysis.apps.CompetitorShopAnalysisConfig',
+    'supplier_management.apps.SupplierManagementConfig',
+]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -36,7 +43,6 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'keywords.middleware.ApprovedUserMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -96,3 +102,8 @@ LOGIN_URL = 'login'
 DATA_UPLOAD_MAX_MEMORY_SIZE = 20971520  # 20MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 20971520  # 20MB
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
+
+
+
+
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')

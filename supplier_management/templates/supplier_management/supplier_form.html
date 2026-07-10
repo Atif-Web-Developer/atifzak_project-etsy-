@@ -1,0 +1,147 @@
+{% extends 'keywords/base.html' %}
+
+{% block title %}{{ title }} — Atif-Zak Analytics{% endblock %}
+
+{% block content %}
+<style>
+    .supplier-form-card {
+        background: #fff; border-radius: 16px; border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden;
+    }
+    .supplier-form-header {
+        padding: 1rem 1.5rem; border-bottom: 1px solid #f1f5f9;
+        background: #fafbfc; display: flex; align-items: center; gap: 8px;
+        font-weight: 700; font-size: 0.95rem; color: #1e293b;
+    }
+    .supplier-form-header i { color: #10b981; }
+    .field-label {
+        font-weight: 600; font-size: 0.87rem; color: #1e293b; margin-bottom: 6px;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .field-label i { color: #10b981; font-size: .85rem; }
+    .form-control, .form-select {
+        border-radius: 10px; border: 1.5px solid #e2e8f0; padding: 0.6rem 0.9rem;
+        font-size: 0.9rem; transition: all 0.2s;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15);
+    }
+</style>
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="fw-bold mb-1" style="font-family:'Outfit',sans-serif;">
+            <i class="fas fa-{% if supplier %}pen{% else %}plus-circle{% endif %} me-2" style="color:#10b981;"></i>{{ title }}
+        </h4>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0" style="font-size:.82rem;">
+                <li class="breadcrumb-item"><a href="{% url 'supplier_management:supplier_list' %}" style="color:#10b981;text-decoration:none;">Suppliers</a></li>
+                <li class="breadcrumb-item active text-muted">{{ title }}</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-7 col-md-9">
+        <div class="supplier-form-card">
+            <div class="supplier-form-header">
+                <i class="fas fa-{% if supplier %}pen{% else %}plus-circle{% endif %}"></i>
+                {{ title }}
+            </div>
+            <div class="p-4">
+                <form method="post" id="supplier-form" novalidate>
+                    {% csrf_token %}
+
+                    <div class="mb-4">
+                        <label for="id_name" class="field-label"><i class="fas fa-building"></i> Supplier Name</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}<div class="text-danger mt-1" style="font-size:.82rem;">{{ form.name.errors.as_text }}</div>{% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_link" class="field-label"><i class="fas fa-link"></i> Supplier Website / Link</label>
+                        {{ form.link }}
+                        {% if form.link.errors %}<div class="text-danger mt-1" style="font-size:.82rem;">{{ form.link.errors.as_text }}</div>{% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_category" class="field-label"><i class="fas fa-tag"></i> Category</label>
+                        {{ form.category }}
+                        {% if form.category.errors %}<div class="text-danger mt-1" style="font-size:.82rem;">{{ form.category.errors.as_text }}</div>{% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_country" class="field-label"><i class="fas fa-globe"></i> Country</label>
+                        {{ form.country }}
+                        {% if form.country.errors %}<div class="text-danger mt-1" style="font-size:.82rem;">{{ form.country.errors.as_text }}</div>{% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_state" class="field-label"><i class="fas fa-map-marker-alt"></i> State / Province</label>
+                        <div class="position-relative">
+                            {{ form.state }}
+                            <div id="state-loading" class="d-none position-absolute top-50 end-0 translate-middle-y me-3">
+                                <div class="spinner-border spinner-border-sm" style="color:#10b981;" role="status"></div>
+                            </div>
+                        </div>
+                        <div id="state-hint" class="mt-1" style="font-size:.8rem;color:#94a3b8;">
+                            <i class="fas fa-info-circle me-1"></i>Select a country first to load states.
+                        </div>
+                        {% if form.state.errors %}<div class="text-danger mt-1" style="font-size:.82rem;">{{ form.state.errors.as_text }}</div>{% endif %}
+                    </div>
+
+                    <hr style="border-color:#f1f5f9;margin:1.5rem 0;">
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn-pro-primary" id="submit-btn">
+                            <i class="fas fa-check me-1"></i> {{ btn_label }}
+                        </button>
+                        <a href="{% url 'supplier_management:supplier_list' %}" class="btn btn-outline-secondary" style="border-radius:10px;font-weight:600;padding:.6rem 1.2rem;">
+                            <i class="fas fa-times me-1"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const countrySelect = document.getElementById('id_country');
+    const stateSelect   = document.getElementById('id_state');
+    const stateLoading  = document.getElementById('state-loading');
+    const stateHint     = document.getElementById('state-hint');
+    const preSelectedStateId = "{{ supplier.state_id|default:'' }}";
+
+    function loadStates(countryId, selectStateId = null) {
+        stateSelect.innerHTML = '<option value="">-- Select State --</option>';
+        if (!countryId) { stateHint.textContent = 'Select a country first to load states.'; return; }
+        stateLoading.classList.remove('d-none');
+        stateSelect.disabled = true;
+        stateHint.textContent = 'Loading states...';
+
+        fetch(`{% url 'supplier_management:ajax_load_states' %}?country_id=${countryId}`)
+            .then(r => r.json())
+            .then(data => {
+                stateLoading.classList.add('d-none');
+                stateSelect.disabled = false;
+                if (!data.states.length) { stateHint.textContent = 'No states found for this country.'; return; }
+                stateHint.textContent = `${data.states.length} state(s) available.`;
+                data.states.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id; opt.textContent = s.name;
+                    if (selectStateId && s.id == selectStateId) opt.selected = true;
+                    stateSelect.appendChild(opt);
+                });
+            })
+            .catch(() => { stateLoading.classList.add('d-none'); stateSelect.disabled = false; stateHint.textContent = 'Error loading states.'; });
+    }
+
+    countrySelect.addEventListener('change', function() { loadStates(this.value); });
+    if (countrySelect.value) loadStates(countrySelect.value, preSelectedStateId);
+</script>
+{% endblock %}

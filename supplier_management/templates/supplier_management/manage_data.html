@@ -1,0 +1,264 @@
+{% extends 'keywords/base.html' %}
+
+{% block title %}Manage Data — Atif-Zak Analytics{% endblock %}
+
+{% block content %}
+<style>
+    .tab-btn {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 10px 22px; border-radius: 12px;
+        font-size: 0.875rem; font-weight: 600; text-decoration: none;
+        color: #64748b; background: #fff; border: 1.5px solid #e2e8f0;
+        transition: all 0.2s;
+    }
+    .tab-btn:hover { border-color: #10b981; color: #10b981; }
+    .tab-btn.tab-active {
+        background: #10b981; color: #fff; border-color: #10b981;
+        box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+    }
+    .tab-count {
+        background: rgba(255,255,255,0.25); border-radius: 99px;
+        padding: 1px 8px; font-size: 0.75rem; font-weight: 700;
+    }
+    .tab-active .tab-count { background: rgba(255,255,255,0.3); color: #fff; }
+    .tab-btn:not(.tab-active) .tab-count { background: #f1f5f9; color: #475569; }
+
+    .manage-card {
+        background: #fff; border-radius: 16px; border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden;
+    }
+    .manage-card-header {
+        padding: 1rem 1.5rem; border-bottom: 1px solid #f1f5f9;
+        display: flex; align-items: center; justify-content: space-between;
+        background: #fafbfc;
+    }
+    .manage-card-header .m-title {
+        font-weight: 700; font-size: 0.95rem; color: #1e293b; margin: 0;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .manage-card-header .m-title i { color: #10b981; }
+    .stat-badge {
+        display: inline-flex; align-items: center; gap: 6px;
+        padding: 4px 12px; border-radius: 99px; font-size: 0.78rem; font-weight: 600;
+        background: #d1fae5; color: #065f46;
+    }
+
+    .data-row {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 12px 16px; border-bottom: 1px solid #f1f5f9; transition: background 0.15s;
+    }
+    .data-row:last-child { border-bottom: none; }
+    .data-row:hover { background: #f8fffe; }
+    .data-row .item-name {
+        font-weight: 600; font-size: 0.9rem; color: #1e293b;
+        display: flex; align-items: center; gap: 10px;
+    }
+    .data-row .item-name .dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; flex-shrink: 0; }
+    .data-row .item-meta { font-size: 0.78rem; color: #94a3b8; margin-top: 2px; }
+
+    .btn-del {
+        width: 28px; height: 28px; border-radius: 8px;
+        display: inline-flex; align-items: center; justify-content: center;
+        background: #fef2f2; color: #ef4444; border: 1.5px solid #fecaca;
+        cursor: pointer; font-size: 0.75rem; transition: all 0.2s;
+    }
+    .btn-del:hover { background: #ef4444; color: #fff; border-color: #ef4444; }
+
+    .add-input-row {
+        display: flex; gap: 10px; align-items: center;
+        padding: 14px 16px; background: #f8fffe; border-top: 1.5px dashed #a7f3d0;
+    }
+    .add-input-row input, .add-input-row select {
+        flex: 1; border: 1.5px solid #e2e8f0; border-radius: 10px;
+        padding: 8px 14px; font-size: 0.875rem; outline: none;
+        transition: border-color 0.2s; color: #1e293b; background: #fff;
+    }
+    .add-input-row input:focus, .add-input-row select:focus {
+        border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.12);
+    }
+    .btn-add-item {
+        background: #10b981; color: #fff; border: none; border-radius: 10px;
+        padding: 8px 20px; font-weight: 600; font-size: 0.875rem;
+        cursor: pointer; white-space: nowrap; transition: all 0.2s;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .btn-add-item:hover { background: #059669; box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
+    .section-empty { padding: 3rem; text-align: center; color: #94a3b8; }
+    .section-empty i { font-size: 2rem; margin-bottom: 0.75rem; display: block; }
+</style>
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="fw-bold mb-1" style="font-family:'Outfit',sans-serif;">
+            <i class="fas fa-database me-2" style="color:#10b981;"></i>Manage Reference Data
+        </h4>
+        <p class="text-muted mb-0" style="font-size:.88rem;">Add and manage categories, countries and states</p>
+    </div>
+    <a href="{% url 'supplier_management:supplier_list' %}" class="btn btn-outline-secondary" style="border-radius:10px;font-size:.85rem;font-weight:600;">
+        <i class="fas fa-arrow-left me-1"></i> Back to Suppliers
+    </a>
+</div>
+
+<!-- ── Tabs ── -->
+<div class="d-flex gap-2 mb-4 flex-wrap">
+    <a href="?tab=categories" class="tab-btn {% if active_tab == 'categories' %}tab-active{% endif %}">
+        <i class="fas fa-tag"></i> Categories <span class="tab-count">{{ categories.count }}</span>
+    </a>
+    <a href="?tab=countries" class="tab-btn {% if active_tab == 'countries' %}tab-active{% endif %}">
+        <i class="fas fa-globe"></i> Countries <span class="tab-count">{{ countries.count }}</span>
+    </a>
+    <a href="?tab=states" class="tab-btn {% if active_tab == 'states' %}tab-active{% endif %}">
+        <i class="fas fa-map-marker-alt"></i> States <span class="tab-count">{{ states.count }}</span>
+    </a>
+</div>
+
+<!-- ══ CATEGORIES TAB ══ -->
+{% if active_tab == 'categories' %}
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="manage-card">
+            <div class="manage-card-header">
+                <div class="m-title"><i class="fas fa-tag"></i> All Categories</div>
+                <span class="stat-badge">{{ categories.count }} total</span>
+            </div>
+            {% if categories %}
+                {% for cat in categories %}
+                <div class="data-row">
+                    <div>
+                        <div class="item-name"><span class="dot"></span> {{ cat.name }}</div>
+                        <div class="item-meta">{{ cat.suppliers.count }} supplier{{ cat.suppliers.count|pluralize }} linked</div>
+                    </div>
+                    <form method="post" action="{% url 'supplier_management:category_delete' cat.pk %}" onsubmit="return confirm('Delete category \'{{ cat.name }}\'?')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-del" title="Delete"><i class="fas fa-trash"></i></button>
+                    </form>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="section-empty"><i class="fas fa-tag"></i> No categories yet. Add one below.</div>
+            {% endif %}
+            <form method="post" action="{% url 'supplier_management:category_add' %}" class="add-input-row">
+                {% csrf_token %}
+                <input type="text" name="name" placeholder="e.g. Electronics, Clothing, Packaging..." required maxlength="200" autocomplete="off">
+                <button type="submit" class="btn-add-item"><i class="fas fa-plus"></i> Add Category</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="pro-card p-4" style="border-left: 4px solid #10b981;">
+            <h6 style="font-weight:700;color:#1e293b;margin-bottom:.75rem;"><i class="fas fa-lightbulb me-2" style="color:#f59e0b;"></i>Tips</h6>
+            <ul style="font-size:.85rem;color:#64748b;padding-left:1.2rem;margin:0;line-height:2;">
+                <li>Categories organize suppliers by product type</li>
+                <li>Examples: <strong>Clothing</strong>, <strong>Electronics</strong>, <strong>Packaging</strong></li>
+                <li>Deleting a category sets supplier's category to blank</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- ══ COUNTRIES TAB ══ -->
+{% elif active_tab == 'countries' %}
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="manage-card">
+            <div class="manage-card-header">
+                <div class="m-title"><i class="fas fa-globe"></i> All Countries</div>
+                <span class="stat-badge">{{ countries.count }} total</span>
+            </div>
+            {% if countries %}
+                {% for country in countries %}
+                <div class="data-row">
+                    <div>
+                        <div class="item-name"><span class="dot" style="background:#7c3aed;"></span> {{ country.name }}</div>
+                        <div class="item-meta">{{ country.states.count }} state{{ country.states.count|pluralize }} · {{ country.suppliers.count }} supplier{{ country.suppliers.count|pluralize }}</div>
+                    </div>
+                    <form method="post" action="{% url 'supplier_management:country_delete' country.pk %}" onsubmit="return confirm('Delete country \'{{ country.name }}\'? All its states will also be deleted.')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-del" title="Delete"><i class="fas fa-trash"></i></button>
+                    </form>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="section-empty"><i class="fas fa-globe"></i> No countries yet. Add one below.</div>
+            {% endif %}
+            <form method="post" action="{% url 'supplier_management:country_add' %}" class="add-input-row">
+                {% csrf_token %}
+                <input type="text" name="name" placeholder="e.g. United States, China, Pakistan..." required maxlength="200" autocomplete="off">
+                <button type="submit" class="btn-add-item"><i class="fas fa-plus"></i> Add Country</button>
+            </form>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="pro-card p-4" style="border-left: 4px solid #7c3aed;">
+            <h6 style="font-weight:700;color:#1e293b;margin-bottom:.75rem;"><i class="fas fa-lightbulb me-2" style="color:#f59e0b;"></i>Tips</h6>
+            <ul style="font-size:.85rem;color:#64748b;padding-left:1.2rem;margin:0;line-height:2;">
+                <li>Add countries first, then their states</li>
+                <li>Deleting a country deletes all its states too</li>
+                <li>Examples: <strong>China</strong>, <strong>United States</strong>, <strong>Turkey</strong></li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- ══ STATES TAB ══ -->
+{% elif active_tab == 'states' %}
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="manage-card">
+            <div class="manage-card-header">
+                <div class="m-title"><i class="fas fa-map-marker-alt"></i> All States / Provinces</div>
+                <span class="stat-badge">{{ states.count }} total</span>
+            </div>
+            {% if states %}
+                {% regroup states by country as states_by_country %}
+                {% for group in states_by_country %}
+                <div style="padding:8px 16px;background:#f8fafc;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:8px;">
+                    <i class="fas fa-globe" style="color:#7c3aed;font-size:.8rem;"></i>
+                    <span style="font-size:.78rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.06em;">{{ group.grouper.name }}</span>
+                    <span style="font-size:.72rem;background:#ede9fe;color:#5b21b6;border-radius:99px;padding:1px 8px;font-weight:600;">{{ group.list|length }}</span>
+                </div>
+                {% for state in group.list %}
+                <div class="data-row" style="padding-left:32px;">
+                    <div class="item-name"><span class="dot" style="background:#f59e0b;width:6px;height:6px;"></span> {{ state.name }}</div>
+                    <form method="post" action="{% url 'supplier_management:state_delete' state.pk %}" onsubmit="return confirm('Delete state \'{{ state.name }}\'?')">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-del" title="Delete"><i class="fas fa-trash"></i></button>
+                    </form>
+                </div>
+                {% endfor %}
+                {% endfor %}
+            {% else %}
+            <div class="section-empty"><i class="fas fa-map-marker-alt"></i> No states yet. Add countries first, then add states.</div>
+            {% endif %}
+            {% if countries %}
+            <form method="post" action="{% url 'supplier_management:state_add' %}" class="add-input-row" style="flex-wrap:wrap;gap:8px;">
+                {% csrf_token %}
+                <select name="country_id" required style="max-width:220px;">
+                    <option value="">-- Select Country --</option>
+                    {% for c in countries %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}
+                </select>
+                <input type="text" name="name" placeholder="State / Province name..." required maxlength="200" autocomplete="off">
+                <button type="submit" class="btn-add-item"><i class="fas fa-plus"></i> Add State</button>
+            </form>
+            {% else %}
+            <div class="add-input-row" style="justify-content:center;color:#94a3b8;font-size:.87rem;">
+                <i class="fas fa-exclamation-circle me-2"></i> Add a Country first.
+                <a href="?tab=countries" style="color:#10b981;font-weight:600;margin-left:6px;">Go to Countries →</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="pro-card p-4" style="border-left: 4px solid #f59e0b;">
+            <h6 style="font-weight:700;color:#1e293b;margin-bottom:.75rem;"><i class="fas fa-lightbulb me-2" style="color:#f59e0b;"></i>Tips</h6>
+            <ul style="font-size:.85rem;color:#64748b;padding-left:1.2rem;margin:0;line-height:2;">
+                <li>States are grouped by Country</li>
+                <li>You must add a Country before adding States</li>
+                <li>These states appear in <strong>Add Supplier</strong> dropdown automatically</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

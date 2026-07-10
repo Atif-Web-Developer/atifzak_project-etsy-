@@ -1,31 +1,54 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
 
-# Django stuff:
+# Virtual Environment
+venv/
+env/
+.venv/
+ENV/
+
+# Django
+*.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-staticfiles/
+media/
 
-# Backup & Zip files
-*.zip
-*.tar.gz
-*.rar
-zip_project.py
+# Environment Variables (IMPORTANT - Secret Keys)
+.env
+.env.local
+.env.production
+*.env
 
-# Virtual Environments
-venv/
-.venv/
-env/
-.env/
-
-# IDEs / Editors
-.idea/
+# IDE
 .vscode/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
+.idea/
 *.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Static files (collected)
+staticfiles/
+static_root/
+
+# Migrations (optional - remove these lines if you want to include migrations)
+# */migrations/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Coverage
+.coverage
+htmlcov/

@@ -7,8 +7,9 @@ import requests
 import urllib.parse
 from bs4 import BeautifulSoup
 
-# API Key Configurations
-GEMINI_API_KEY = ''
+import os
+
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 # Groq Cloud (gsk_...) or OpenAI API Key
 GROK_API_KEY = ''
 OPENAI_API_KEY = ''

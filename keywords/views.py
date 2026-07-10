@@ -10,23 +10,7 @@ import pandas as pd
 import io
 from django.http import HttpResponse
 
-def signup_view(request):
-    if request.method == 'POST':
-        username = request.POST.get('username')
-        password = request.POST.get('password')
-        first_name = request.POST.get('first_name', '')
-        
-        if username and password:
-            if User.objects.filter(username=username).exists():
-                return render(request, 'keywords/signup.html', {'error': 'Username already exists'})
-            
-            user = User.objects.create_user(username=username, password=password, first_name=first_name)
-            login(request, user)
-            return redirect('pending_approval')
-    return render(request, 'keywords/signup.html')
-
-def pending_approval_view(request):
-    return render(request, 'keywords/pending_approval.html')
+# Signup and pending approval views removed as per requirements.
 
 @login_required
 def dashboard_view(request):

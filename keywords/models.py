@@ -6,13 +6,9 @@ from django.dispatch import receiver
 class User(AbstractUser):
     """Custom user model for future scaling (e.g., Premium features)."""
     is_premium = models.BooleanField(default=False)
-    is_approved = models.BooleanField(default=False)
+    is_approved = models.BooleanField(default=True)
 
     def save(self, *args, **kwargs):
-        # Superuser is always auto-approved and staff
-        if self.is_superuser:
-            self.is_approved = True
-            self.is_staff = True
         super().save(*args, **kwargs)
 
 class KeywordSearch(models.Model):

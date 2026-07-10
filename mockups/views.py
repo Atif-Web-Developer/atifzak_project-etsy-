@@ -8,8 +8,10 @@ import requests
 import base64
 import time
 
+import os
+
 # Gemini API Configuration
-GEMINI_API_KEY = 'AIzaSyB1vUMJWS3KLSlHGQHiS0qMxw2VDXSwJ4A'
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
 
 @login_required
@@ -107,52 +109,91 @@ def get_ai_suggestions(request):
 @login_required
 def generate_mockup_api(request):
     """
-    Real-time Mockup Generation using high-quality static templates for photorealistic overlay.
+    Real-time Mockup Generation with temporary diagnostic logging.
     """
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
             product_type = data.get('product_type', 't-shirt')
+            custom_instructions = data.get('custom_instructions', '')
             label = data.get('label', '')
 
-            # Fallback to ultra-high-quality static templates for perfect photorealistic results
+            prompt = f"A professional, photorealistic mockup of a blank, empty, unpatterned white {product_type}. Studio lighting, clean minimal background, realistic fabric folds, shadows, highly detailed, 8k resolution."
+            if custom_instructions:
+                prompt += f" Style details: {custom_instructions}"
+
+            api_key = GEMINI_API_KEY
+            log_data = []
+
+            # ----------------------------------------------------
+            # Attempt 1: Legacy Imagen 3 (imagen-3.0-generate-002)
+            # ----------------------------------------------------
+            url1 = f"https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key={api_key}"
+            payload1 = {
+                "instances": [{"prompt": prompt}],
+                "parameters": {
+                    "sampleCount": 1,
+                    "aspectRatio": "1:1",
+                    "outputMimeType": "image/jpeg"
+                }
+            }
+            log_data.append("=== ATTEMPT 1: imagen-3.0-generate-002:predict ===")
+            log_data.append(f"URL: {url1.split('?')[0]}")
+            log_data.append(f"Payload: {json.dumps(payload1)}")
+            try:
+                res1 = requests.post(url1, json=payload1, headers={"Content-Type": "application/json"}, timeout=20)
+                log_data.append(f"Status Code: {res1.status_code}")
+                log_data.append(f"Response: {res1.text[:2000]}")
+            except Exception as e:
+                log_data.append(f"Exception: {str(e)}")
+
+            # ----------------------------------------------------
+            # Attempt 2: New Gemini 3.1 Flash Image
+            # ----------------------------------------------------
+            url2 = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key={api_key}"
+            payload2 = {
+                "contents": [
+                    {
+                        "role": "user",
+                        "parts": [{"text": prompt}]
+                    }
+                ],
+                "generationConfig": {
+                    "responseModalities": ["IMAGE"]
+                }
+            }
+            log_data.append("\n=== ATTEMPT 2: gemini-3.1-flash-image:generateContent ===")
+            log_data.append(f"URL: {url2.split('?')[0]}")
+            log_data.append(f"Payload: {json.dumps(payload2)}")
+            try:
+                res2 = requests.post(url2, json=payload2, headers={"Content-Type": "application/json"}, timeout=20)
+                log_data.append(f"Status Code: {res2.status_code}")
+                log_data.append(f"Response: {res2.text[:2000]}")
+            except Exception as e:
+                log_data.append(f"Exception: {str(e)}")
+
+            # Write logs to file
+            log_filepath = r"e:\etsy related product\diagnosis.log"
+            with open(log_filepath, "w", encoding="utf-8") as f:
+                f.write("\n".join(log_data))
+
+            # Return fallback for now so the UI doesn't break during diagnosis
             templates = {
                 "t-shirt": [
-                    "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=800&auto=format&fit=crop", # White tee front
-                    "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?q=80&w=800&auto=format&fit=crop", # White tee flat
-                    "https://images.unsplash.com/photo-1576566588028-4147f3842f27?q=80&w=800&auto=format&fit=crop", # Grey tee
-                    "https://images.unsplash.com/photo-1562157873-818bc0726f68?q=80&w=800&auto=format&fit=crop"  # White tee lifestyle
-                ],
-                "mug": [
-                    "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?q=80&w=800&auto=format&fit=crop",
-                    "https://images.unsplash.com/photo-1481833751843-222a45a30dc3?q=80&w=800&auto=format&fit=crop"
-                ],
-                "poster": [
-                    "https://images.unsplash.com/photo-1580136608260-4eb11f4b24fe?q=80&w=800&auto=format&fit=crop",
-                    "https://images.unsplash.com/photo-1615800098779-1be32e60cca3?q=80&w=800&auto=format&fit=crop"
-                ],
-                "hoodie": [
-                    "https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=800&auto=format&fit=crop"
-                ],
-                "tote bag": [
-                    "https://images.unsplash.com/photo-1597484661643-2f5fef640df1?q=80&w=800&auto=format&fit=crop"
+                    "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?q=80&w=800&auto=format&fit=crop"
                 ],
                 "default": [
                     "https://images.unsplash.com/photo-1513364776144-60967b0f800f?q=80&w=800&auto=format&fit=crop"
                 ]
             }
-            
             ptype = product_type.lower()
             pool = templates.get(ptype, templates['default'])
             selected_url = random.choice(pool)
 
-            # Simulate processing delay
-            time.sleep(1.5)
-
             return JsonResponse({
                 "status": "success",
                 "image_url": selected_url,
-                "label": label
+                "label": label + " (Template Fallback - Diagnosing)"
             })
 
         except Exception as e:
