@@ -1,174 +1,385 @@
 {% extends 'keywords/base.html' %}
+{% load static humanize %}
 
-{% block title %}System Overview | Atif-Zak Analytics{% endblock %}
+{% block title %}Dashboard | Atif-Zak Analytics{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
+{# ------------------------------------------------------------------ Welcome #}
+<div class="row">
     <div class="col-12">
-        <h2 class="fw-bold text-dark">System Overview</h2>
-        <p class="text-muted">Global insights across all your uploaded eRank files.</p>
-    </div>
-</div>
-
-<!-- Key Metrics Cards -->
-<div class="row row-cols-1 row-cols-md-3 row-cols-xl-5 g-4 mb-5">
-    <!-- Customers Card -->
-    <div class="col">
-        <a href="{% url 'customer_detail:customer_dashboard' %}" class="text-decoration-none">
-            <div class="pro-card text-center h-100" style="border-bottom: 4px solid #8b5cf6; transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
-                <i class="fas fa-users fa-3x mb-3 opacity-50" style="color: #8b5cf6;"></i>
-                <h2 class="fw-bold mb-0 text-dark">{{ total_customers_db }}</h2>
-                <p class="text-muted mb-0">Total Customers <i class="fas fa-arrow-right ms-1 small"></i></p>
-            </div>
-        </a>
-    </div>
-    <!-- Files Uploaded -->
-    <div class="col">
-        <a href="{% url 'view_history' %}" class="text-decoration-none">
-            <div class="pro-card text-center h-100" style="border-bottom: 4px solid #10b981; transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
-                <i class="fas fa-file-csv fa-3x text-success opacity-50 mb-3"></i>
-                <h2 class="fw-bold mb-0 text-dark">{{ total_files }}</h2>
-                <p class="text-muted mb-0">Total Files Uploaded <i class="fas fa-arrow-right ms-1 small"></i></p>
-            </div>
-        </a>
-    </div>
-    <!-- Keywords Analyzed -->
-    <div class="col">
-        <a href="{% url 'dashboard' %}" class="text-decoration-none">
-            <div class="pro-card text-center h-100" style="border-bottom: 4px solid #3b82f6; transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
-                <i class="fas fa-search fa-3x text-primary opacity-50 mb-3"></i>
-                <h2 class="fw-bold mb-0 text-dark">{{ total_keywords }}</h2>
-                <p class="text-muted mb-0">Total Keywords <i class="fas fa-arrow-right ms-1 small"></i></p>
-            </div>
-        </a>
-    </div>
-    <!-- Saved Favorites -->
-    <div class="col">
-        <a href="{% url 'saved_keywords' %}" class="text-decoration-none">
-            <div class="pro-card text-center h-100" style="border-bottom: 4px solid #f59e0b; transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
-                <i class="fas fa-star fa-3x text-warning opacity-50 mb-3"></i>
-                <h2 class="fw-bold mb-0 text-dark">{{ favorites_count }}</h2>
-                <p class="text-muted mb-0">Saved Favorites <i class="fas fa-arrow-right ms-1 small"></i></p>
-            </div>
-        </a>
-    </div>
-    <!-- Golden Nuggets -->
-    <div class="col">
-        <a href="#golden-nuggets-section" class="text-decoration-none">
-            <div class="pro-card text-center h-100 bg-dark text-white" style="border-bottom: 4px solid #064e3b; transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='translateY(-5px)'" onmouseout="this.style.transform='translateY(0)'">
-                <i class="fas fa-gem fa-3x text-success opacity-75 mb-3"></i>
-                <h2 class="fw-bold mb-0">{{ golden_nuggets.count }}</h2>
-                <p class="text-light mb-0">Golden Nuggets <i class="fas fa-arrow-down ms-1 small"></i></p>
-            </div>
-        </a>
-    </div>
-</div>
-
-<!-- Extracted Keywords Sections -->
-<div class="row g-4" id="golden-nuggets-section">
-    <!-- Golden Nuggets -->
-    <div class="col-md-6">
-        <div class="pro-card h-100" style="border: 2px solid #064e3b;">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="fw-bold text-dark mb-0"><i class="fas fa-gem text-success me-2"></i> Golden Nuggets</h5>
-                <span class="badge" style="background: #064e3b;">High Demand + Low Comp</span>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="bg-light">
-                        <tr>
-                            <th>Keyword</th>
-                            <th>Searches</th>
-                            <th>Competition</th>
-                            <th>Source</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in golden_nuggets %}
-                        <tr>
-                            <td class="fw-bold">{{ item.keyword }}</td>
-                            <td><span class="badge" style="background:#064e3b;">{{ item.avg_searches }}</span></td>
-                            <td><span class="badge" style="background:#064e3b;">{{ item.competition }}</span></td>
-                            <td class="small text-muted">{{ item.search.term|truncatechars:20 }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="4" class="text-center text-muted">Upload a CSV to find Golden Nuggets.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Easy to Rank -->
-    <div class="col-md-6">
-        <div class="pro-card h-100" style="border: 2px solid #22c55e;">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="fw-bold text-dark mb-0"><i class="fas fa-arrow-trend-up text-success me-2"></i> Easy to Rank</h5>
-                <span class="badge" style="background: #22c55e;">Good Demand + Med Comp</span>
-            </div>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="bg-light">
-                        <tr>
-                            <th>Keyword</th>
-                            <th>Searches</th>
-                            <th>Competition</th>
-                            <th>Source</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in easy_to_rank %}
-                        <tr>
-                            <td class="fw-bold">{{ item.keyword }}</td>
-                            <td><span class="badge" style="background:#22c55e;">{{ item.avg_searches }}</span></td>
-                            <td><span class="badge" style="background:#22c55e;">{{ item.competition }}</span></td>
-                            <td class="small text-muted">{{ item.search.term|truncatechars:20 }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="4" class="text-center text-muted">Upload a CSV to find easy keywords.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        <div class="card welcome-banner">
+            <div class="card-body p-4 position-relative" style="z-index: 1;">
+                <div class="row align-items-center g-3">
+                    <div class="col-md">
+                        <p class="text-white-50 mb-1 fw-medium">{% now 'l, F j' %}</p>
+                        <h4 class="text-white fw-semibold mb-1">Good to see you, {{ user.first_name|default:user.username }} 👋</h4>
+                        <p class="text-white-50 mb-0">Here's what's happening across your Etsy research workspace.</p>
+                    </div>
+                    <div class="col-md-auto d-flex flex-wrap gap-2">
+                        {% if 'analyzer' in user.accessible_modules %}
+                            <a href="{% url 'dashboard' %}" class="btn btn-on-brand"><i class="ri-upload-cloud-2-line align-middle me-1"></i> Analyze CSV</a>
+                        {% endif %}
+                        {% if 'rank_optimizer' in user.accessible_modules %}
+                            <a href="{% url 'rank_optimizer_dashboard' %}" class="btn btn-on-brand-outline"><i class="ri-rocket-2-line align-middle me-1"></i> Rank Optimizer</a>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Favorites Section -->
-{% if favorites %}
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="pro-card" style="border: 2px solid #f59e0b;">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="fw-bold text-dark mb-0"><i class="fas fa-star text-warning me-2"></i> Your Saved Favorites</h5>
+{# ------------------------------------------------------------------ KPIs #}
+<div class="row">
+    {% if 'analyzer' in user.accessible_modules or 'history' in user.accessible_modules %}
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1 overflow-hidden">
+                        <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Keywords analysed</p>
+                    </div>
+                    <span class="badge bg-primary-subtle text-primary fs-12">{{ total_files }} file{{ total_files|pluralize }}</span>
+                </div>
+                <div class="d-flex align-items-end justify-content-between mt-4">
+                    <div>
+                        <h4 class="fs-22 fw-semibold ff-secondary mb-4">{{ total_keywords|intcomma }}</h4>
+                        <a href="{% url 'view_history' %}" class="text-decoration-underline">View history</a>
+                    </div>
+                    <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-primary-subtle rounded fs-3"><i class="ri-file-search-line text-primary"></i></span></div>
+                </div>
             </div>
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="bg-light">
-                        <tr>
-                            <th>Keyword</th>
-                            <th>Searches</th>
-                            <th>Competition</th>
-                            <th>Opp. Score</th>
-                            <th>Source File</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in favorites %}
-                        <tr>
-                            <td class="fw-bold"><i class="fas fa-star text-warning me-2"></i> {{ item.keyword }}</td>
-                            <td>{{ item.avg_searches }}</td>
-                            <td>{{ item.competition }}</td>
-                            <td>{{ item.opportunity_score }}</td>
-                            <td class="text-muted"><i class="fas fa-file-csv me-1"></i> {{ item.search.term }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1 overflow-hidden">
+                        <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Golden nuggets</p>
+                    </div>
+                    <span class="badge bg-success-subtle text-success fs-12">Top tier</span>
+                </div>
+                <div class="d-flex align-items-end justify-content-between mt-4">
+                    <div>
+                        <h4 class="fs-22 fw-semibold ff-secondary mb-4">{{ golden_count|intcomma }}</h4>
+                        <a href="#golden-nuggets" class="text-decoration-underline">See the list</a>
+                    </div>
+                    <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-success-subtle rounded fs-3"><i class="ri-vip-diamond-line text-success"></i></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1 overflow-hidden">
+                        <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Saved favourites</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-end justify-content-between mt-4">
+                    <div>
+                        <h4 class="fs-22 fw-semibold ff-secondary mb-4">{{ favorites_count|intcomma }}</h4>
+                        <a href="{% url 'saved_keywords' %}" class="text-decoration-underline">Open saved</a>
+                    </div>
+                    <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-warning-subtle rounded fs-3"><i class="ri-star-line text-warning"></i></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-animate">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1 overflow-hidden">
+                        <p class="text-uppercase fw-medium text-muted text-truncate mb-0">Monthly search volume</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-end justify-content-between mt-4">
+                    <div>
+                        <h4 class="fs-22 fw-semibold ff-secondary mb-4">{{ total_searches|intcomma }}</h4>
+                        <span class="text-muted">Across all keywords</span>
+                    </div>
+                    <div class="avatar-sm flex-shrink-0"><span class="avatar-title bg-info-subtle rounded fs-3"><i class="ri-search-eye-line text-info"></i></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if total_customers is not None %}
+        {% url 'customer_detail:customer_list' as link %}
+        {% include 'keywords/partials/mini_stat.html' with label='Customers' value=total_customers icon='ri-contacts-book-2-line' color='secondary' link=link %}
+    {% endif %}
+    {% if total_suppliers is not None %}
+        {% url 'supplier_management:supplier_list' as link %}
+        {% include 'keywords/partials/mini_stat.html' with label='Suppliers' value=total_suppliers icon='ri-truck-line' color='warning' link=link %}
+    {% endif %}
+    {% if total_competitors is not None %}
+        {% url 'competitor_shop_dashboard' as link %}
+        {% include 'keywords/partials/mini_stat.html' with label='Competitor shops' value=total_competitors icon='ri-store-2-line' color='danger' link=link %}
+    {% endif %}
+    {% if team %}
+        {% url 'accounts:user_list' as link %}
+        {% include 'keywords/partials/mini_stat.html' with label='Active team members' value=team.active icon='ri-team-line' color='info' link=link note=team.online_today|stringformat:'s'|add:' signed in today' %}
+    {% endif %}
+</div>
+
+{# ------------------------------------------------------------------ Charts #}
+<div class="row">
+    <div class="col-xl-4">
+        <div class="card card-height-100">
+            <div class="card-header align-items-center d-flex">
+                <h4 class="card-title mb-0 flex-grow-1">Keyword opportunity mix</h4>
+            </div>
+            <div class="card-body">
+                {% if total_keywords %}
+                    <div id="chart-categories" class="apex-charts" dir="ltr"></div>
+                {% else %}
+                    {% include 'partials/empty_state.html' with icon='ri-pie-chart-2-line' text='Upload an eRank CSV to see how your keywords score.' %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-8">
+        <div class="card card-height-100">
+            <div class="card-header align-items-center d-flex">
+                <h4 class="card-title mb-0 flex-grow-1">{% if growth_chart %}Customers &amp; suppliers added{% else %}Largest analysed files{% endif %}</h4>
+                {% if growth_chart and files_chart.series %}
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" class="btn btn-soft-primary active" data-chart-tab="growth">Growth</button>
+                    <button type="button" class="btn btn-soft-primary" data-chart-tab="files">Files</button>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if growth_chart %}<div id="chart-growth" class="apex-charts" dir="ltr"></div>{% endif %}
+                <div id="chart-files" class="apex-charts {% if growth_chart %}d-none{% endif %}" dir="ltr"></div>
+                {% if not growth_chart and not files_chart.series %}
+                    {% include 'partials/empty_state.html' with icon='ri-bar-chart-2-line' text='No files analysed yet.' %}
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
-{% endif %}
+
+{# ------------------------------------------------------------------ Keyword tables #}
+<div class="row" id="golden-nuggets">
+    <div class="col-xl-6">
+        <div class="card card-height-100">
+            <div class="card-header align-items-center d-flex">
+                <h4 class="card-title mb-0 flex-grow-1"><i class="ri-vip-diamond-line text-success align-middle me-1"></i> Golden nuggets</h4>
+                <span class="badge bg-success-subtle text-success">Searches ≥ 1,000 · Competition &lt; 5,000</span>
+            </div>
+            <div class="card-body p-0">
+                {% include 'keywords/partials/keyword_table.html' with rows=golden_nuggets color='success' empty='Upload a CSV to find golden nuggets.' %}
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="card card-height-100">
+            <div class="card-header align-items-center d-flex">
+                <h4 class="card-title mb-0 flex-grow-1"><i class="ri-line-chart-line text-info align-middle me-1"></i> Easy to rank</h4>
+                <span class="badge bg-info-subtle text-info">Searches ≥ 500 · Competition &lt; 15,000</span>
+            </div>
+            <div class="card-body p-0">
+                {% include 'keywords/partials/keyword_table.html' with rows=easy_to_rank color='info' empty='Upload a CSV to find easy keywords.' %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    {% if favorites %}
+    <div class="{% if upcoming_events or recent_activity %}col-xl-8{% else %}col-12{% endif %}">
+        <div class="card">
+            <div class="card-header align-items-center d-flex">
+                <h4 class="card-title mb-0 flex-grow-1"><i class="ri-star-fill text-warning align-middle me-1"></i> Your saved favourites</h4>
+                <a href="{% url 'saved_keywords' %}" class="btn btn-soft-primary btn-sm">View all <i class="ri-arrow-right-line align-middle"></i></a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive table-card m-0">
+                    <table class="table table-borderless table-hover table-nowrap align-middle mb-0">
+                        <thead class="table-light text-muted">
+                            <tr><th>Keyword</th><th>Searches</th><th>Competition</th><th>Category</th><th>Source file</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for item in favorites %}
+                                <tr>
+                                    <td class="fw-medium">{{ item.keyword }}</td>
+                                    <td>{{ item.avg_searches|intcomma }}</td>
+                                    <td>{{ item.competition|intcomma }}</td>
+                                    <td>{% include 'keywords/partials/category_badge.html' with category=item.category %}</td>
+                                    <td class="text-muted"><i class="ri-file-text-line align-middle me-1"></i>{{ item.search.term|cut:'Upload_'|truncatechars:30 }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="{% if favorites %}col-xl-4{% else %}col-12{% endif %}">
+        <div class="row">
+            {% if upcoming_events %}
+            <div class="{% if favorites %}col-12{% else %}col-xl-6{% endif %}">
+                <div class="card">
+                    <div class="card-header align-items-center d-flex">
+                        <h4 class="card-title mb-0 flex-grow-1">Upcoming seasonal events</h4>
+                        <a href="{% url 'forecaster_dashboard' %}" class="btn btn-soft-primary btn-sm">Forecaster</a>
+                    </div>
+                    <div class="card-body">
+                        {% for e in upcoming_events %}
+                            <div class="d-flex align-items-center {% if not forloop.last %}mb-3{% endif %}">
+                                <div class="flex-shrink-0 avatar-sm">
+                                    <div class="avatar-title bg-light text-primary rounded-3 flex-column lh-1">
+                                        <span class="fs-15 fw-semibold">{{ e.date|date:'d' }}</span><span class="fs-10 text-uppercase">{{ e.date|date:'M' }}</span>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-1">{{ e.name }}</h6>
+                                    <p class="text-muted mb-0 fs-12"><i class="ri-map-pin-line align-middle"></i> {{ e.regions }}</p>
+                                </div>
+                                <span class="badge {% if e.days <= 30 %}bg-danger-subtle text-danger{% elif e.days <= 60 %}bg-warning-subtle text-warning{% else %}bg-success-subtle text-success{% endif %}">
+                                    {% if e.days == 0 %}Today{% else %}in {{ e.days }} day{{ e.days|pluralize }}{% endif %}
+                                </span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="{% if favorites or not upcoming_events %}col-12{% else %}col-xl-6{% endif %}">
+                <div class="card">
+                    <div class="card-header align-items-center d-flex">
+                        <h4 class="card-title mb-0 flex-grow-1">Your recent activity</h4>
+                        <a href="{% url 'accounts:profile' %}?tab=activity" class="btn btn-soft-secondary btn-sm">All</a>
+                    </div>
+                    <div class="card-body">
+                        {% include 'accounts/partials/activity_feed.html' with items=recent_activity %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ------------------------------------------------------------------ Quick access #}
+<div class="card">
+    <div class="card-header"><h4 class="card-title mb-0">Quick access</h4></div>
+    <div class="card-body">
+        <div class="row g-3">
+            {% for group, modules in nav_groups %}
+                {% for m in modules %}
+                    {% if m.key != 'overview' %}
+                    <div class="col-xxl-3 col-lg-4 col-sm-6">
+                        <a href="{% url m.url_name %}" class="module-tile">
+                            <span class="avatar-xs flex-shrink-0"><span class="avatar-title bg-primary-subtle text-primary rounded fs-16"><i class="{{ m.icon }}"></i></span></span>
+                            <span class="overflow-hidden">
+                                <span class="d-block fw-medium">{{ m.label }}</span>
+                                <span class="d-block text-muted fs-12 text-truncate">{{ m.description }}</span>
+                            </span>
+                        </a>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{{ category_chart|json_script:'category-chart-data' }}
+{{ files_chart|json_script:'files-chart-data' }}
+{% if growth_chart %}{{ growth_chart|json_script:'growth-chart-data' }}{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'velzon/libs/apexcharts/apexcharts.min.js' %}"></script>
+<script>
+(function () {
+    function data(id) { var el = document.getElementById(id); return el ? JSON.parse(el.textContent) : null; }
+    function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+    function isDark() { return document.documentElement.getAttribute('data-bs-theme') === 'dark'; }
+
+    var charts = [];
+    function baseOptions() {
+        return {
+            chart: { fontFamily: 'inherit', toolbar: { show: false }, foreColor: css('--vz-secondary-color') || '#878a99', background: 'transparent' },
+            theme: { mode: isDark() ? 'dark' : 'light' },
+            grid: { borderColor: css('--vz-border-color') || '#e9ebec', strokeDashArray: 4 },
+            tooltip: { theme: isDark() ? 'dark' : 'light' },
+            dataLabels: { enabled: false }
+        };
+    }
+
+    function render() {
+        charts.forEach(function (c) { c.destroy(); });
+        charts = [];
+        var primary = css('--vz-primary') || '#066b5e';
+
+        var cat = data('category-chart-data');
+        var catEl = document.querySelector('#chart-categories');
+        if (cat && catEl) {
+            var c1 = new ApexCharts(catEl, Object.assign(baseOptions(), {
+                chart: Object.assign(baseOptions().chart, { type: 'donut', height: 320 }),
+                series: cat.series, labels: cat.labels,
+                colors: ['#0a7c5c', '#34c38f', '#f7b84b', '#f06548'],
+                legend: { position: 'bottom' },
+                stroke: { width: 0 },
+                plotOptions: { pie: { donut: { size: '72%', labels: { show: true, total: { show: true, label: 'Keywords', fontSize: '13px' } } } } }
+            }));
+            c1.render(); charts.push(c1);
+        }
+
+        var growth = data('growth-chart-data');
+        var growthEl = document.querySelector('#chart-growth');
+        if (growth && growthEl) {
+            var c2 = new ApexCharts(growthEl, Object.assign(baseOptions(), {
+                chart: Object.assign(baseOptions().chart, { type: 'bar', height: 320 }),
+                series: growth.series,
+                xaxis: { categories: growth.labels, axisBorder: { show: false } },
+                yaxis: { forceNiceScale: true, labels: { formatter: function (v) { return Math.round(v); } } },
+                colors: [primary, '#f7b84b'],
+                plotOptions: { bar: { columnWidth: '45%', borderRadius: 4 } },
+                legend: { position: 'top', horizontalAlign: 'right' }
+            }));
+            c2.render(); charts.push(c2);
+        }
+
+        var files = data('files-chart-data');
+        var filesEl = document.querySelector('#chart-files');
+        if (files && filesEl && files.series.length) {
+            var c3 = new ApexCharts(filesEl, Object.assign(baseOptions(), {
+                chart: Object.assign(baseOptions().chart, { type: 'bar', height: 320 }),
+                series: [{ name: 'Keywords', data: files.series }],
+                xaxis: { categories: files.labels },
+                plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: '55%' } },
+                colors: [primary]
+            }));
+            c3.render(); charts.push(c3);
+        }
+    }
+
+    render();
+    document.addEventListener('themechange', render);
+
+    document.querySelectorAll('[data-chart-tab]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('[data-chart-tab]').forEach(function (b) { b.classList.toggle('active', b === btn); });
+            var showFiles = btn.getAttribute('data-chart-tab') === 'files';
+            document.getElementById('chart-files').classList.toggle('d-none', !showFiles);
+            var g = document.getElementById('chart-growth');
+            if (g) g.classList.toggle('d-none', showFiles);
+            window.dispatchEvent(new Event('resize'));
+        });
+    });
+})();
+</script>
 {% endblock %}

@@ -1,0 +1,202 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Manual | Stock Hunting{% endblock %}
+
+{% block page_header %}
+    {% url 'stock_hunting:hunt_list' as list_url %}
+    {% include 'partials/page_title.html' with title='Manual' parent='Stock Hunting' parent_url=list_url %}
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-xxl-9">
+
+<div class="card bg-primary-subtle border-0">
+    <div class="card-body d-flex flex-wrap align-items-center gap-3">
+        <div class="fs-1">🎯</div>
+        <div class="flex-grow-1">
+            <h4 class="mb-1">Stock Hunting – poora sequence</h4>
+            <p class="mb-0 text-muted">White label stock ke liye product dhoondne ke 11 steps. Form bhi isi tarteeb mein hai – har step ka number form par likha hai.</p>
+        </div>
+        <a href="{% url 'stock_hunting:hunt_add' %}" class="btn btn-primary"><i class="ri-add-line align-bottom me-1"></i> New hunt</a>
+    </div>
+</div>
+
+{# ---------------------------------------------------------------- Step 1 #}
+<div class="card">
+    <div class="card-body">
+        <h5 class="mb-2"><span class="step-no">1</span> Market chunein <small class="text-muted fw-normal">(sab se pehle)</small></h5>
+        <p class="text-muted">Kahan bechna hai? Is ek choice se aage sab kuch khud set ho jata hai:</p>
+        <div class="table-responsive">
+            <table class="table table-bordered table-sm mb-0 text-center align-middle">
+                <thead class="table-light"><tr><th class="text-start">Cheez</th>{% for key, m in markets.items %}<th>{{ m.label }}</th>{% endfor %}</tr></thead>
+                <tbody>
+                    <tr><td class="text-start">eBay site</td>{% for key, m in markets.items %}<td>{{ m.site }}</td>{% endfor %}</tr>
+                    <tr><td class="text-start">Currency</td>{% for key, m in markets.items %}<td>{{ m.currency }}</td>{% endfor %}</tr>
+                    <tr><td class="text-start">Price ki had</td>{% for key, m in markets.items %}<td>{{ m.currency }}{{ conf.price_min|floatformat:"-2" }}–{{ conf.price_max|floatformat:"-2" }}</td>{% endfor %}</tr>
+                    <tr><td class="text-start">AliExpress shipping check</td>{% for key, m in markets.items %}<td>{{ m.label }} ko ship ho</td>{% endfor %}</tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{# ---------------------------------------------------------------- Steps 2–5 #}
+<div class="card">
+    <div class="card-body vstack gap-4">
+        <div>
+            <h5 class="mb-2"><span class="step-no">2</span> Product ka idea dhoondein <small class="text-muted fw-normal">(AliExpress / Alibaba / Temu)</small></h5>
+            <ul class="mb-0"><li>AliExpress par <strong>Choice / Best seller</strong> dekhein.</li><li>Product ka link save karein.</li></ul>
+        </div>
+        <div>
+            <h5 class="mb-2"><span class="step-no">3</span> AliExpress ki shartein check karein</h5>
+            <table class="table table-sm table-bordered w-auto mb-2">
+                <thead class="table-light"><tr><th>Shart</th><th>Pass</th></tr></thead>
+                <tbody>
+                    <tr><td>Rating</td><td>{{ conf.ali_min_rating|floatformat:"-1" }} ya zyada</td></tr>
+                    <tr><td>Sales</td><td>{{ conf.ali_min_sales }}+</td></tr>
+                    <tr><td>Shipping</td><td>Step 1 wale mulk ko ship hota ho</td></tr>
+                </tbody>
+            </table>
+            <div class="alert alert-danger py-2 mb-0 fs-13"><strong>Ek bhi fail ho to yahin ruk jayein.</strong> Agla product dekhein.</div>
+        </div>
+        <div>
+            <h5 class="mb-2"><span class="step-no">4</span> Main keyword nikalein</h5>
+            <p class="mb-0">AliExpress ke title se asal keyword lein, maslan <em>“Soft TPR Toy”</em>.</p>
+        </div>
+        <div>
+            <h5 class="mb-2"><span class="step-no">5</span> eBay research tool mein keyword search karein</h5>
+            <ul class="mb-0">
+                <li>Step 1 wali eBay site par search karein.</li>
+                <li>Check karein ke <strong>wahi product</strong> hai jo AliExpress par dekha tha.</li>
+                <li>Sellers ke titles dekhein ke woh kaunse keywords target kar rahe hain. Har keyword alag test karein.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+{# ---------------------------------------------------------------- Steps 6–9 #}
+<div class="card">
+    <div class="card-body vstack gap-4">
+        <div>
+            <h5 class="mb-2"><span class="step-no">6</span> Top {{ conf.top_sellers }} competitors note karein</h5>
+            <p class="mb-1">{{ conf.top_sellers }} listings, {{ conf.top_sellers }} <strong>alag</strong> sellers. Har ek ka:</p>
+            <p class="mb-0 text-muted">Listing link · Seller name · Feedback · Price · 30 din ki sales · Variations (pack/rang) · Free postage (Haan/Nahi)</p>
+        </div>
+        <div>
+            <h5 class="mb-2"><span class="step-no">7</span> eBay ki shartein check karein <span class="badge bg-success-subtle text-success">tool khud karega</span></h5>
+            <table class="table table-sm table-bordered w-auto mb-0">
+                <thead class="table-light"><tr><th>Shart</th><th>Pass</th></tr></thead>
+                <tbody>
+                    <tr><td>Price</td><td>{{ conf.price_min|floatformat:"-2" }}–{{ conf.price_max|floatformat:"-2" }} ke beech (market ki currency mein)</td></tr>
+                    <tr><td>Sales</td><td>Kam az kam {{ conf.min_strong_sellers }} sellers ki 30 din mein {{ conf.min_sales_30d }}+ sales</td></tr>
+                    <tr><td>Naye seller ki jagah</td><td>Kam az kam {{ conf.min_low_feedback_sellers }} seller ke feedback {{ conf.max_feedback }} se kam</td></tr>
+                    <tr><td>Sellers</td><td>{{ conf.top_sellers }} listings, sab alag sellers</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div>
+            <h5 class="mb-2"><span class="step-no">8</span> Trend check karein</h5>
+            <ul class="mb-0">
+                <li>3 saal ki sales trend: barhti ya stable ✅, girti ❌</li>
+                <li>Qism: Evergreen 🟢 / Trending 🟡 / Seasonal 🟡 <span class="text-muted">(seasonal ho to kam quantity)</span></li>
+            </ul>
+        </div>
+        <div>
+            <h5 class="mb-2"><span class="step-no">9</span> Faisla <span class="badge bg-success-subtle text-success">tool khud dikhayega</span></h5>
+            <div class="row g-2">
+                <div class="col-md-4"><div class="p-3 rounded bg-success-subtle h-100"><div class="fw-semibold">🟢 Source karein</div><div class="fs-13">Saari zaroori shartein pass, aur “achha ho to behtar” bhi.</div></div></div>
+                <div class="col-md-4"><div class="p-3 rounded bg-warning-subtle h-100"><div class="fw-semibold">🟡 Test karein</div><div class="fs-13">Zaroori pass, lekin “achha ho to behtar” mein kuch fail (maslan seasonal).</div></div></div>
+                <div class="col-md-4"><div class="p-3 rounded bg-danger-subtle h-100"><div class="fw-semibold">🔴 Chhod dein</div><div class="fs-13">Koi bhi zaroori shart fail.</div></div></div>
+            </div>
+            <p class="text-muted fs-12 mt-2 mb-0">⚪ “Steps poore karein” = abhi kisi zaroori shart ka data nahi likha.</p>
+        </div>
+    </div>
+</div>
+
+{# ---------------------------------------------------------------- Steps 10–11 #}
+<div class="card">
+    <div class="card-body vstack gap-4">
+        <div>
+            <h5 class="mb-2"><span class="step-no">10</span> Test <small class="text-muted fw-normal">(bulk se pehle)</small></h5>
+            <p class="mb-1">Tareeqa chunein:</p>
+            <ul>
+                <li><strong>Dropship</strong> par break-even price par bech kar dekhein, ya</li>
+                <li><strong>Thodi quantity</strong> (local se) mangwa kar target price par bechein.</li>
+            </ul>
+            <p class="mb-0">Record karein: kitne din, kitni sales, roz kitne order. <strong>Roz order aa rahe hain → source karein. Warna chhod dein.</strong>
+                <span class="text-muted">(Tool: roz {{ conf.min_orders_per_day|floatformat:"-2" }}+ order = source.)</span></p>
+        </div>
+        <div>
+            <h5 class="mb-2"><span class="step-no">11</span> Source karein</h5>
+            <p class="mb-0">Pehle <strong>local</strong> se, phir <strong>China</strong> se 200–300 pieces.</p>
+        </div>
+    </div>
+</div>
+
+{# ---------------------------------------------------------------- White label notes #}
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header"><h5 class="card-title mb-0"><i class="ri-price-tag-3-line align-bottom text-primary me-1"></i> White label kya hai</h5></div>
+            <div class="card-body">
+                <ul class="mb-3">
+                    <li><strong>Unbranded</strong> – product par apna logo nahi hota.</li>
+                    <li>Inventory (maal) aap ke paas hoti hai, aap eBay par bechte hain.</li>
+                    <li>Shuru karna aasan hai.</li>
+                </ul>
+                <h6>Maal kahan se (sources)</h6>
+                <ul class="mb-0">
+                    <li>Apne jaan-pehchan ke manufacturers <span class="text-muted">– pehle eBay par sale line aur price range check karein</span></li>
+                    <li>Pak made products</li>
+                    <li>Local wholesale markets</li>
+                    <li>Online wholesale suppliers (USA / UK / Australia) <span class="text-muted">– har mulk ki apni wholesale market hoti hai</span></li>
+                    <li>China suppliers <span class="text-muted">– zyada quantity, delivery rate kam</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header"><h5 class="card-title mb-0"><i class="ri-flag-line align-bottom text-info me-1"></i> UK market (ebay.co.uk)</h5></div>
+            <div class="card-body">
+                <ul class="mb-3">
+                    <li><strong>Private account</strong>: stock model sab se behtar (dropshipping nahi) – eBay ko fee nahi deni padti.</li>
+                    <li><strong>Business account</strong>: har sale par 13.25% fee.</li>
+                </ul>
+                <h6>Yaad rakhein</h6>
+                <ul class="mb-0">
+                    <li>Price {{ conf.price_min|floatformat:"-2" }} se neeche na jayein – sasti cheez mein dropshippers aa kar market kharab kar dete hain.</li>
+                    <li>Research tool par avg sold price, free postage aur total sellers dekhein.</li>
+                    <li>Sellers par nazar rakhein (spy) – zyada price + zyada sales wala product chunein.</li>
+                    <li>Bulk se pehle hamesha chhota test.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h5 class="card-title mb-0"><i class="ri-lightbulb-flash-line align-bottom text-warning me-1"></i> Sourcing se pehle – mazeed achhi baatein</h5></div>
+    <div class="card-body">
+        <p class="text-muted fs-13">Ye tool ke checks mein shamil nahi, lekin maal mangwane se pehle zaroor sochein:</p>
+        <ul class="mb-0">
+            <li><strong>Munafa:</strong> landing cost (maal + shipping + custom) bechne ki price ka 35% se kam ho.</li>
+            <li><strong>Halka aur chhota</strong> product – warna shipping munafa kha jati hai.</li>
+            <li><strong>Na tootne wala</strong> – glass jaisi cheez returns barhati hai.</li>
+            <li><strong>Brand / patent ka masla na ho</strong> – bade brand jaisa product eBay par VeRO ka khatra hai.</li>
+            <li><strong>Kam variations</strong> (1–2 rang) – zyada size/rang stock phansate hain.</li>
+            <li><strong>Kam returns</strong> wali category – electronics aur size wale kapdon mein returns zyada.</li>
+        </ul>
+    </div>
+</div>
+
+</div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .step-no { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%;
+               background: var(--vz-primary); color: #fff; font-size: 13px; font-weight: 600; margin-right: .35rem; vertical-align: middle; }
+</style>
+{% endblock %}

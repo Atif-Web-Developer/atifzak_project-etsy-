@@ -1,0 +1,197 @@
+{% extends 'layouts/base.html' %}
+{% block title %}eBay Dropshipping | Atif-Zak Analytics{% endblock %}
+
+{% block page_header %}{% include 'partials/page_title.html' with title='eBay Dropshipping' parent='Dropshipping' %}{% endblock %}
+
+{% block content %}
+{# ------------------------------------------------ Stats #}
+<div class="row">
+    <div class="col-xl-3 col-6">
+        <div class="card card-animate"><div class="card-body d-flex align-items-center gap-3">
+            <span class="stat-icon bg-primary-subtle text-primary"><i class="ri-shopping-bag-3-line"></i></span>
+            <div><p class="text-uppercase fw-medium text-muted mb-1 fs-12">Products</p><h4 class="mb-0">{{ stats.total }}</h4></div>
+        </div></div>
+    </div>
+    <div class="col-xl-3 col-6">
+        <div class="card card-animate"><div class="card-body d-flex align-items-center gap-3">
+            <span class="stat-icon bg-success-subtle text-success"><i class="ri-trophy-line"></i></span>
+            <div><p class="text-uppercase fw-medium text-muted mb-1 fs-12">Winning</p><h4 class="mb-0">{{ stats.winning }}</h4></div>
+        </div></div>
+    </div>
+    <div class="col-xl-3 col-6">
+        <div class="card card-animate"><div class="card-body d-flex align-items-center gap-3">
+            <span class="stat-icon bg-info-subtle text-info"><i class="ri-price-tag-3-line"></i></span>
+            <div><p class="text-uppercase fw-medium text-muted mb-1 fs-12">Listed</p><h4 class="mb-0">{{ stats.listed }}</h4></div>
+        </div></div>
+    </div>
+    <div class="col-xl-3 col-6">
+        <div class="card card-animate"><div class="card-body d-flex align-items-center gap-3">
+            <span class="stat-icon bg-warning-subtle text-warning"><i class="ri-money-dollar-circle-line"></i></span>
+            <div><p class="text-uppercase fw-medium text-muted mb-1 fs-12">Avg. profit</p><h4 class="mb-0">{% if stats.avg_profit is not None %}${{ stats.avg_profit }}{% else %}—{% endif %}</h4></div>
+        </div></div>
+    </div>
+</div>
+
+{# ------------------------------------------------ Sync bar #}
+<div class="card">
+    <div class="card-body d-flex flex-wrap align-items-center gap-3">
+        <span class="stat-icon {% if conf.sheet_connected %}bg-success-subtle text-success{% else %}bg-secondary-subtle text-secondary{% endif %}"><i class="ri-google-line"></i></span>
+        <div class="flex-grow-1">
+            {% if conf.sheet_connected %}
+                <h6 class="mb-1">Google Sheet connected</h6>
+                <p class="text-muted mb-0 fs-13" id="sync-status">
+                    {% if conf.last_sync_at %}Last sync {{ conf.last_sync_at|timesince }} ago – {{ conf.last_sync_message }}{% else %}Not synced yet.{% endif %}
+                    {% if stats.unsynced %}<span class="text-warning fw-medium"><i class="ri-time-line align-bottom"></i> {{ stats.unsynced }} waiting to sync</span>{% endif %}
+                </p>
+            {% else %}
+                <h6 class="mb-1">Google Sheet not connected</h6>
+                <p class="text-muted mb-0 fs-13">Products are saved here. Connect your sheet so every product is also kept there.</p>
+            {% endif %}
+        </div>
+        <div class="d-flex gap-2">
+            {% if conf.sheet_connected %}
+                <form method="post" action="{% url 'ebay_dropshipping:sync' %}" id="sync-form">
+                    {% csrf_token %}
+                    <button class="btn btn-soft-success" id="btn-sync"><i class="ri-refresh-line align-bottom me-1"></i> Sync now</button>
+                </form>
+            {% endif %}
+            <a href="{% url 'ebay_dropshipping:settings' %}" class="btn btn-soft-secondary"><i class="ri-settings-3-line align-bottom me-1"></i> Settings</a>
+            <a href="{% url 'ebay_dropshipping:product_add' %}" class="btn btn-primary"><i class="ri-add-line align-bottom me-1"></i> Add product</a>
+        </div>
+    </div>
+</div>
+
+{# ------------------------------------------------ Table #}
+<div class="card">
+    <div class="card-header border-0">
+        <form method="get" class="row g-2">
+            <div class="col-lg-5">
+                <div class="search-box">
+                    <input type="text" name="q" value="{{ filters.q }}" class="form-control" placeholder="Search item ID, product or seller…">
+                    <i class="ri-search-line search-icon"></i>
+                </div>
+            </div>
+            <div class="col-lg-3 col-sm-6">
+                <select name="tab" class="form-select">
+                    <option value="">All tabs</option>
+                    {% for t in tabs %}<option value="{{ t }}" {% if filters.tab == t %}selected{% endif %}>{{ t }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-lg-2 col-sm-6">
+                <select name="status" class="form-select">
+                    <option value="">All statuses</option>
+                    {% for value, label in statuses %}<option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-lg-2 d-flex gap-2">
+                <button class="btn btn-soft-primary flex-fill"><i class="ri-equalizer-fill align-bottom me-1"></i> Filter</button>
+                {% if filters.q or filters.tab or filters.status %}<a href="{% url 'ebay_dropshipping:product_list' %}" class="btn btn-light" title="Reset"><i class="ri-refresh-line"></i></a>{% endif %}
+            </div>
+        </form>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive table-card m-0">
+            <table class="table table-hover align-middle table-nowrap mb-0">
+                <thead class="table-light text-muted text-uppercase fs-11">
+                    <tr>
+                        <th>Product</th><th>Seller</th><th class="text-end">eBay price</th><th class="text-end">Cost</th>
+                        <th class="text-end">My price</th><th class="text-end">Profit</th><th>Status</th><th>Sheet</th><th class="text-end"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p, c in rows %}
+                        <tr>
+                            <td style="max-width: 360px;">
+                                <div class="d-flex align-items-center gap-2">
+                                    {% if p.image_url %}<img src="{{ p.image_url }}" alt="" class="rounded border flex-shrink-0 bg-white" style="width: 40px; height: 40px; object-fit: contain;" loading="lazy" referrerpolicy="no-referrer">
+                                    {% else %}<span class="avatar-xs flex-shrink-0"><span class="avatar-title rounded bg-light text-muted"><i class="ri-image-line"></i></span></span>{% endif %}
+                                    <div style="min-width: 0;">
+                                        <a href="{% url 'ebay_dropshipping:product_edit' p.pk %}" class="fw-medium text-body d-block text-truncate" title="{{ p.product_name }}">{{ p.product_name|default:'(no name)' }}</a>
+                                        <span class="text-muted fs-12">
+                                            <a href="{{ p.ebay_link }}" target="_blank" rel="noopener" class="text-muted">#{{ p.item_id }} <i class="ri-external-link-line align-bottom"></i></a>
+                                            · {{ p.tab }}{% if p.sold_orders is not None %} · {{ p.sold_orders }} sold{% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {{ p.seller_name|default:'—' }}
+                                {% if p.seller_feedback is not None %}<div class="text-muted fs-12">{{ p.seller_feedback }} feedback</div>{% endif %}
+                            </td>
+                            <td class="text-end">{% if p.seller_price is not None %}${{ p.seller_price }}{% else %}—{% endif %}
+                                {% if p.buyer_shipping is not None %}<div class="text-muted fs-12">+ ${{ p.buyer_shipping }} their shipping</div>{% endif %}</td>
+                            <td class="text-end">{% if p.supplier_cost is not None %}${{ p.supplier_cost }}{% else %}—{% endif %}
+                                {% if p.supplier_link %}<div class="fs-12"><a href="{{ p.supplier_link }}" target="_blank" rel="noopener">supplier <i class="ri-external-link-line align-bottom"></i></a></div>{% endif %}</td>
+                            <td class="text-end fw-medium">{% if p.listed_price is not None %}${{ p.listed_price }}{% if p.my_shipping %}<span class="text-muted fw-normal fs-12"> + ${{ p.my_shipping }} ship</span>{% endif %}{% else %}—{% endif %}
+                                {% if c.break_even is not None %}<div class="fs-12 {% if p.listed_price is not None and p.listed_price < c.break_even %}text-danger{% else %}text-muted{% endif %}">break-even ${{ c.break_even }}</div>{% endif %}</td>
+                            <td class="text-end">
+                                {% if c.profit is not None %}
+                                    <span class="fw-semibold {% if c.profit >= 0 %}text-success{% else %}text-danger{% endif %}">${{ c.profit }}</span>
+                                    <div class="fs-12 {% if c.profit >= 0 %}text-success{% else %}text-danger{% endif %}">{{ c.profit_pct }}%{% if c.roi is not None %} · ROI {{ c.roi }}%{% endif %}</div>
+                                {% else %}<span class="text-muted">—</span>{% endif %}
+                            </td>
+                            <td><span class="badge bg-{{ p.status_color }}-subtle text-{{ p.status_color }}">{{ p.status }}</span></td>
+                            <td>
+                                {% if p.sync_status == 'synced' %}<i class="ri-checkbox-circle-fill text-success fs-16" data-bs-toggle="tooltip" title="In Google Sheet"></i>
+                                {% elif p.sync_status == 'error' %}<i class="ri-error-warning-fill text-danger fs-16" data-bs-toggle="tooltip" title="{{ p.sync_error }}"></i>
+                                {% else %}<i class="ri-time-fill text-warning fs-16" data-bs-toggle="tooltip" title="Waiting to sync"></i>{% endif %}
+                            </td>
+                            <td class="text-end">
+                                <div class="dropdown">
+                                    <button class="btn btn-soft-secondary btn-sm" data-bs-toggle="dropdown" aria-label="Actions"><i class="ri-more-fill"></i></button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="{% url 'ebay_dropshipping:product_edit' p.pk %}"><i class="ri-pencil-fill align-bottom me-2 text-muted"></i> Edit</a></li>
+                                        <li><a class="dropdown-item" href="{{ p.ebay_link }}" target="_blank" rel="noopener"><i class="ri-external-link-line align-bottom me-2 text-muted"></i> Open on eBay</a></li>
+                                        {% for link in p.competitor_link_list|slice:':3' %}<li><a class="dropdown-item" href="{{ link }}" target="_blank" rel="noopener"><i class="ri-store-2-line align-bottom me-2 text-muted"></i> Competitor {{ forloop.counter }}</a></li>{% endfor %}
+                                        <li class="dropdown-divider"></li>
+                                        <li>
+                                            <form method="post" action="{% url 'ebay_dropshipping:product_delete' p.pk %}" data-confirm="This removes item {{ p.item_id }} here and from the Google Sheet." data-confirm-button="Delete">
+                                                {% csrf_token %}<button class="dropdown-item text-danger"><i class="ri-delete-bin-fill align-bottom me-2"></i> Delete</button>
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="9" class="py-5">
+                            <div class="text-center">
+                                <div class="avatar-md mx-auto mb-3"><span class="avatar-title bg-primary-subtle text-primary rounded-circle fs-24"><i class="ri-shopping-bag-3-line"></i></span></div>
+                                <h6>No products yet</h6>
+                                <p class="text-muted">Paste an eBay listing to add your first product.</p>
+                                <a href="{% url 'ebay_dropshipping:product_add' %}" class="btn btn-primary btn-sm"><i class="ri-add-line align-bottom"></i> Add product</a>
+                            </div>
+                        </td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% if page.paginator.num_pages > 1 %}<div class="card-footer">{% include 'partials/pagination.html' %}</div>{% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    var form = document.getElementById('sync-form');
+    if (!form) return;
+    var btn = document.getElementById('btn-sync');
+    function busy() { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Syncing…'; }
+    form.addEventListener('submit', busy);
+
+    {% if auto_sync %}
+    // Quietly pull changes made in the sheet when the page opens.
+    busy();
+    fetch(form.action, { method: 'POST', headers: { 'X-CSRFToken': getCookie('csrftoken'), 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+            if (d.ok && d.changed) { window.location.reload(); return; }
+            btn.disabled = false; btn.innerHTML = '<i class="ri-refresh-line align-bottom me-1"></i> Sync now';
+            document.getElementById('sync-status').textContent = d.ok ? 'Just synced – ' + d.message : 'Auto-sync failed: ' + d.error;
+        })
+        .catch(function () { btn.disabled = false; btn.innerHTML = '<i class="ri-refresh-line align-bottom me-1"></i> Sync now'; });
+    {% endif %}
+})();
+</script>
+{% endblock %}

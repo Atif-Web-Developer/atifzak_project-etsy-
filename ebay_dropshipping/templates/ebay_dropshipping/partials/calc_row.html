@@ -1,0 +1,8 @@
+<div class="d-flex align-items-center justify-content-between gap-2">
+    <label class="text-muted fs-13 mb-0" for="calc-{{ key }}">{{ label }}</label>
+    <div class="input-group input-group-sm" style="max-width: 150px;">
+        {% if prefix %}<span class="input-group-text">{{ prefix }}</span>{% endif %}
+        <input type="text" class="form-control text-end fw-semibold calc-value bg-light" id="calc-{{ key }}" readonly tabindex="-1">
+        {% if suffix %}<span class="input-group-text">{{ suffix }}</span>{% endif %}
+    </div>
+</div>

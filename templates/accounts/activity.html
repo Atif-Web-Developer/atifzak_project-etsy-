@@ -1,0 +1,60 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Activity Log | Atif-Zak Analytics{% endblock %}
+
+{% block page_header %}{% include 'partials/page_title.html' with title='Activity Log' parent='Administration' %}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header border-0">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md"><h5 class="card-title mb-0">Security &amp; account events</h5></div>
+            <div class="col-md-3 col-sm-6">
+                <select name="action" class="form-select">
+                    <option value="">All events</option>
+                    {% for value, label in actions %}<option value="{{ value }}" {% if filters.action == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 col-sm-6">
+                <select name="user" class="form-select">
+                    <option value="">All users</option>
+                    {% for u in users %}<option value="{{ u.pk }}" {% if filters.user == u.pk|stringformat:'s' %}selected{% endif %}>{{ u.username }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-md-auto d-flex gap-2">
+                <button class="btn btn-soft-primary"><i class="ri-equalizer-fill align-bottom me-1"></i> Filter</button>
+                {% if filters.action or filters.user %}<a href="{% url 'accounts:activity' %}" class="btn btn-light" title="Reset"><i class="ri-refresh-line"></i></a>{% endif %}
+            </div>
+        </form>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive table-card m-0">
+            <table class="table table-hover align-middle table-nowrap mb-0">
+                <thead class="table-light text-muted text-uppercase fs-12">
+                    <tr><th>Event</th><th>User</th><th>Details</th><th>IP address</th><th>When</th></tr>
+                </thead>
+                <tbody>
+                    {% for a in page %}
+                        {% with ic=a.icon %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="avatar-xs"><span class="avatar-title rounded-circle bg-{{ ic.1 }}-subtle text-{{ ic.1 }}"><i class="{{ ic.0 }}"></i></span></span>
+                                    <span class="fw-medium">{{ a.get_action_display }}</span>
+                                </div>
+                            </td>
+                            <td>{% if a.user %}{{ a.user.display_name }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+                            <td class="text-muted text-wrap" style="max-width: 360px;">{{ a.description }}</td>
+                            <td><code>{{ a.ip_address|default:'—' }}</code></td>
+                            <td class="text-muted" title="{{ a.created_at|date:'Y-m-d H:i:s' }}">{{ a.created_at|timesince }} ago</td>
+                        </tr>
+                        {% endwith %}
+                    {% empty %}
+                        <tr><td colspan="5">{% include 'partials/empty_state.html' with icon='ri-pulse-line' text='No events recorded yet.' %}</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% if page.paginator.num_pages > 1 %}<div class="card-footer">{% include 'partials/pagination.html' %}</div>{% endif %}
+</div>
+{% endblock %}

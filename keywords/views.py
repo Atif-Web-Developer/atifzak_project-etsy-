@@ -216,31 +216,112 @@ def load_results(request, search_id):
 
 @login_required
 def overview_dashboard(request):
-    total_files = KeywordSearch.objects.filter(user=request.user).count()
-    total_keywords = KeywordResult.objects.filter(search__user=request.user).count()
-    favorites_count = KeywordResult.objects.filter(is_favorite=True, search__user=request.user).count()
-    
+    from datetime import date
+    from django.db.models import Count, Sum
+    from django.db.models.functions import TruncMonth
+    from django.utils import timezone
+
+    user = request.user
+    my_results = KeywordResult.objects.filter(search__user=user)
+
+    total_files = KeywordSearch.objects.filter(user=user).count()
+    total_keywords = my_results.count()
+    favorites_count = my_results.filter(is_favorite=True).count()
+    total_searches = my_results.aggregate(s=Sum('avg_searches'))['s'] or 0
+
     # Golden Nuggets: High Demand (>1000) + Low Comp (<5000)
-    golden_nuggets = KeywordResult.objects.filter(competition__lt=5000, avg_searches__gte=1000, search__user=request.user).order_by('-avg_searches')[:10]
-    
+    golden_qs = my_results.filter(competition__lt=5000, avg_searches__gte=1000)
+    golden_count = golden_qs.count()
+    golden_nuggets = list(golden_qs.select_related('search').order_by('-avg_searches')[:8])
+
     # Easy to Rank: Good Demand (>500) + Med-Low Comp (<15000)
-    easy_to_rank = KeywordResult.objects.filter(competition__lt=15000, avg_searches__gte=500, search__user=request.user).exclude(id__in=[g.id for g in golden_nuggets]).order_by('-avg_searches')[:10]
-    
-    # All Favorites
-    favorites = KeywordResult.objects.filter(is_favorite=True, search__user=request.user).order_by('-avg_searches')
-    
-    from customer_detail.models import Customer
-    total_customers_db = Customer.objects.count()
-    
+    easy_to_rank = my_results.filter(competition__lt=15000, avg_searches__gte=500).exclude(
+        id__in=[g.id for g in golden_nuggets]).select_related('search').order_by('-avg_searches')[:8]
+
+    favorites = my_results.filter(is_favorite=True).select_related('search').order_by('-avg_searches')[:10]
+
+    # Chart: keyword opportunity mix.
+    category_order = ['Dark Green', 'Light Green', 'Orange', 'Red']
+    category_counts = dict(my_results.values_list('category').annotate(n=Count('id')))
+    category_chart = {
+        'labels': ['Golden (Dark Green)', 'Good (Light Green)', 'Moderate (Orange)', 'Hard (Red)'],
+        'series': [category_counts.get(c, 0) for c in category_order],
+    }
+
+    # Chart: biggest analysed files.
+    top_files = (KeywordSearch.objects.filter(user=user).annotate(n=Count('results'))
+                 .filter(n__gt=0).order_by('-n')[:7])
+    files_chart = {
+        'labels': [f.term.replace('Upload_', '')[:28] for f in top_files],
+        'series': [f.n for f in top_files],
+    }
+
     context = {
         'total_files': total_files,
         'total_keywords': total_keywords,
         'favorites_count': favorites_count,
+        'total_searches': total_searches,
+        'golden_count': golden_count,
         'golden_nuggets': golden_nuggets,
         'easy_to_rank': easy_to_rank,
         'favorites': favorites,
-        'total_customers_db': total_customers_db,
+        'category_chart': category_chart,
+        'files_chart': files_chart,
+        'recent_activity': user.activity.all()[:6],
     }
+
+    # Customers & suppliers growth over the last six months.
+    if user.has_module('customers') or user.has_module('suppliers'):
+        today = timezone.now().date().replace(day=1)
+        months = []
+        for i in range(5, -1, -1):
+            y, m = today.year, today.month - i
+            while m <= 0:
+                m += 12
+                y -= 1
+            months.append(date(y, m, 1))
+        since = months[0]
+
+        def monthly(qs, field):
+            rows = (qs.filter(**{f'{field}__date__gte': since}).annotate(month=TruncMonth(field))
+                    .values('month').annotate(n=Count('id')))
+            counts = {r['month'].date() if hasattr(r['month'], 'date') else r['month']: r['n'] for r in rows}
+            return [counts.get(mo, 0) for mo in months]
+
+        growth = {'labels': [mo.strftime('%b %Y') for mo in months], 'series': []}
+        if user.has_module('customers'):
+            from customer_detail.models import Customer
+            context['total_customers'] = Customer.objects.count()
+            context['recent_customers'] = Customer.objects.order_by('-created_date')[:5]
+            growth['series'].append({'name': 'Customers', 'data': monthly(Customer.objects.all(), 'created_date')})
+        if user.has_module('suppliers'):
+            from supplier_management.models import Supplier
+            context['total_suppliers'] = Supplier.objects.count()
+            growth['series'].append({'name': 'Suppliers', 'data': monthly(Supplier.objects.all(), 'created_at')})
+        context['growth_chart'] = growth
+
+    if user.has_module('competitors'):
+        from competitor_shop_analysis.models import CompetitorShop
+        context['total_competitors'] = CompetitorShop.objects.filter(category__user=user).count()
+
+    if user.has_module('forecaster'):
+        from django.db.models import Q
+        from forecaster.models import ForecastEvent
+        events = ForecastEvent.objects.filter(Q(is_system_default=True) | Q(user=user))
+        upcoming = sorted(events, key=lambda e: e.target_date)[:4]
+        today_d = date.today()
+        context['upcoming_events'] = [
+            {'name': e.name, 'date': e.target_date, 'days': (e.target_date - today_d).days,
+             'regions': e.target_regions} for e in upcoming
+        ]
+
+    if user.can_manage_users:
+        context['team'] = {
+            'total': User.objects.count(),
+            'active': User.objects.filter(is_active=True).count(),
+            'online_today': User.objects.filter(last_login__date=timezone.now().date()).count(),
+        }
+
     return render(request, 'keywords/overview.html', context)
 
 @login_required
@@ -287,7 +368,3 @@ def delete_history(request, search_id):
         KeywordResult.objects.filter(search=search_obj).delete()
         search_obj.delete()
     return redirect('view_history')
-
-def logout_view(request):
-    logout(request)
-    return redirect('login')

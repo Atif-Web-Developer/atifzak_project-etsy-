@@ -5,3 +5,6 @@ requests
 django-bootstrap5
 whitenoise
 gunicorn
+
+pillow
+python-dotenv

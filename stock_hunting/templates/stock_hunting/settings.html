@@ -1,0 +1,92 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Settings | Stock Hunting{% endblock %}
+
+{% block page_header %}
+    {% url 'stock_hunting:hunt_list' as list_url %}
+    {% include 'partials/page_title.html' with title='Settings' parent='Stock Hunting' parent_url=list_url %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-xl-7">
+        <div class="card">
+            <div class="card-header d-flex align-items-center">
+                <h5 class="card-title mb-0 flex-grow-1"><i class="ri-google-line align-bottom text-success me-1"></i> Google Sheet connection</h5>
+                {% if conf.sheet_connected %}<span class="badge bg-success-subtle text-success"><i class="ri-checkbox-circle-fill align-bottom"></i> Connected</span>
+                {% else %}<span class="badge bg-warning-subtle text-warning">Not connected</span>{% endif %}
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Ek dafa ye steps karein. Phir har hunt website ke saath Google Sheet ke <strong>Product selection</strong> aur <strong>Competitors selection</strong> tabs mein bhi save hoga.</p>
+                <ol class="vstack gap-3 ps-3 mb-4">
+                    <li><strong>Apni Google Sheet kholein</strong> (ma'am wali “stock sheet” View only hai – us ki copy banayein: <em>File → Make a copy</em>, ya nayi sheet) → <em>Extensions → Apps Script</em>.</li>
+                    <li><strong>Code.gs:</strong> editor mein sab kuch mita kar ye code paste karein:
+                        <button type="button" class="btn btn-soft-primary btn-sm ms-1" data-copy-url="{% url 'stock_hunting:download_script' %}"><i class="ri-file-copy-line align-bottom"></i> Copy code</button>
+                        <a href="{% url 'stock_hunting:download_script' %}?download=1" class="btn btn-light btn-sm">Download</a>
+                        <div class="text-muted fs-12 mt-1">Sync key is file mein pehle se hai. Ye eBay Dropshipping wale Code.gs se alag hai – alag sheet mein lagayein.</div>
+                    </li>
+                    <li><strong>Save</strong> (<kbd>Ctrl</kbd>+<kbd>S</kbd>).</li>
+                    <li><strong>Deploy → New deployment</strong> → ⚙ → <em>Web app</em>. <em>Execute as: <strong>Me</strong></em>, <em>Who has access: <strong>Anyone</strong></em> → <strong>Deploy</strong> → permission allow karein.</li>
+                    <li><strong>Web app URL</strong> (aakhir mein <code>/exec</code>) copy kar ke neeche paste karein.</li>
+                </ol>
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {% include 'partials/form_errors.html' with form=conn_form %}
+                    <label class="form-label" for="{{ conn_form.sheet_webapp_url.id_for_label }}">Web app URL</label>
+                    <div class="input-group">
+                        {{ conn_form.sheet_webapp_url }}
+                        <button class="btn btn-primary"><i class="ri-link align-bottom me-1"></i> Save &amp; test</button>
+                    </div>
+                    {% for e in conn_form.sheet_webapp_url.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+                </form>
+                <div class="alert alert-info mt-4 mb-0 fs-13">
+                    <i class="ri-information-line align-bottom text-info"></i> Ma'am ke column naam (“Sr. No”, “2 Sellers with 100 above sales { Yes / no}”, “Slaes price of competitors” …) pehchane jate hain – un ki sheet ki copy waisi hi chal jayegi. Sirf yahi columns likhe jate hain – koi extra column nahi banta.
+                    Code.gs baad mein badla? <em>Deploy → Manage deployments → ✏ Edit → New version → Deploy</em>.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-5">
+        <div class="card">
+            <div class="card-header"><h5 class="card-title mb-0"><i class="ri-scales-3-line align-bottom text-muted me-1"></i> Hunting rules</h5></div>
+            <div class="card-body">
+                <form method="post" action="{% url 'stock_hunting:save_rules' %}" novalidate>
+                    {% csrf_token %}
+                    <div class="row g-2">
+                        {% for field in rules_form %}
+                            <div class="col-sm-6">
+                                <label class="form-label fs-12 mb-1" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button class="btn btn-primary w-100 mt-3"><i class="ri-save-line align-bottom me-1"></i> Save rules</button>
+                    <p class="text-muted fs-11 mt-2 mb-0">Prices market ki apni currency mein hain ($ / £ / A$). Har hunt naye rules se dobara check hota hai.</p>
+                </form>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header"><h5 class="card-title mb-0"><i class="ri-key-2-line align-bottom text-muted me-1"></i> Sync key</h5></div>
+            <div class="card-body">
+                <p class="text-muted fs-13">Sirf is key wali requests aap ki sheet padh ya likh sakti hain. Leak ho jaye to nayi banayein.</p>
+                <form method="post" action="{% url 'stock_hunting:regenerate_token' %}" data-confirm="Create a new sync key? You must copy Code.gs into Apps Script again and redeploy.">
+                    {% csrf_token %}<button class="btn btn-soft-danger btn-sm"><i class="ri-refresh-line align-bottom"></i> New sync key</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('[data-copy-url]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        fetch(btn.getAttribute('data-copy-url')).then(function (r) { return r.text(); }).then(function (text) {
+            return navigator.clipboard.writeText(text);
+        }).then(function () { appToast('Copied! Now paste it into Apps Script.', 'success'); })
+          .catch(function () { appToast('Could not copy automatically – use Download.', 'warning'); });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,303 @@
+{% extends 'layouts/base.html' %}
+{% block title %}{% if instance %}Edit #{{ instance.sr_no }}{% else %}New hunt{% endif %} | Stock Hunting{% endblock %}
+
+{% block page_header %}
+    {% url 'stock_hunting:hunt_list' as list_url %}
+    {% if instance %}{% include 'partials/page_title.html' with title='Edit hunt' parent='Stock Hunting' parent_url=list_url %}
+    {% else %}{% include 'partials/page_title.html' with title='New hunt' parent='Stock Hunting' parent_url=list_url %}{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if not conf.sheet_connected %}
+    <div class="alert alert-warning alert-border-left d-flex align-items-center gap-2">
+        <i class="ri-google-line fs-18"></i>
+        <div class="flex-grow-1">Google Sheet is not connected yet – hunts are saved here and sent to the sheet once you connect it.</div>
+        <a href="{% url 'stock_hunting:settings' %}" class="btn btn-sm btn-warning">Connect now</a>
+    </div>
+{% endif %}
+
+<form method="post" id="hunt-form" novalidate>
+    {% csrf_token %}
+    {% include 'partials/form_errors.html' %}
+    {{ form.competitors.as_hidden }}
+
+    <div class="row">
+        <div class="col-xl-9">
+            {# ------------------------------------------------ Tab 1: Product selection #}
+            <div class="card">
+                <div class="card-header d-flex align-items-center gap-2">
+                    <i class="ri-file-list-3-line fs-18 text-success"></i>
+                    <h5 class="card-title mb-0 flex-grow-1">Product selection</h5>
+                    <a href="{% url 'stock_hunting:guide' %}" target="_blank" class="btn btn-sm btn-soft-info"><i class="ri-book-open-line align-bottom"></i> Manual</a>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-2">
+                            <label class="form-label">Sr. No</label>
+                            <input type="text" class="form-control bg-light" value="{{ sr_no }}" readonly tabindex="-1">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="id_main_keyword">Main Keyword</label>
+                            {{ form.main_keyword }}
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="id_sales_trend">Sales Trend</label>
+                            {{ form.sales_trend }}
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label" for="id_two_sellers_100">2 Sellers with 100 above sales {Yes / no}</label>
+                            {{ form.two_sellers_100 }}
+                            <div class="form-text auto-note" data-for="two_sellers_100"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="id_avg_price">Avg sales price {USD / POUND}</label>
+                            <div class="input-group">
+                                {{ form.market }}
+                                {{ form.avg_price }}
+                            </div>
+                            <div class="form-text auto-note" data-for="avg_price"></div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="id_total_sellers">Total Sellers</label>
+                            {{ form.total_sellers }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="id_seller_listing_link">seller listing link</label>
+                            {{ form.seller_listing_link }}
+                            <div class="form-text auto-note" data-for="seller_listing_link"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# ------------------------------------------------ Tab 2: Competitors selection #}
+            <div class="card">
+                <div class="card-header d-flex flex-wrap align-items-center gap-2">
+                    <i class="ri-team-line fs-18 text-success"></i>
+                    <h5 class="card-title mb-0 flex-grow-1">Competitors selection
+                        <small class="text-muted fw-normal fs-12">Sr No aur Main Keywords har row mein khud lag jate hain</small></h5>
+                    <span class="badge bg-primary-subtle text-primary" id="comp-count">0</span>
+                    <button type="button" class="btn btn-soft-primary btn-sm" id="comp-add"><i class="ri-add-line align-bottom"></i> Add row</button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive border rounded">
+                        <table class="table table-sm align-middle mb-0 hunt-grid" id="comp-table">
+                            <thead class="table-light text-muted fs-12">
+                                <tr><th style="width: 30px;">#</th><th>Listing link of competitors</th><th style="width: 120px;">Seller Feedback</th>
+                                    <th style="width: 130px;">Sales price of competitors (<span class="js-currency">{{ form.instance.market_info.currency }}</span>)</th>
+                                    <th style="width: 120px;">30 Days sales of competitors</th><th style="width: 170px;">pack/colour variation of competitors</th>
+                                    <th style="width: 40px;"></th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# ------------------------------------------------ Right: check + save #}
+        <div class="col-xl-3">
+            <div class="hunt-sticky">
+                <div class="card">
+                    <div class="card-header d-flex align-items-center gap-2">
+                        <h5 class="card-title mb-0 flex-grow-1">Check</h5><span class="badge bg-light text-muted">Live</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="verdict-box text-center rounded p-3 mb-3" id="verdict-box">
+                            <div class="fs-24" id="verdict-icon">⚪</div>
+                            <div class="fw-semibold fs-16" id="verdict-label">Data poora karein</div>
+                        </div>
+                        <ul class="list-unstyled vstack gap-2 mb-0 fs-13" id="checklist"></ul>
+                        <p class="text-muted fs-11 mb-0 mt-3">Ma'am ke qawaid – <a href="{% url 'stock_hunting:settings' %}">Settings</a> mein badal sakte hain.</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body d-flex flex-wrap gap-2">
+                        <a href="{% url 'stock_hunting:hunt_list' %}" class="btn btn-light flex-fill">Cancel</a>
+                        {% if not instance %}<button type="submit" name="then" value="new" class="btn btn-soft-primary flex-fill">Save &amp; new</button>{% endif %}
+                        <button type="submit" class="btn btn-primary flex-fill" id="btn-submit"><i class="ri-send-plane-2-line align-bottom me-1"></i> {% if instance %}Save changes{% else %}Save{% endif %}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+{{ error_list|json_script:'form-errors-data' }}
+{{ markets_json|json_script:'markets-data' }}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    @media (min-width: 1200px) { .hunt-sticky { position: sticky; top: calc(70px + 1.5rem); } }
+    #id_market { max-width: 110px; flex: 0 0 auto; }
+    .hunt-grid { min-width: 820px; }
+    .hunt-grid td { padding: .3rem .35rem; }
+    .hunt-grid .form-control { font-size: .8125rem; padding: .25rem .5rem; }
+    .verdict-box { background: var(--vz-light); transition: background .2s; }
+    .verdict-green { background: rgba(var(--vz-success-rgb), .15); color: var(--vz-success); }
+    .verdict-yellow { background: rgba(var(--vz-warning-rgb), .18); color: #b07a12; }
+    .verdict-red { background: rgba(var(--vz-danger-rgb), .12); color: var(--vz-danger); }
+    .check-item { display: flex; gap: .5rem; align-items: flex-start; }
+    .check-item .ci { width: 18px; flex-shrink: 0; text-align: center; }
+    .check-item .cd { margin-left: auto; color: var(--vz-secondary-color); white-space: nowrap; padding-left: .5rem; }
+    .auto-note a { cursor: pointer; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    var form = document.getElementById('hunt-form');
+    var MARKETS = JSON.parse(document.getElementById('markets-data').textContent);
+    var IS_NEW = {{ instance|yesno:'false,true' }};
+    function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; }
+    function field(name) { return form.querySelector('[name="' + name + '"]'); }
+
+    /* ---- Currency ($ USD / £ POUND / A$ AUD) */
+    function applyCurrency() {
+        var m = MARKETS[field('market').value] || MARKETS.US;
+        document.querySelectorAll('.js-currency').forEach(function (el) { el.textContent = m.currency; });
+    }
+    field('market').addEventListener('change', applyCurrency);
+    applyCurrency();
+
+    /* ---- Competitors selection table (JSON in the hidden #id_competitors) */
+    var comps = [];
+    try { comps = JSON.parse(document.getElementById('id_competitors').value || '[]'); } catch (e) {}
+    if (!Array.isArray(comps)) comps = [];
+    function blank() { return { link: '', feedback: '', price: '', sales_30d: '', variation: '' }; }
+    if (IS_NEW && !comps.length) for (var n = 0; n < 5; n++) comps.push(blank());
+    var COLS = [['link', 'url', 'https://www.ebay…/itm/…'], ['feedback', 'count'], ['price', 'money'],
+                ['sales_30d', 'count'], ['variation', 'text', 'e.g. 1 pack, red']];
+    function store() { document.getElementById('id_competitors').value = JSON.stringify(comps); }
+    function cell(row, col) {
+        var key = col[0], kind = col[1], td = document.createElement('td'), input = document.createElement('input');
+        input.className = 'form-control form-control-sm';
+        input.type = kind === 'url' ? 'url' : (kind === 'text' ? 'text' : 'number');
+        if (kind === 'money') { input.step = '0.01'; input.min = '0'; }
+        if (kind === 'count') { input.step = '1'; input.min = '0'; }
+        if (col[2]) input.placeholder = col[2];
+        input.value = row[key] == null ? '' : row[key];
+        input.setAttribute('aria-label', key);
+        input.addEventListener('input', function () { row[key] = input.value.trim(); changed(); });
+        td.appendChild(input);
+        return td;
+    }
+    function changed() {
+        var filled = comps.filter(function (c) { return COLS.some(function (col) { return String(c[col[0]] || '').trim(); }); }).length;
+        document.getElementById('comp-count').textContent = filled + (filled === 1 ? ' competitor' : ' competitors');
+        store();
+        schedule();
+    }
+    function render() {
+        var body = document.querySelector('#comp-table tbody');
+        body.innerHTML = '';
+        comps.forEach(function (c, i) {
+            var tr = document.createElement('tr');
+            var no = document.createElement('td'); no.className = 'text-muted fs-12'; no.textContent = i + 1; tr.appendChild(no);
+            COLS.forEach(function (col) { tr.appendChild(cell(c, col)); });
+            var del = document.createElement('td'); del.className = 'text-end';
+            del.innerHTML = '<button type="button" class="btn btn-sm btn-ghost-danger btn-icon" title="Delete row"><i class="ri-delete-bin-line"></i></button>';
+            del.querySelector('button').addEventListener('click', function () { comps.splice(i, 1); render(); });
+            tr.appendChild(del);
+            body.appendChild(tr);
+        });
+        changed();
+    }
+    document.getElementById('comp-add').addEventListener('click', function () {
+        comps.push(blank());
+        render();
+        var rows = document.querySelectorAll('#comp-table tbody tr');
+        rows[rows.length - 1].querySelector('input').focus();
+    });
+
+    /* ---- Fields filled from the competitor rows (until you type your own value) */
+    var AUTO = ['two_sellers_100', 'avg_price', 'seller_listing_link'];
+    var mode = {};   // 'auto' | 'manual' | 'unknown' (edit page, decided on the first check)
+    AUTO.forEach(function (name) {
+        mode[name] = field(name).value.trim() ? (IS_NEW ? 'manual' : 'unknown') : 'auto';
+        field(name).addEventListener(field(name).tagName === 'SELECT' ? 'change' : 'input', function () {
+            mode[name] = field(name).value.trim() ? 'manual' : 'auto';
+            schedule();
+        });
+    });
+    function same(name, a, b) {
+        if (name === 'avg_price') return a !== '' && b !== '' && Number(a) === Number(b);
+        return String(a || '') === String(b || '');
+    }
+    function showNotes() {
+        form.querySelectorAll('.auto-note').forEach(function (el) {
+            var name = el.getAttribute('data-for');
+            if (mode[name] === 'manual') {
+                el.innerHTML = 'Aap ka likha hua · <a class="link-primary js-auto">competitors se lein</a>';
+                el.querySelector('.js-auto').addEventListener('click', function () { mode[name] = 'auto'; field(name).value = ''; schedule(); });
+            } else {
+                el.textContent = 'Competitors ki rows se khud';
+            }
+        });
+    }
+
+    /* ---- Live check (stock_hunting/rules.py) */
+    var timer = null, seq = 0;
+    function schedule() { clearTimeout(timer); timer = setTimeout(evaluate, 250); }
+    form.addEventListener('input', function (e) { if (!e.target.closest('#comp-table') && AUTO.indexOf(e.target.name) === -1) schedule(); });
+    form.addEventListener('change', function (e) { if (!e.target.closest('#comp-table') && AUTO.indexOf(e.target.name) === -1) schedule(); });
+    var ICON = { pass: '<span class="text-success">✅</span>', fail: '<span class="text-danger">❌</span>', missing: '<span class="text-muted">○</span>' };
+    function evaluate() {
+        var mine = ++seq, data = new FormData(form);
+        AUTO.forEach(function (name) { if (mode[name] === 'auto') data.set(name, ''); });
+        fetch('{% url "stock_hunting:evaluate" %}', { method: 'POST', body: data, headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (r) { return r.json(); })
+            .then(function (d) { if (mine === seq) show(d); })
+            .catch(function () {});
+    }
+    function show(d) {
+        AUTO.forEach(function (name) {
+            if (mode[name] === 'unknown') mode[name] = same(name, field(name).value.trim(), d.auto[name]) ? 'auto' : 'manual';
+            if (mode[name] === 'auto') field(name).value = d.auto[name] || '';
+        });
+        showNotes();
+        var box = document.getElementById('verdict-box');
+        box.className = 'verdict-box text-center rounded p-3 mb-3 verdict-' + d.verdict;
+        document.getElementById('verdict-icon').textContent = d.verdict_info.icon;
+        document.getElementById('verdict-label').textContent = d.verdict_label;
+        var html = '', lastReq = null;
+        d.checks.forEach(function (c) {
+            if (lastReq !== c.required) {
+                html += '<li class="text-uppercase fs-11 fw-semibold text-muted mt-1">' + (c.required ? 'Zaroori' : 'Achha ho to behtar') + '</li>';
+                lastReq = c.required;
+            }
+            html += '<li class="check-item"><span class="ci">' + ICON[c.status] + '</span><span>' + esc(c.label) +
+                    '</span><span class="cd">' + esc(c.detail) + '</span></li>';
+        });
+        document.getElementById('checklist').innerHTML = html;
+    }
+    render();   // also runs the first check
+
+    /* ---- Errors and double submits */
+    var errors = JSON.parse(document.getElementById('form-errors-data').textContent);
+    if (errors.length) {
+        var ul = document.createElement('ul'); ul.className = 'text-start mb-0';
+        errors.forEach(function (m) { var li = document.createElement('li'); li.textContent = m; ul.appendChild(li); });
+        Swal.fire({ icon: 'error', title: 'Not saved yet', html: ul.outerHTML, confirmButtonText: 'OK, fix it',
+                    customClass: { confirmButton: 'btn btn-primary w-xs' }, buttonsStyling: false });
+    }
+    form.addEventListener('submit', function (e) {
+        var kw = field('main_keyword');
+        if (!kw.value.trim()) {
+            e.preventDefault();
+            kw.classList.add('is-invalid');
+            Swal.fire({ icon: 'error', title: 'Not saved yet', text: 'Main Keyword likhein.', confirmButtonText: 'OK',
+                        customClass: { confirmButton: 'btn btn-primary w-xs' }, buttonsStyling: false })
+                .then(function () { kw.scrollIntoView({ behavior: 'smooth', block: 'center' }); kw.focus({ preventScroll: true }); });
+            return;
+        }
+        form.querySelectorAll('button[type="submit"]').forEach(function (b) { b.disabled = true; });
+        var hidden = document.createElement('input'); hidden.type = 'hidden'; hidden.name = 'then';
+        hidden.value = e.submitter && e.submitter.value === 'new' ? 'new' : ''; form.appendChild(hidden);
+    });
+})();
+</script>
+{% endblock %}

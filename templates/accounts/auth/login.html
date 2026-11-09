@@ -1,0 +1,53 @@
+{% extends 'layouts/auth.html' %}
+{% block title %}Sign in{% endblock %}
+{% block form %}
+<div>
+    <h4 class="text-primary fw-semibold">Welcome back!</h4>
+    <p class="text-muted">Sign in to continue to Atif-Zak Analytics.</p>
+</div>
+
+<div class="mt-4">
+    {% if lockout_error %}
+        <div class="alert alert-warning alert-border-left d-flex gap-2" role="alert"><i class="ri-time-line fs-16"></i><div>{{ lockout_error }}</div></div>
+    {% endif %}
+    {% include 'partials/form_errors.html' %}
+
+    <form method="post" novalidate data-loading>
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+
+        <div class="mb-3">
+            <label for="{{ form.username.id_for_label }}" class="form-label">Username or email</label>
+            <div class="form-icon">
+                {{ form.username }}
+                <i class="ri-user-3-line"></i>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <div class="float-end"><a href="{% url 'password_reset' %}" class="text-muted">Forgot password?</a></div>
+            <label class="form-label" for="{{ form.password.id_for_label }}">Password</label>
+            <div class="position-relative auth-pass-inputgroup">
+                {{ form.password }}
+                <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" type="button" tabindex="-1" aria-label="Show password"><i class="ri-eye-fill align-middle"></i></button>
+            </div>
+        </div>
+
+        <div class="form-check">
+            {{ form.remember_me }}
+            <label class="form-check-label" for="{{ form.remember_me.id_for_label }}">{{ form.remember_me.label }}</label>
+        </div>
+
+        <div class="mt-4">
+            <button class="btn btn-primary w-100 btn-label waves-effect waves-light" type="submit" data-loading-text="Signing in…">
+                <i class="ri-login-circle-line label-icon align-middle fs-16 me-2"></i> Sign in
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="mt-5 text-center">
+    <p class="mb-0 text-muted fs-13"><i class="ri-shield-check-line align-middle text-success"></i>
+        Accounts are created by your administrator. Need access? Contact your admin.</p>
+</div>
+{% endblock %}

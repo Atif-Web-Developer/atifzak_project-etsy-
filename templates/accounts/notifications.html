@@ -1,0 +1,50 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Notifications | Atif-Zak Analytics{% endblock %}
+
+{% block page_header %}{% include 'partials/page_title.html' with title='Notifications' parent='Account' %}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex flex-wrap gap-2 align-items-center">
+        <ul class="nav nav-pills nav-customs nav-danger flex-grow-1" role="tablist">
+            <li class="nav-item"><a class="nav-link py-1 px-3 {% if status != 'unread' %}active{% endif %}" href="?status=all">All</a></li>
+            <li class="nav-item"><a class="nav-link py-1 px-3 {% if status == 'unread' %}active{% endif %}" href="?status=unread">Unread {% if nav_unread_count %}<span class="badge bg-danger ms-1">{{ nav_unread_count }}</span>{% endif %}</a></li>
+        </ul>
+        <form method="post" action="{% url 'accounts:notification_mark_all' %}">
+            {% csrf_token %}
+            <button class="btn btn-soft-primary btn-sm" {% if not nav_unread_count %}disabled{% endif %}><i class="ri-check-double-line align-bottom me-1"></i> Mark all read</button>
+        </form>
+        <form method="post" action="{% url 'accounts:notification_clear' %}" data-confirm="All read notifications will be deleted." data-confirm-button="Clear">
+            {% csrf_token %}
+            <button class="btn btn-soft-danger btn-sm"><i class="ri-delete-bin-line align-bottom me-1"></i> Clear read</button>
+        </form>
+    </div>
+    <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+            {% for n in page %}
+                <li class="list-group-item px-4 py-3 {% if not n.is_read %}notification-item unread{% endif %}">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="avatar-xs flex-shrink-0">
+                            <span class="avatar-title bg-{{ n.level }}-subtle text-{{ n.level }} rounded-circle fs-16"><i class="{{ n.icon }}"></i></span>
+                        </div>
+                        <div class="flex-grow-1 overflow-hidden">
+                            <a href="{{ n.get_absolute_url }}" class="text-body"><h6 class="mb-1 fs-14">{{ n.title }} {% if not n.is_read %}<span class="badge bg-primary ms-1 fs-10">New</span>{% endif %}</h6></a>
+                            {% if n.message %}<p class="text-muted mb-1">{{ n.message }}</p>{% endif %}
+                            <small class="text-muted"><i class="ri-time-line align-bottom"></i> {{ n.created_at|date:'M j, Y H:i' }} · {{ n.created_at|timesince }} ago</small>
+                        </div>
+                        <form method="post" action="{% url 'accounts:notification_delete' n.pk %}">
+                            {% csrf_token %}
+                            <button class="btn btn-ghost-danger btn-icon btn-sm" title="Delete" aria-label="Delete notification"><i class="ri-close-line fs-16"></i></button>
+                        </form>
+                    </div>
+                </li>
+            {% empty %}
+                <li class="list-group-item py-5">{% include 'partials/empty_state.html' with icon='ri-notification-off-line' text='No notifications here.' %}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% if page.paginator.num_pages > 1 %}
+        <div class="card-footer">{% include 'partials/pagination.html' %}</div>
+    {% endif %}
+</div>
+{% endblock %}

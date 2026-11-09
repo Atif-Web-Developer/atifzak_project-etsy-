@@ -1,0 +1,78 @@
+<div class="app-menu navbar-menu">
+    <div class="navbar-brand-box">
+        {% include 'partials/logo.html' with variant='logo-dark' %}
+        {% include 'partials/logo.html' with variant='logo-light' %}
+        <button type="button" class="btn btn-sm p-0 fs-20 header-item float-end btn-vertical-sm-hover" id="vertical-hover" aria-label="Pin sidebar">
+            <i class="ri-record-circle-line"></i>
+        </button>
+    </div>
+
+    <div id="scrollbar" data-simplebar>
+        <div class="container-fluid">
+            <div id="two-column-menu"></div>
+            <ul class="navbar-nav" id="navbar-nav">
+                {% for group, modules in nav_groups %}
+                    <li class="menu-title"><span>{{ group }}</span></li>
+                    {% for m in modules %}
+                        <li class="nav-item">
+                            <a class="nav-link menu-link {% if nav_current_module == m.key %}active{% endif %}" href="{% url m.url_name %}">
+                                <i class="{{ m.icon }}"></i> <span>{{ m.label }}</span>
+                            </a>
+                        </li>
+                    {% endfor %}
+                {% empty %}
+                    <li class="menu-title"><span>Modules</span></li>
+                    <li class="nav-item px-3 py-2 text-muted fs-13">
+                        No modules are assigned to your role yet. Please contact an administrator.
+                    </li>
+                {% endfor %}
+
+                {% if user.is_administration %}
+                    <li class="menu-title"><i class="ri-more-fill"></i> <span>Administration</span></li>
+                    {% if user.can_manage_users %}
+                        <li class="nav-item">
+                            <a class="nav-link menu-link {% if 'accounts:user' in nav_current_url %}active{% endif %}" href="{% url 'accounts:user_list' %}">
+                                <i class="ri-team-line"></i> <span>Users</span>
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% if user.can_manage_roles %}
+                        <li class="nav-item">
+                            <a class="nav-link menu-link {% if 'accounts:role' in nav_current_url %}active{% endif %}" href="{% url 'accounts:role_list' %}">
+                                <i class="ri-shield-keyhole-line"></i> <span>Roles &amp; Permissions</span>
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% if user.can_view_activity %}
+                        <li class="nav-item">
+                            <a class="nav-link menu-link {% if nav_current_url == 'accounts:activity' %}active{% endif %}" href="{% url 'accounts:activity' %}">
+                                <i class="ri-pulse-line"></i> <span>Activity Log</span>
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endif %}
+
+                <li class="menu-title"><i class="ri-more-fill"></i> <span>Account</span></li>
+                <li class="nav-item">
+                    <a class="nav-link menu-link {% if nav_current_url == 'accounts:profile' %}active{% endif %}" href="{% url 'accounts:profile' %}">
+                        <i class="ri-user-settings-line"></i> <span>My Profile</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link menu-link {% if 'accounts:notification' in nav_current_url %}active{% endif %}" href="{% url 'accounts:notifications' %}">
+                        <i class="ri-notification-3-line"></i> <span>Notifications</span>
+                        {% if nav_unread_count %}<span class="badge badge-pill bg-danger ms-auto">{{ nav_unread_count }}</span>{% endif %}
+                    </a>
+                </li>
+                {% if user.is_superuser %}
+                    <li class="nav-item">
+                        <a class="nav-link menu-link" href="{% url 'admin:index' %}" target="_blank" rel="noopener">
+                            <i class="ri-database-2-line"></i> <span>Django Admin</span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+    <div class="sidebar-background"></div>
+</div>

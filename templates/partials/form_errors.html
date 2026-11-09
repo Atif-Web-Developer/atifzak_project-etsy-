@@ -1,0 +1,6 @@
+{% if form.non_field_errors %}
+    <div class="alert alert-danger alert-border-left d-flex align-items-start gap-2 mb-3" role="alert">
+        <i class="ri-error-warning-line fs-16"></i>
+        <div>{% for e in form.non_field_errors %}{{ e }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</div>
+    </div>
+{% endif %}

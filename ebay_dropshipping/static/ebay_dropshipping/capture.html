@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sending to eBay Tool</title>
+<style>
+    :root { --bg: #f3f3f9; --card: #fff; --text: #212529; --muted: #878a99; --ok: #0ab39c; --warn: #f7b84b; --bad: #f06548; }
+    @media (prefers-color-scheme: dark) { :root { --bg: #1a1d21; --card: #212529; --text: #ced4da; --muted: #878a99; } }
+    body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg);
+           color: var(--text); font: 15px/1.5 "Segoe UI", system-ui, sans-serif; padding: 16px; box-sizing: border-box; }
+    .card { background: var(--card); border-radius: 10px; box-shadow: 0 4px 24px rgba(0,0,0,.08); padding: 28px 32px; max-width: 440px; width: 100%; text-align: center; }
+    .icon { font-size: 40px; line-height: 1; margin-bottom: 10px; }
+    h1 { font-size: 18px; margin: 0 0 6px; }
+    p { margin: 0; color: var(--muted); font-size: 14px; }
+    .ok h1 { color: var(--ok); } .warn h1 { color: #c08b2c; } .bad h1 { color: var(--bad); }
+    ul { text-align: left; font-size: 13px; color: var(--muted); padding-left: 18px; margin: 12px 0 0; }
+</style>
+</head>
+<body>
+<div class="card" id="card">
+    <div class="icon" id="icon">⏳</div>
+    <h1 id="title">Sending to your form…</h1>
+    <p id="body">One moment.</p>
+</div>
+<script>
+/*
+ * Relay page for the one-click button. The button opens this page with the product data in
+ * the address (#…). If an "Add/Edit product" form of the tool is open in another tab, the
+ * data goes there (the form you used last); otherwise a new "Add product" form opens with it.
+ */
+(function () {
+    var FORM_URL = '/ebay/add/';
+    var PENDING_KEY = 'ebay-capture-pending';
+
+    function show(kind, icon, title, body, notes) {
+        document.getElementById('card').className = 'card ' + kind;
+        document.getElementById('icon').textContent = icon;
+        document.getElementById('title').textContent = title;
+        document.getElementById('body').textContent = body;
+        if (notes && notes.length) {
+            var ul = document.createElement('ul');
+            notes.forEach(function (n) { var li = document.createElement('li'); li.textContent = n; ul.appendChild(li); });
+            document.getElementById('card').appendChild(ul);
+        }
+    }
+
+    var payload = null;
+    try { payload = JSON.parse(decodeURIComponent(location.hash.slice(1))); } catch (e) {}
+    history.replaceState(null, '', location.pathname);  // don't keep the data in the address / history
+    if (!payload || !payload.url) {
+        show('bad', '⚠️', 'Nothing received', 'Open a product page and click the "eBay Tool" button in your bookmarks bar.');
+        return;
+    }
+
+    function openNewForm() {
+        try { localStorage.setItem(PENDING_KEY, JSON.stringify({ ts: Date.now(), payload: payload })); } catch (e) {}
+        location.replace(FORM_URL);
+    }
+    if (!('BroadcastChannel' in window)) { openNewForm(); return; }
+
+    var id = String(Date.now()) + Math.random().toString(16).slice(2);
+    var channel = new BroadcastChannel('ebay-capture');
+    var claims = [];
+
+    channel.onmessage = function (e) {
+        var m = e.data || {};
+        if (m.id !== id) return;
+        if (m.type === 'claim') claims.push(m);
+        if (m.type === 'done') {
+            show(m.ok ? 'ok' : 'warn', m.ok ? '✅' : 'ℹ️', m.title, m.body + ' Switch back to the tool tab.', m.notes);
+            channel.close();
+            setTimeout(function () { window.close(); }, m.notes && m.notes.length ? 6000 : 2500);
+        }
+    };
+    channel.postMessage({ type: 'offer', id: id });
+
+    // Give open forms a moment to answer, then send to the one used most recently.
+    setTimeout(function () {
+        if (!claims.length) { channel.close(); openNewForm(); return; }
+        claims.sort(function (a, b) { return b.lastActive - a.lastActive; });
+        channel.postMessage({ type: 'apply', id: id, to: claims[0].formId, payload: payload });
+        setTimeout(function () {
+            if (document.getElementById('title').textContent.indexOf('Sending') === 0) {
+                show('warn', 'ℹ️', 'Your form did not answer', 'Refresh the tool tab (Ctrl+F5) and click the button again.');
+            }
+        }, 4000);
+    }, 800);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+{% load static %}<!doctype html>
+<html lang="en" data-layout="vertical" data-topbar="light" data-sidebar="dark" data-sidebar-size="lg"
+      data-sidebar-image="none" data-preloader="disable" data-theme="default" data-theme-colors="green"
+      data-layout-width="fluid" data-layout-position="fixed" data-layout-style="default" data-bs-theme="light">
+<head>
+    <meta charset="utf-8">
+    <title>{% block title %}Dashboard | Atif-Zak Analytics{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Atif-Zak Analytics – Etsy research and operations platform">
+    <link rel="shortcut icon" href="{% static 'velzon/images/favicon.ico' %}">
+
+    {# Restore dark mode and sidebar size before first paint to avoid a flash. #}
+    <script>
+        (function () {
+            var html = document.documentElement;
+            try {
+                var theme = localStorage.getItem('az-theme');
+                if (theme === 'dark' || theme === 'light') html.setAttribute('data-bs-theme', theme);
+                var size = localStorage.getItem('az-sidebar-size');
+                var w = window.innerWidth;
+                if (w > 1024 && (size === 'sm' || size === 'lg')) html.setAttribute('data-sidebar-size', size);
+                else if (w > 767 && w <= 1024) html.setAttribute('data-sidebar-size', 'sm');
+            } catch (e) {}
+        })();
+    </script>
+
+    <link href="{% static 'velzon/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'velzon/css/icons.min.css' %}" rel="stylesheet">
+    <link href="{% static 'velzon/css/app.min.css' %}" rel="stylesheet">
+    <link href="{% static 'velzon/libs/sweetalert2/sweetalert2.min.css' %}" rel="stylesheet">
+    {# Libraries the existing module pages rely on. #}
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="{% static 'app/css/app.css' %}" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+<div id="layout-wrapper">
+
+    {% include 'partials/topbar.html' %}
+    {% include 'partials/sidebar.html' %}
+    <div class="vertical-overlay"></div>
+
+    <div class="main-content">
+        <div class="page-content">
+            <div class="container-fluid">
+                {% block page_header %}{% endblock %}
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+        {% include 'partials/footer.html' %}
+    </div>
+</div>
+
+<button type="button" class="btn btn-primary btn-icon" id="back-to-top" aria-label="Back to top">
+    <i class="ri-arrow-up-line"></i>
+</button>
+
+{# Legacy loader used by several module pages. #}
+<div id="loader-overlay">
+    <div class="spinner-border text-primary avatar-sm" role="status"></div>
+    <p class="mt-3 fw-semibold">Analyzing Etsy data…</p>
+</div>
+
+{% include 'partials/messages.html' %}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="{% static 'velzon/libs/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'velzon/libs/simplebar/simplebar.min.js' %}"></script>
+<script src="{% static 'velzon/libs/node-waves/waves.min.js' %}"></script>
+<script src="{% static 'velzon/libs/sweetalert2/sweetalert2.min.js' %}"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script src="{% static 'app/js/app.js' %}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

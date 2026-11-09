@@ -1,0 +1,160 @@
+{% extends 'layouts/base.html' %}
+{% block title %}Settings | eBay Dropshipping{% endblock %}
+
+{% block page_header %}
+    {% url 'ebay_dropshipping:product_list' as list_url %}
+    {% include 'partials/page_title.html' with title='Settings' parent='eBay Dropshipping' parent_url=list_url %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-header d-flex align-items-center">
+                <h5 class="card-title mb-0 flex-grow-1"><i class="ri-google-line align-bottom text-success me-1"></i> Google Sheet connection</h5>
+                {% if conf.sheet_connected %}<span class="badge bg-success-subtle text-success"><i class="ri-checkbox-circle-fill align-bottom"></i> Connected</span>
+                {% else %}<span class="badge bg-warning-subtle text-warning">Not connected</span>{% endif %}
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Follow these steps once. After that every product you save here is also written to your Google Sheet, and products you add in the sheet come back here when you sync.</p>
+
+                <ol class="vstack gap-3 ps-3 mb-4">
+                    <li>
+                        <strong>Open your Google Sheet</strong> → menu <em>Extensions</em> → <em>Apps Script</em>.
+                    </li>
+                    <li>
+                        <strong>Code.gs:</strong> delete everything in the editor, then paste the code from
+                        <a href="{% url 'ebay_dropshipping:download_script' 'Code.gs' %}" target="_blank">Code.gs</a>
+                        (<a href="{% url 'ebay_dropshipping:download_script' 'Code.gs' %}?download=1">download</a>).
+                        <button type="button" class="btn btn-soft-primary btn-sm ms-1" data-copy-url="{% url 'ebay_dropshipping:download_script' 'Code.gs' %}"><i class="ri-file-copy-line align-bottom"></i> Copy code</button>
+                        <div class="text-muted fs-12 mt-1">Your sync key is already inside this file.</div>
+                    </li>
+                    <li>
+                        <strong>Form.html:</strong> click <em>＋</em> next to “Files” → <em>HTML</em> → name it exactly <code>Form</code>, delete what's inside, and paste
+                        <a href="{% url 'ebay_dropshipping:download_script' 'Form.html' %}" target="_blank">Form.html</a>.
+                        <button type="button" class="btn btn-soft-primary btn-sm ms-1" data-copy-url="{% url 'ebay_dropshipping:download_script' 'Form.html' %}"><i class="ri-file-copy-line align-bottom"></i> Copy code</button>
+                    </li>
+                    <li><strong>Save</strong> (💾 icon or <kbd>Ctrl</kbd>+<kbd>S</kbd>).</li>
+                    <li>
+                        Click <strong>Deploy → New deployment</strong> → gear ⚙ → <em>Web app</em>. Set
+                        <em>Execute as: <strong>Me</strong></em> and <em>Who has access: <strong>Anyone</strong></em> → <strong>Deploy</strong>.
+                        Google asks for permission the first time: <em>Authorize access</em> → choose your account → <em>Advanced</em> → <em>Go to … (unsafe)</em> → <em>Allow</em>.
+                    </li>
+                    <li>Copy the <strong>Web app URL</strong> (it ends with <code>/exec</code>) and paste it below.</li>
+                </ol>
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {% include 'partials/form_errors.html' with form=conn_form %}
+                    <label class="form-label" for="{{ conn_form.sheet_webapp_url.id_for_label }}">Web app URL</label>
+                    <div class="input-group">
+                        {{ conn_form.sheet_webapp_url }}
+                        <button class="btn btn-primary"><i class="ri-link align-bottom me-1"></i> Save &amp; test</button>
+                    </div>
+                    {% for e in conn_form.sheet_webapp_url.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+                </form>
+
+                <div class="alert alert-info mt-4 mb-0 fs-13">
+                    <i class="ri-information-line align-bottom text-info"></i>
+                    <strong>Changed Code.gs later?</strong> Use <em>Deploy → Manage deployments → ✏ Edit → Version: New version → Deploy</em> so the URL stays the same.
+                    In the sheet you also get a menu <em>eBay Dropshipping → Open form</em> to add products directly there.
+                </div>
+            </div>
+        </div>
+
+        <div class="card" id="one-click">
+            <div class="card-header d-flex align-items-center">
+                <h5 class="card-title mb-0 flex-grow-1"><i class="ri-cursor-line align-bottom text-primary me-1"></i> One-click button</h5>
+                <span class="badge bg-light text-muted">eBay · Amazon · AliExpress · Temu · CJ · any shop</span>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Open a product page and click this button in your bookmarks bar – the details go straight into your open <strong>Add product</strong> form (or a new one opens). No copy-paste.</p>
+                <div class="d-flex flex-wrap align-items-center gap-3 p-3 rounded border border-dashed mb-3">
+                    <a href="{{ bookmarklet }}" class="btn btn-success" id="bookmarklet-btn" title="Drag me to your bookmarks bar"><i class="ri-drag-move-2-line align-bottom me-1"></i> eBay Tool</a>
+                    <span class="fs-13"><i class="ri-arrow-left-line align-bottom text-success"></i> <strong>Drag this green button</strong> onto your bookmarks bar.</span>
+                </div>
+                <ol class="vstack gap-2 ps-3 mb-3 fs-13">
+                    <li>Bookmarks bar not showing? Press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>. (Works in Chrome, Edge and Firefox.)</li>
+                    <li>Keep <a href="{% url 'ebay_dropshipping:product_add' %}">Add product</a> open in one tab.</li>
+                    <li><strong>eBay listing</strong> → click <em>eBay Tool</em>: the first one fills the product, the next ones are added as <strong>competitors</strong> (only the biggest competitor's feedback and sold are kept).</li>
+                    <li><strong>Supplier page</strong> (Amazon, AliExpress, Temu, CJ, any shop) → click <em>eBay Tool</em>: supplier link, cost, shipping and the picture are filled.</li>
+                    <li>Check the form and click <strong>Submit</strong> – nothing is saved without you.</li>
+                </ol>
+                <div class="alert alert-warning mb-0 fs-13">
+                    <i class="ri-information-line align-bottom"></i> Use the tool at the same address every time (this button was made for <code>{{ request.get_host }}</code>).
+                    If something isn't found on a page, that field stays empty with a note – type it yourself. Prices in other currencies (e.g. Rs) are not converted: switch the site to US $ / a US delivery address.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        <div class="card">
+            <div class="card-header"><h5 class="card-title mb-0"><i class="ri-percent-line align-bottom text-muted me-1"></i> Fees</h5></div>
+            <div class="card-body">
+                <form method="post" action="{% url 'ebay_dropshipping:save_fees' %}" novalidate>
+                    {% csrf_token %}
+                    {% include 'partials/field.html' with field=fee_form.ebay_fee_pct %}
+                    <div class="row g-2">
+                        <div class="col-6">{% include 'partials/field.html' with field=fee_form.ebay_fixed_fee %}</div>
+                        <div class="col-6">{% include 'partials/field.html' with field=fee_form.ebay_fixed_fee_high %}</div>
+                    </div>
+                    {% include 'partials/field.html' with field=fee_form.fixed_fee_threshold %}
+                    {% include 'partials/field.html' with field=fee_form.ad_rate_pct %}
+                    {% include 'partials/field.html' with field=fee_form.sales_tax_pct %}
+                    <button class="btn btn-primary w-100"><i class="ri-save-line align-bottom me-1"></i> Save fees</button>
+                </form>
+                <p class="text-muted fs-12 mt-3 mb-0">They are also kept on an “eBay Settings” tab in your sheet, and every sheet formula uses them. Change them here or there – the newest change wins on sync.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h5 class="card-title mb-0"><i class="ri-key-2-line align-bottom text-muted me-1"></i> Sync key</h5></div>
+            <div class="card-body">
+                <p class="text-muted fs-13">Only requests with this key can read or write your sheet. It's already inside the Code.gs you copy above.</p>
+                <div class="input-group input-group-sm mb-3">
+                    <input type="password" class="form-control font-monospace" value="{{ conf.sync_token }}" readonly id="sync-key">
+                    <button class="btn btn-soft-secondary" type="button" onclick="var i=document.getElementById('sync-key');i.type=i.type==='password'?'text':'password';"><i class="ri-eye-line"></i></button>
+                </div>
+                <form method="post" action="{% url 'ebay_dropshipping:regenerate_token' %}" data-confirm="The current Code.gs will stop syncing until you paste the new one and redeploy." data-confirm-button="Create new key">
+                    {% csrf_token %}
+                    <button class="btn btn-soft-danger btn-sm w-100"><i class="ri-refresh-line align-bottom me-1"></i> Create a new key</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h5 class="card-title mb-0"><i class="ri-layout-column-line align-bottom text-muted me-1"></i> Sheet columns</h5></div>
+            <div class="card-body p-0">
+                <ol class="list-group list-group-flush list-group-numbered fs-13">
+                    {% for c in columns %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                            <span class="ms-1 me-auto">{{ c.header }}</span>
+                            {% if c.group == 'auto' %}<span class="badge bg-info-subtle text-info">auto</span>{% elif c.group == 'calc' %}<span class="badge bg-success-subtle text-success">formula</span>{% else %}<span class="badge bg-light text-muted">manual</span>{% endif %}
+                        </li>
+                    {% endfor %}
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// The one-click button only works from the bookmarks bar (it reads the page you are on).
+document.getElementById('bookmarklet-btn').addEventListener('click', function (e) {
+    e.preventDefault();
+    Swal.fire({ icon: 'info', title: 'Drag it, don't click it', html: 'Drag the green <b>eBay Tool</b> button onto your bookmarks bar (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> shows the bar). Then click it there while you are on an eBay or supplier page.',
+                customClass: { confirmButton: 'btn btn-primary w-xs' }, buttonsStyling: false });
+});
+document.querySelectorAll('[data-copy-url]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+        fetch(btn.getAttribute('data-copy-url')).then(function (r) { return r.text(); }).then(function (text) {
+            return navigator.clipboard.writeText(text);
+        }).then(function () { appToast('Copied! Now paste it into Apps Script.', 'success'); })
+          .catch(function () { appToast('Could not copy automatically – open the link and copy the text.', 'warning'); });
+    });
+});
+</script>
+{% endblock %}
