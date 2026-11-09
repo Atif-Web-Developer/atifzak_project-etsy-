@@ -1,0 +1,19 @@
+{# Django messages: normal ones become toasts (top-right); messages sent with extra_tags='swal' become a SweetAlert popup. app.js shows both on load. #}
+<div class="toast-container position-fixed top-0 end-0 p-3" id="app-toasts" style="z-index: 1090;">
+    {% for message in messages %}
+        {% with level=message.level_tag|default:'info' %}
+        {% if 'swal' in message.extra_tags %}
+            {# "Title::Body" – the part before :: is the popup title. #}
+            <div class="d-none app-swal" data-level="{{ level }}" data-message="{{ message }}"></div>
+        {% else %}
+        <div class="toast app-toast border-0 overflow-hidden" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+            <div class="toast-body d-flex align-items-start gap-2 bg-{{ level }}-subtle text-{{ level }}-emphasis">
+                <i class="fs-18 {% if level == 'success' %}ri-checkbox-circle-fill{% elif level == 'danger' %}ri-error-warning-fill{% elif level == 'warning' %}ri-alert-fill{% else %}ri-information-fill{% endif %}"></i>
+                <div class="flex-grow-1 fw-medium">{{ message }}</div>
+                <button type="button" class="btn-close btn-sm" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+        {% endif %}
+        {% endwith %}
+    {% endfor %}
+</div>

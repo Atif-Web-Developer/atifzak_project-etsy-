@@ -1,0 +1,35 @@
+{% load static %}<!doctype html>
+<html lang="en" data-theme="default" data-theme-colors="green" data-bs-theme="light">
+<head>
+    <meta charset="utf-8">
+    <title>{% block title %}{% endblock %} | Atif-Zak Analytics</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="{% static 'velzon/images/favicon.ico' %}">
+    <script>try { var t = localStorage.getItem('az-theme'); if (t) document.documentElement.setAttribute('data-bs-theme', t); } catch (e) {}</script>
+    <link href="{% static 'velzon/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'velzon/css/icons.min.css' %}" rel="stylesheet">
+    <link href="{% static 'velzon/css/app.min.css' %}" rel="stylesheet">
+    <link href="{% static 'app/css/app.css' %}" rel="stylesheet">
+</head>
+<body>
+<div class="auth-page-wrapper py-5 d-flex justify-content-center align-items-center min-vh-100">
+    <div class="auth-page-content overflow-hidden p-0">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-xl-6 col-lg-8 text-center">
+                    <div class="mb-4">{% include 'partials/logo.html' with variant='logo-dark d-inline-block' %}</div>
+                    <div class="display-1 fw-bold text-primary opacity-75 mb-2">{% block code %}{% endblock %}</div>
+                    <div class="avatar-lg mx-auto mb-4">
+                        <span class="avatar-title bg-primary-subtle text-primary rounded-circle display-6"><i class="{% block icon %}ri-error-warning-line{% endblock %}"></i></span>
+                    </div>
+                    <h3 class="text-uppercase">{% block heading %}{% endblock %}</h3>
+                    <p class="text-muted mb-4">{% block message %}{% endblock %}</p>
+                    <a href="{% url 'overview' %}" class="btn btn-primary"><i class="mdi mdi-home me-1"></i>Back to dashboard</a>
+                    <button type="button" onclick="history.back()" class="btn btn-soft-secondary ms-1"><i class="ri-arrow-left-line me-1"></i>Go back</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{# Renders one form field with Velzon markup. Usage: include 'partials/field.html' with field=form.email #}
+{% if field.field.widget.input_type == 'checkbox' %}
+    <div class="form-check form-switch form-switch-md mb-3">
+        {{ field }}
+        <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+        {% for e in field.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+    </div>
+{% else %}
+    <div class="mb-3">
+        <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="text-danger">*</span>{% endif %}</label>
+        {% if field.field.widget.input_type == 'password' %}
+            <div class="position-relative auth-pass-inputgroup">
+                {{ field.as_widget }}
+                <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" type="button" tabindex="-1" aria-label="Show password"><i class="ri-eye-fill align-middle"></i></button>
+            </div>
+        {% else %}
+            {{ field.as_widget }}
+        {% endif %}
+        {% if field.help_text %}<div class="form-text">{{ field.help_text|safe }}</div>{% endif %}
+        {% for e in field.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+    </div>
+{% endif %}

@@ -1,0 +1,85 @@
+{% load static %}<!doctype html>
+<html lang="en" data-layout="vertical" data-topbar="light" data-sidebar="dark" data-sidebar-size="lg"
+      data-theme="default" data-theme-colors="green" data-bs-theme="light">
+<head>
+    <meta charset="utf-8">
+    <title>{% block title %}Sign in{% endblock %} | Atif-Zak Analytics</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="{% static 'velzon/images/favicon.ico' %}">
+    <script>
+        try { var t = localStorage.getItem('az-theme'); if (t) document.documentElement.setAttribute('data-bs-theme', t); } catch (e) {}
+    </script>
+    <link href="{% static 'velzon/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'velzon/css/icons.min.css' %}" rel="stylesheet">
+    <link href="{% static 'velzon/css/app.min.css' %}" rel="stylesheet">
+    <link href="{% static 'app/css/app.css' %}" rel="stylesheet">
+</head>
+<body>
+<div class="auth-page-wrapper auth-bg-cover py-5 d-flex justify-content-center align-items-center min-vh-100">
+    <div class="bg-overlay"></div>
+    <div class="auth-page-content overflow-hidden pt-lg-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-xl-10 col-lg-11">
+                    <div class="card overflow-hidden card-bg-fill border-0 shadow-lg">
+                        <div class="row g-0">
+                            <div class="col-lg-6 d-none d-lg-block">
+                                <div class="p-lg-5 p-4 auth-one-bg h-100">
+                                    <div class="bg-overlay"></div>
+                                    <div class="position-relative h-100 d-flex flex-column">
+                                        <div class="mb-4">
+                                            {% include 'partials/logo.html' with variant='logo-light d-inline-block' %}
+                                        </div>
+                                        <div class="my-auto">
+                                            <h3 class="text-white fw-semibold mb-2">Grow your Etsy shop with data.</h3>
+                                            <p class="text-white-50 mb-4">Keyword research, competitor tracking, profit planning and operations — in one workspace.</p>
+                                            <div class="vstack gap-3">
+                                                <div class="auth-feature"><i class="ri-file-search-line"></i><div><h6 class="text-white mb-0">Keyword intelligence</h6><small>Score eRank exports and find golden nuggets.</small></div></div>
+                                                <div class="auth-feature"><i class="ri-store-2-line"></i><div><h6 class="text-white mb-0">Competitor tracking</h6><small>Monitor shops and their winning keywords.</small></div></div>
+                                                <div class="auth-feature"><i class="ri-shield-keyhole-line"></i><div><h6 class="text-white mb-0">Role-based access</h6><small>Every team member sees exactly what they need.</small></div></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-6">
+                                <div class="p-lg-5 p-4">
+                                    <div class="d-lg-none text-center mb-4">
+                                        {% include 'partials/logo.html' with variant='logo-dark d-inline-block' %}
+                                    </div>
+                                    {% block form %}{% endblock %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer class="footer border-0">
+        <div class="container">
+            <div class="text-center"><p class="mb-0 text-white-50">{% now 'Y' %} © Atif-Zak Analytics</p></div>
+        </div>
+    </footer>
+</div>
+{% include 'partials/messages.html' %}
+<script src="{% static 'velzon/libs/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<script>
+    document.querySelectorAll('.app-toast').forEach(function (el) { new bootstrap.Toast(el).show(); });
+    document.querySelectorAll('.password-addon').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var input = btn.parentElement.querySelector('input');
+            var show = input.type === 'password';
+            input.type = show ? 'text' : 'password';
+            btn.querySelector('i').className = (show ? 'ri-eye-off-fill' : 'ri-eye-fill') + ' align-middle';
+        });
+    });
+    document.querySelectorAll('form[data-loading]').forEach(function (f) {
+        f.addEventListener('submit', function () {
+            var b = f.querySelector('button[type=submit]');
+            if (b) { b.disabled = true; b.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>' + b.getAttribute('data-loading-text'); }
+        });
+    });
+</script>
+</body>
+</html>

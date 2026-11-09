@@ -1,0 +1,1 @@
+{% if u.avatar %}<img class="{{ css }} object-fit-cover" src="{{ u.avatar.url }}" alt="{{ u.display_name }}">{% else %}<span class="{{ css }} avatar-initials bg-{{ u.role_color }}-subtle text-{{ u.role_color }}">{{ u.initials }}</span>{% endif %}

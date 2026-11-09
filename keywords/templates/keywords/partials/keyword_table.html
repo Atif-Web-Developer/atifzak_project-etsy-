@@ -1,0 +1,20 @@
+{% load humanize %}
+<div class="table-responsive table-card m-0">
+    <table class="table table-borderless table-hover table-nowrap align-middle mb-0">
+        <thead class="table-light text-muted">
+            <tr><th>Keyword</th><th class="text-end">Searches</th><th class="text-end">Competition</th><th>Source</th></tr>
+        </thead>
+        <tbody>
+            {% for item in rows %}
+                <tr>
+                    <td class="fw-medium">{{ item.keyword }}</td>
+                    <td class="text-end"><span class="badge bg-{{ color }}-subtle text-{{ color }}">{{ item.avg_searches|intcomma }}</span></td>
+                    <td class="text-end">{{ item.competition|intcomma }}</td>
+                    <td class="text-muted fs-12">{{ item.search.term|cut:'Upload_'|truncatechars:22 }}</td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="4">{% include 'partials/empty_state.html' with icon='ri-file-upload-line' text=empty %}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

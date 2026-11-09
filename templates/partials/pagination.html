@@ -1,0 +1,22 @@
+{# Expects `page` (a Paginator page). Keeps current query-string filters. #}
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <div class="text-muted fs-13">
+        Showing <span class="fw-semibold">{{ page.start_index }}</span>–<span class="fw-semibold">{{ page.end_index }}</span>
+        of <span class="fw-semibold">{{ page.paginator.count }}</span>
+    </div>
+    <ul class="pagination pagination-separated pagination-sm mb-0">
+        <li class="page-item {% if not page.has_previous %}disabled{% endif %}">
+            <a class="page-link" href="{% if page.has_previous %}?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}page={{ page.previous_page_number }}{% else %}#{% endif %}">←</a>
+        </li>
+        {% for num in page.paginator.page_range %}
+            {% if num == page.number %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+            {% elif num > page.number|add:'-3' and num < page.number|add:'3' %}
+                <li class="page-item"><a class="page-link" href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a></li>
+            {% endif %}
+        {% endfor %}
+        <li class="page-item {% if not page.has_next %}disabled{% endif %}">
+            <a class="page-link" href="{% if page.has_next %}?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}page={{ page.next_page_number }}{% else %}#{% endif %}">→</a>
+        </li>
+    </ul>
+</div>

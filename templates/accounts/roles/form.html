@@ -1,0 +1,96 @@
+{% extends 'layouts/base.html' %}
+{% block title %}{% if role %}Edit {{ role.name }}{% else %}New role{% endif %} | Atif-Zak Analytics{% endblock %}
+
+{% block page_header %}
+    {% url 'accounts:role_list' as roles_url %}
+    {% if role %}{% include 'partials/page_title.html' with title='Edit role' parent='Roles & Permissions' parent_url=roles_url %}
+    {% else %}{% include 'partials/page_title.html' with title='New role' parent='Roles & Permissions' parent_url=roles_url %}{% endif %}
+{% endblock %}
+
+{% block content %}
+<form method="post" novalidate>
+    {% csrf_token %}
+    <div class="row">
+        <div class="col-xl-4">
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0">Role details</h5></div>
+                <div class="card-body">
+                    {% include 'partials/form_errors.html' %}
+                    {% include 'partials/field.html' with field=form.name %}
+                    {% include 'partials/field.html' with field=form.description %}
+                    {% include 'partials/field.html' with field=form.color %}
+                    {% if role.is_system %}
+                        <div class="alert alert-info fs-13 mb-0"><i class="ri-information-line align-middle me-1"></i> System role — permissions can be changed but the role cannot be deleted.</div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0">Administration rights</h5></div>
+                <div class="card-body">
+                    {% include 'partials/field.html' with field=form.can_manage_users %}
+                    {% include 'partials/field.html' with field=form.can_manage_roles %}
+                    {% include 'partials/field.html' with field=form.can_view_activity %}
+                    <p class="text-muted fs-12 mb-0">Only grant “Manage roles” to people you trust: they can change everyone's permissions.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-8">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <h5 class="card-title mb-0 flex-grow-1">Module access</h5>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-soft-primary btn-sm" data-select-all="1">Select all</button>
+                        <button type="button" class="btn btn-soft-secondary btn-sm" data-select-all="0">Clear</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% for e in form.modules.errors %}<div class="alert alert-danger">{{ e }}</div>{% endfor %}
+                    {% for group, modules in module_groups %}
+                        <div class="permission-group py-3">
+                            <div class="d-flex align-items-center mb-2">
+                                <h6 class="text-uppercase text-muted fs-12 mb-0 flex-grow-1">{{ group }}</h6>
+                                <a href="#" class="fs-12" data-select-group="{{ forloop.counter }}">Toggle group</a>
+                            </div>
+                            <div class="row g-2" data-group="{{ forloop.counter }}">
+                                {% for m in modules %}
+                                    <div class="col-md-6">
+                                        <label class="form-check form-check-card mb-0" for="mod-{{ m.key }}">
+                                            <input class="form-check-input" type="checkbox" name="modules" value="{{ m.key }}" id="mod-{{ m.key }}" {% if m.key in selected %}checked{% endif %}>
+                                            <span class="d-block fw-medium"><i class="{{ m.icon }} text-primary align-middle me-1"></i> {{ m.label }}</span>
+                                            <span class="d-block text-muted fs-12">{{ m.description }}</span>
+                                        </label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mb-4">
+                <a href="{% url 'accounts:role_list' %}" class="btn btn-light">Cancel</a>
+                <button class="btn btn-primary"><i class="ri-save-3-line align-bottom me-1"></i> {% if role %}Save role{% else %}Create role{% endif %}</button>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelectorAll('[data-select-all]').forEach(function (b) {
+    b.addEventListener('click', function () {
+        var on = b.getAttribute('data-select-all') === '1';
+        document.querySelectorAll('input[name=modules]').forEach(function (c) { c.checked = on; });
+    });
+});
+document.querySelectorAll('[data-select-group]').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+        e.preventDefault();
+        var boxes = document.querySelectorAll('[data-group="' + a.getAttribute('data-select-group') + '"] input');
+        var allOn = Array.prototype.every.call(boxes, function (c) { return c.checked; });
+        boxes.forEach(function (c) { c.checked = !allOn; });
+    });
+});
+</script>
+{% endblock %}

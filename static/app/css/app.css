@@ -1,0 +1,372 @@
+/* =====================================================================
+   Atif-Zak Analytics – theme layer on top of Velzon
+   1. Brand palette & sidebar
+   2. Shared components (brand mark, avatars, cards, toasts)
+   3. Legacy compatibility (classes used by the original module pages)
+   4. Auth pages
+   ===================================================================== */
+
+/* ---------------------------------------------------------------- 1 */
+:root,
+[data-bs-theme=light] {
+    --az-sidebar-bg: #0c1f1d;
+    --az-sidebar-bg-2: #0f2b28;
+    --az-accent: #10b981;
+    --az-accent-soft: rgba(16, 185, 129, .14);
+}
+
+[data-bs-theme=dark] {
+    --az-sidebar-bg: #0b1514;
+    --az-sidebar-bg-2: #0e1d1b;
+}
+
+/* Dark sidebar with a subtle green tint. */
+[data-sidebar=dark] .navbar-menu {
+    background: linear-gradient(180deg, var(--az-sidebar-bg) 0%, var(--az-sidebar-bg-2) 100%);
+    border-right-color: transparent;
+}
+
+[data-sidebar=dark] {
+    --vz-vertical-menu-item-color: #9fb3ae;
+    --vz-vertical-menu-title-color: #5f7d77;
+    --vz-vertical-menu-item-hover-color: #ffffff;
+    --vz-vertical-menu-item-active-color: #ffffff;
+}
+
+/* Give the menu a fixed height so it scrolls (Velzon's app.js normally adds .h-100).
+   In the collapsed icon mode the menu is not fixed, so the page itself scrolls instead. */
+[data-layout=vertical]:not([data-sidebar-size=sm]) .navbar-menu #scrollbar {
+    height: 100%;
+}
+
+#scrollbar .simplebar-scrollbar::before {
+    background-color: rgba(255, 255, 255, .35);
+}
+
+.navbar-menu .navbar-nav .nav-link {
+    border-radius: 8px;
+    margin: 1px 12px;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    transition: background-color .15s ease, color .15s ease;
+}
+
+.navbar-menu .navbar-nav .nav-link:hover {
+    background-color: rgba(255, 255, 255, .05);
+}
+
+[data-sidebar=dark] .navbar-menu .navbar-nav .nav-link.active {
+    background: linear-gradient(90deg, rgba(16, 185, 129, .28), rgba(16, 185, 129, .08));
+    color: #fff;
+    box-shadow: inset 3px 0 0 var(--az-accent);
+}
+
+[data-sidebar=dark] .navbar-menu .navbar-nav .nav-link.active i {
+    color: #34d399;
+}
+
+.navbar-menu .navbar-nav .nav-link .badge {
+    margin-left: auto;
+}
+
+.navbar-menu .menu-title span {
+    letter-spacing: .06em;
+    font-size: 11px;
+}
+
+/* Collapsed (icon) sidebar: keep items square and centred. */
+[data-layout=vertical][data-sidebar-size=sm] .navbar-menu .navbar-nav .nav-link {
+    margin: 2px 8px;
+    justify-content: center;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+/* ---------------------------------------------------------------- 2 */
+.brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, #10b981 0%, #066b5e 100%);
+    color: #fff;
+    font-size: 18px;
+    box-shadow: 0 6px 14px -6px rgba(16, 185, 129, .7);
+    vertical-align: middle;
+}
+
+.brand-text {
+    font-family: var(--vz-headings-font-family, inherit);
+    font-weight: 700;
+    font-size: 17px;
+    margin-left: 8px;
+    vertical-align: middle;
+    letter-spacing: -.01em;
+}
+
+.logo-light .brand-text { color: #fff; }
+.logo-dark .brand-text { color: var(--vz-heading-color, #212529); }
+.brand-accent { color: var(--az-accent); }
+
+.navbar-brand-box .logo { line-height: 70px; }
+
+.avatar-initials {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: .8em;
+}
+
+.header-profile-user.avatar-initials { font-size: 14px; }
+.object-fit-cover { object-fit: cover; }
+
+.unread-dot {
+    position: absolute;
+    top: 14px;
+    right: 10px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.notification-item.unread { background-color: var(--az-accent-soft); }
+
+#back-to-top { display: none; }
+
+.app-toast { min-width: 300px; box-shadow: var(--vz-box-shadow-lg); }
+.app-toast .toast-body { padding: .85rem 1rem; }
+
+.card-animate { transition: transform .2s ease, box-shadow .2s ease; }
+.card-animate:hover { transform: translateY(-4px); box-shadow: 0 10px 30px -12px rgba(var(--vz-primary-rgb), .35); }
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-size: 22px;
+}
+
+.welcome-banner {
+    background: linear-gradient(120deg, #066b5e 0%, #0f9d7a 55%, #10b981 100%);
+    color: #fff;
+    border: 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.welcome-banner::after {
+    content: '';
+    position: absolute;
+    right: -60px;
+    top: -60px;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .08);
+}
+
+.welcome-banner::before {
+    content: '';
+    position: absolute;
+    right: 120px;
+    bottom: -90px;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .06);
+}
+
+/* Buttons placed on the green brand banner – same look in light and dark mode. */
+.btn-on-brand {
+    background-color: #fff;
+    color: #066b5e;
+    border: 1px solid #fff;
+}
+
+.btn-on-brand:hover { background-color: #ecfdf5; color: #055047; }
+
+.btn-on-brand-outline {
+    background-color: rgba(255, 255, 255, .08);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, .55);
+}
+
+.btn-on-brand-outline:hover { background-color: rgba(255, 255, 255, .18); color: #fff; }
+
+.module-tile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--vz-border-color);
+    border-radius: 10px;
+    color: var(--vz-body-color);
+    transition: border-color .15s, background-color .15s;
+}
+
+.module-tile:hover {
+    border-color: rgba(var(--vz-primary-rgb), .5);
+    background-color: rgba(var(--vz-primary-rgb), .05);
+    color: var(--vz-body-color);
+}
+
+.permission-group + .permission-group { border-top: 1px dashed var(--vz-border-color); }
+
+.form-check-card {
+    border: 1px solid var(--vz-border-color);
+    border-radius: 8px;
+    padding: 10px 12px 10px 38px;
+    height: 100%;
+    cursor: pointer;
+}
+
+.form-check-card:has(input:checked) {
+    border-color: rgba(var(--vz-primary-rgb), .6);
+    background-color: rgba(var(--vz-primary-rgb), .06);
+}
+
+.table-card .table > :not(caption) > * > * { padding: .75rem 1rem; }
+
+/* ---------------------------------------------------------------- 3
+   The original module pages were written against a custom stylesheet.
+   These rules map their classes onto Velzon so they inherit the theme
+   (including dark mode) without rewriting every page. */
+
+.pro-card {
+    background-color: var(--vz-secondary-bg);
+    border: 1px solid var(--vz-border-color);
+    border-radius: .5rem;
+    box-shadow: var(--vz-box-shadow);
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    color: var(--vz-body-color);
+}
+
+.btn-pro-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background-color: var(--vz-primary);
+    border: 1px solid var(--vz-primary);
+    color: #fff;
+    border-radius: .375rem;
+    padding: .5rem 1rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all .2s ease;
+}
+
+.btn-pro-primary:hover,
+.btn-pro-primary:focus {
+    background-color: var(--vz-primary-text-emphasis);
+    color: #fff;
+    box-shadow: 0 6px 16px -6px rgba(var(--vz-primary-rgb), .6);
+}
+
+.badge-pro {
+    padding: 5px 10px;
+    border-radius: 50rem;
+    font-size: .75rem;
+    font-weight: 600;
+}
+
+/* Headings in module pages used Bootstrap's large h2; bring them in line with Velzon page titles. */
+.page-content h2.fw-bold,
+.page-content .container-fluid > .row:first-child h2 {
+    font-size: 1.35rem;
+}
+
+/* Legacy loading overlay. */
+#loader-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(var(--vz-body-bg-rgb, 243, 243, 249), .88);
+    z-index: 9999;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: var(--vz-body-color);
+}
+
+.pro-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--vz-border-color);
+    border-top-color: var(--vz-primary);
+    border-radius: 50%;
+    animation: az-spin 1s linear infinite;
+}
+
+@keyframes az-spin { to { transform: rotate(360deg); } }
+
+/* Hard-coded light utility classes used by old pages → theme-aware in dark mode. */
+[data-bs-theme=dark] .page-content .bg-white { background-color: var(--vz-secondary-bg) !important; }
+[data-bs-theme=dark] .page-content .bg-light { background-color: var(--vz-light-bg-subtle, #2a2f34) !important; }
+[data-bs-theme=dark] .page-content .text-dark { color: var(--vz-heading-color, #ced4da) !important; }
+[data-bs-theme=dark] .page-content .table-light { --vz-table-bg: var(--vz-light-bg-subtle, #2a2f34); }
+
+/* Some module pages style `.form-control` globally; keep the topbar search on the theme. */
+#page-topbar .app-search .form-control {
+    background-color: var(--vz-topbar-search-bg);
+    color: var(--vz-topbar-search-color, var(--vz-body-color));
+    border: none;
+    box-shadow: none;
+}
+
+/* DataTables controls inherit Velzon form styling. */
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select {
+    border: 1px solid var(--vz-input-border-custom, var(--vz-border-color));
+    background-color: var(--vz-input-bg-custom, var(--vz-secondary-bg));
+    color: var(--vz-body-color);
+    border-radius: .25rem;
+}
+
+/* ---------------------------------------------------------------- 4 */
+.auth-page-wrapper .auth-one-bg {
+    background-image: url("../../velzon/images/auth-one-bg.jpg");
+    background-position: center;
+    background-size: cover;
+}
+
+.auth-page-wrapper .auth-one-bg .bg-overlay {
+    background: linear-gradient(135deg, #066b5e 0%, #0c3b35 100%);
+    opacity: .92;
+}
+
+.auth-bg-cover {
+    background: linear-gradient(-45deg, #0c1f1d 50%, #066b5e);
+}
+
+.auth-feature {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    color: rgba(255, 255, 255, .85);
+}
+
+.auth-feature i {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, .12);
+    color: #6ee7b7;
+    font-size: 18px;
+}
+
+@media (max-width: 575.98px) {
+    .page-title-box { padding-top: 6px; }
+    .app-toast { min-width: 0; width: calc(100vw - 2rem); }
+}

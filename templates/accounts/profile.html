@@ -1,0 +1,155 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+{% block title %}My Profile | Atif-Zak Analytics{% endblock %}
+
+{% block content %}
+<div class="position-relative mx-n4 mt-n4">
+    <div class="profile-wid-bg profile-setting-img" style="height: 200px;">
+        <img src="{% static 'velzon/images/profile-bg.jpg' %}" class="profile-wid-img" alt="">
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xxl-3">
+        <div class="card mt-n5">
+            <div class="card-body p-4 text-center">
+                <div class="profile-user position-relative d-inline-block mx-auto mb-4">
+                    {% if user.avatar %}
+                        <img src="{{ user.avatar.url }}" class="rounded-circle avatar-xl img-thumbnail user-profile-image object-fit-cover" alt="">
+                    {% else %}
+                        <span class="rounded-circle avatar-xl img-thumbnail d-inline-flex align-items-center justify-content-center fs-1 fw-semibold bg-{{ user.role_color }}-subtle text-{{ user.role_color }}">{{ user.initials }}</span>
+                    {% endif %}
+                </div>
+                <h5 class="fs-16 mb-1">{{ user.display_name }}</h5>
+                <p class="text-muted mb-2">{{ user.job_title|default:'—' }}</p>
+                <span class="badge bg-{{ user.role_color }}-subtle text-{{ user.role_color }} fs-12"><i class="ri-shield-user-line align-middle me-1"></i>{{ user.role_label }}</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title mb-3">Account</h5>
+                <div class="table-responsive">
+                    <table class="table table-borderless mb-0 fs-13">
+                        <tbody>
+                            <tr><th class="ps-0 text-muted fw-medium" scope="row">Username</th><td class="text-end">{{ user.username }}</td></tr>
+                            <tr><th class="ps-0 text-muted fw-medium" scope="row">Email</th><td class="text-end text-break">{{ user.email|default:'—' }}</td></tr>
+                            <tr><th class="ps-0 text-muted fw-medium" scope="row">Phone</th><td class="text-end">{{ user.phone|default:'—' }}</td></tr>
+                            <tr><th class="ps-0 text-muted fw-medium" scope="row">Joined</th><td class="text-end">{{ user.date_joined|date:'M j, Y' }}</td></tr>
+                            <tr><th class="ps-0 text-muted fw-medium" scope="row">Last sign-in</th><td class="text-end">{{ user.last_login|date:'M j, Y H:i'|default:'—' }}</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xxl-9">
+        <div class="card mt-xxl-n5">
+            <div class="card-header">
+                <ul class="nav nav-tabs-custom rounded card-header-tabs border-bottom-0" role="tablist">
+                    <li class="nav-item"><a class="nav-link {% if active_tab == 'overview' %}active{% endif %}" data-bs-toggle="tab" href="#tab-overview" role="tab"><i class="ri-user-line me-1 align-bottom"></i> Overview</a></li>
+                    <li class="nav-item"><a class="nav-link {% if active_tab == 'edit' %}active{% endif %}" data-bs-toggle="tab" href="#tab-edit" role="tab"><i class="ri-edit-2-line me-1 align-bottom"></i> Edit profile</a></li>
+                    <li class="nav-item"><a class="nav-link {% if active_tab == 'security' %}active{% endif %}" data-bs-toggle="tab" href="#tab-security" role="tab"><i class="ri-lock-password-line me-1 align-bottom"></i> Security</a></li>
+                    <li class="nav-item"><a class="nav-link {% if active_tab == 'activity' %}active{% endif %}" data-bs-toggle="tab" href="#tab-activity" role="tab"><i class="ri-history-line me-1 align-bottom"></i> Activity</a></li>
+                </ul>
+            </div>
+            <div class="card-body p-4">
+                <div class="tab-content">
+
+                    {# ---------------------------------------------------- Overview #}
+                    <div class="tab-pane {% if active_tab == 'overview' %}active{% endif %}" id="tab-overview" role="tabpanel">
+                        <h5 class="mb-1">Your access</h5>
+                        <p class="text-muted">Modules included in the <strong>{{ user.role_label }}</strong> role{% if user.role and user.role.description %} — {{ user.role.description|lower }}{% endif %}</p>
+                        <div class="row g-3">
+                            {% for m in modules %}
+                                <div class="col-xl-4 col-sm-6">
+                                    <a href="{% url m.url_name %}" class="module-tile">
+                                        <span class="avatar-xs flex-shrink-0"><span class="avatar-title bg-primary-subtle text-primary rounded fs-16"><i class="{{ m.icon }}"></i></span></span>
+                                        <span><span class="d-block fw-medium">{{ m.label }}</span><span class="d-block text-muted fs-12">{{ m.group }}</span></span>
+                                    </a>
+                                </div>
+                            {% empty %}
+                                <div class="col-12">{% include 'partials/empty_state.html' with icon='ri-lock-line' text='Your role does not include any modules yet.' %}</div>
+                            {% endfor %}
+                        </div>
+                        {% if user.is_administration %}
+                            <h6 class="mt-4 mb-2 text-uppercase fs-12 text-muted">Administrative rights</h6>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% if user.can_manage_users %}<span class="badge bg-danger-subtle text-danger fs-12"><i class="ri-team-line align-middle"></i> Manage users</span>{% endif %}
+                                {% if user.can_manage_roles %}<span class="badge bg-danger-subtle text-danger fs-12"><i class="ri-shield-keyhole-line align-middle"></i> Manage roles</span>{% endif %}
+                                {% if user.can_view_activity %}<span class="badge bg-info-subtle text-info fs-12"><i class="ri-pulse-line align-middle"></i> View activity log</span>{% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    {# ---------------------------------------------------- Edit #}
+                    <div class="tab-pane {% if active_tab == 'edit' %}active{% endif %}" id="tab-edit" role="tabpanel">
+                        <form method="post" enctype="multipart/form-data" novalidate>
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="profile">
+                            {% include 'partials/form_errors.html' with form=profile_form %}
+                            <div class="row">
+                                <div class="col-lg-6">{% include 'partials/field.html' with field=profile_form.first_name %}</div>
+                                <div class="col-lg-6">{% include 'partials/field.html' with field=profile_form.last_name %}</div>
+                                <div class="col-lg-6">{% include 'partials/field.html' with field=profile_form.email %}</div>
+                                <div class="col-lg-6">{% include 'partials/field.html' with field=profile_form.phone %}</div>
+                                <div class="col-lg-6">{% include 'partials/field.html' with field=profile_form.job_title %}</div>
+                                <div class="col-lg-6">
+                                    {% include 'partials/field.html' with field=profile_form.avatar %}
+                                    {% if user.avatar %}
+                                        <div class="form-check mt-n2 mb-3">
+                                            <input class="form-check-input" type="checkbox" name="remove_avatar" id="remove_avatar" value="1">
+                                            <label class="form-check-label" for="remove_avatar">Remove current photo</label>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="hstack gap-2 justify-content-end">
+                                <button type="submit" class="btn btn-primary"><i class="ri-save-3-line align-bottom me-1"></i> Save changes</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    {# ---------------------------------------------------- Security #}
+                    <div class="tab-pane {% if active_tab == 'security' %}active{% endif %}" id="tab-security" role="tabpanel">
+                        <div class="row">
+                            <div class="col-lg-7">
+                                <h5 class="mb-1">Change password</h5>
+                                <p class="text-muted">Use at least 8 characters. Avoid common words and personal details.</p>
+                                <form method="post" novalidate>
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="password">
+                                    {% include 'partials/form_errors.html' with form=password_form %}
+                                    {% include 'partials/field.html' with field=password_form.old_password %}
+                                    {% include 'partials/field.html' with field=password_form.new_password1 %}
+                                    {% include 'partials/field.html' with field=password_form.new_password2 %}
+                                    <button type="submit" class="btn btn-primary"><i class="ri-lock-password-line align-bottom me-1"></i> Update password</button>
+                                </form>
+                            </div>
+                            <div class="col-lg-5 mt-4 mt-lg-0">
+                                <div class="card bg-light border-0 mb-0">
+                                    <div class="card-body">
+                                        <h6 class="mb-3"><i class="ri-shield-check-line text-success align-middle me-1"></i> Security tips</h6>
+                                        <ul class="text-muted ps-3 mb-0 fs-13 vstack gap-2">
+                                            <li>After 5 failed sign-in attempts, sign-in is paused for 15 minutes.</li>
+                                            <li>Untick “Keep me signed in” on shared computers.</li>
+                                            <li>Every sign-in is recorded in your activity history.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# ---------------------------------------------------- Activity #}
+                    <div class="tab-pane {% if active_tab == 'activity' %}active{% endif %}" id="tab-activity" role="tabpanel">
+                        <h5 class="mb-3">Recent account activity</h5>
+                        {% include 'accounts/partials/activity_feed.html' with items=recent_activity %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

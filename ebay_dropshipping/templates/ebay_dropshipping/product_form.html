@@ -1,0 +1,939 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+{% block title %}{% if instance %}Edit {{ instance.item_id }}{% else %}Add product{% endif %} | eBay Dropshipping{% endblock %}
+
+{% block page_header %}
+    {% url 'ebay_dropshipping:product_list' as list_url %}
+    {% if instance %}{% include 'partials/page_title.html' with title='Edit product' parent='eBay Dropshipping' parent_url=list_url %}
+    {% else %}{% include 'partials/page_title.html' with title='Add product' parent='eBay Dropshipping' parent_url=list_url %}{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if not conf.sheet_connected %}
+    <div class="alert alert-warning alert-border-left d-flex align-items-center gap-2">
+        <i class="ri-google-line fs-18"></i>
+        <div class="flex-grow-1">Google Sheet is not connected yet – products are saved here and will be sent to the sheet once you connect it.</div>
+        <a href="{% url 'ebay_dropshipping:settings' %}" class="btn btn-sm btn-warning">Connect now</a>
+    </div>
+{% endif %}
+
+<form method="post" id="product-form" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="confirm_update" id="confirm_update" value="0">
+    {% include 'partials/form_errors.html' %}
+
+    <div class="row">
+        <div class="col-xl-8">
+            {# ------------------------------------------------ 1. Tab #}
+            <div class="card">
+                <div class="card-body">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-6">
+                            <label class="form-label" for="tab_choice"><i class="ri-table-line align-bottom text-muted me-1"></i> Save into sheet tab</label>
+                            <select name="tab_choice" id="tab_choice" class="form-select {% if form.tab_choice.errors %}is-invalid{% endif %}">
+                                {% for t in tabs %}
+                                    {% if t in blocked_tabs %}<option value="{{ t }}" disabled>{{ t }} (has other data)</option>
+                                    {% else %}<option value="{{ t }}" {% if t == selected_tab %}selected{% endif %}>{{ t }}</option>{% endif %}
+                                {% endfor %}
+                                <option value="{{ new_tab_value }}" {% if selected_tab == new_tab_value %}selected{% endif %}>➕ Create new tab…</option>
+                            </select>
+                            {% for e in form.tab_choice.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+                        </div>
+                        <div class="col-md-6 {% if selected_tab != new_tab_value %}d-none{% endif %}" id="new-tab-wrap">
+                            <label class="form-label" for="id_new_tab">New tab name</label>
+                            <input type="text" name="new_tab" id="id_new_tab" maxlength="100" class="form-control {% if form.new_tab.errors %}is-invalid{% endif %}" value="{{ form.new_tab.value|default:'' }}" placeholder="e.g. Kitchen products">
+                            {% for e in form.new_tab.errors %}<div class="invalid-feedback d-block">{{ e }}</div>{% endfor %}
+                            {% if blocked_tabs %}<div class="form-text">Your existing tabs already hold other data, so the tool keeps its products in its own tab.</div>{% endif %}
+                        </div>
+                        <div class="col-md-6 {% if selected_tab == new_tab_value %}d-none{% endif %}" id="tab-hint">
+                            <p class="text-muted fs-12 mb-0">Your last choice is remembered. {% if conf.sheet_connected %}<a href="?refresh_tabs=1">Reload tabs from Google Sheet</a>{% endif %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# ------------------------------------------------ 2. Paste #}
+            {% if not instance %}
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <h5 class="card-title mb-0 flex-grow-1"><i class="ri-clipboard-line align-bottom text-primary me-1"></i> Paste from eBay</h5>
+                    <span class="text-muted fs-12">Copy the whole listing page (with ZIK data) and paste it here</span>
+                </div>
+                <div class="card-body">
+                    <textarea id="paste-box" class="form-control font-monospace fs-12" rows="7" placeholder="Paste the text you copied from the eBay listing page…"></textarea>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
+                        <button type="button" class="btn btn-primary" id="btn-autofill"><i class="ri-magic-line align-bottom me-1"></i> Auto Fill</button>
+                        <button type="button" class="btn btn-light" id="btn-clear-paste">Clear</button>
+                        <span id="autofill-result" class="fs-13 ms-1"></span>
+                    </div>
+                    <p class="text-muted fs-12 mb-0 mt-2"><i class="ri-cursor-line align-bottom text-success"></i> Faster: use the <a href="{% url 'ebay_dropshipping:settings' %}#one-click">one-click button</a> – click it on the eBay or supplier page and this form fills itself.</p>
+                </div>
+            </div>
+            {% endif %}
+
+            {# ------------------------------------------------ 3. Auto fields #}
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0"><i class="ri-ebay-line align-bottom text-muted me-1"></i> From the eBay page <small class="text-muted fw-normal">(auto-filled – check and correct)</small></h5></div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">{% include 'partials/field.html' with field=form.item_id %}</div>
+                        <div class="col-md-8">{% include 'partials/field.html' with field=form.product_name %}</div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label">eBay Item Link</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control bg-light" id="ebay-link" readonly value="{% if form.item_id.value %}https://www.ebay.com/itm/{{ form.item_id.value }}{% endif %}">
+                                <a class="btn btn-soft-primary" id="ebay-link-open" href="#" target="_blank" rel="noopener" title="Open on eBay"><i class="ri-external-link-line"></i></a>
+                            </div>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <div class="d-flex gap-3 align-items-start">
+                                <div class="flex-shrink-0 border rounded bg-white d-flex align-items-center justify-content-center overflow-hidden" style="width: 84px; height: 84px;">
+                                    <img id="image-preview" src="{{ form.image_url.value|default:'' }}" alt="" class="{% if not form.image_url.value %}d-none{% endif %}" style="max-width: 100%; max-height: 100%; object-fit: contain;" referrerpolicy="no-referrer">
+                                    <i id="image-placeholder" class="ri-image-line fs-24 text-muted {% if form.image_url.value %}d-none{% endif %}"></i>
+                                </div>
+                                <div class="flex-grow-1">{% include 'partials/field.html' with field=form.image_url %}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">{% include 'partials/field.html' with field=form.seller_name %}</div>
+                        <div class="col-md-6">{% include 'partials/field.html' with field=form.seller_feedback %}</div>
+                        <div class="col-md-4">{% include 'partials/field.html' with field=form.seller_price %}</div>
+                        <div class="col-md-4">{% include 'partials/field.html' with field=form.buyer_shipping %}</div>
+                        <div class="col-md-4">{% include 'partials/field.html' with field=form.sold_orders %}</div>
+                        <div class="col-md-8">{% include 'partials/field.html' with field=form.sales_line %}</div>
+                        <div class="col-md-4">{% include 'partials/field.html' with field=form.variation %}</div>
+                    </div>
+                </div>
+            </div>
+
+            {# ------------------------------------------------ 4. Manual fields #}
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0"><i class="ri-edit-box-line align-bottom text-muted me-1"></i> Your research</h5></div>
+                <div class="card-body">
+                    {# The tables are kept as JSON in these two hidden fields; the single sheet fields are filled from them on save. #}
+                    {{ form.competitors.as_hidden }}
+                    {{ form.suppliers.as_hidden }}
+
+                    {# Two tabs: each shows only its own paste box and table. The last open tab is remembered. #}
+                    <ul class="nav nav-tabs nav-tabs-custom nav-success mb-3" role="tablist" id="research-tabs">
+                        <li class="nav-item" role="presentation">
+                            <button type="button" class="nav-link active" data-bs-toggle="tab" data-bs-target="#rp-supplier" data-research-tab="supplier" role="tab">
+                                <i class="ri-truck-line align-bottom me-1"></i> Suppliers <span class="badge bg-success-subtle text-success ms-1" id="sup-count">0</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#rp-competitor" data-research-tab="competitor" role="tab">
+                                <i class="ri-store-2-line align-bottom me-1"></i> Competitors <span class="badge bg-primary-subtle text-primary ms-1" id="comp-count">0</span>
+                            </button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content mb-4">
+                        {# ---------------- Suppliers #}
+                        <div class="tab-pane active" id="rp-supplier" role="tabpanel">
+                            <div class="border rounded p-3 mb-3 bg-light-subtle">
+                                <div class="row g-2 align-items-end mb-2">
+                                    <div class="col-sm-5">
+                                        <label class="form-label fs-12 mb-1" for="supplier-platform">1. Choose supplier</label>
+                                        <select id="supplier-platform" class="form-select form-select-sm"></select>
+                                    </div>
+                                    <div class="col-sm-7"><p class="text-muted fs-12 mb-1">2. Copy the supplier page (<kbd>Ctrl</kbd>+<kbd>A</kbd>, <kbd>Ctrl</kbd>+<kbd>C</kbd>) and paste below – it becomes a row in the table. Put the page URL on the first line for the link.</p></div>
+                                </div>
+                                <textarea id="supplier-paste" class="form-control font-monospace fs-12" rows="3" placeholder="https://www.aliexpress.com/item/…&#10;Paste the supplier page text here…"></textarea>
+                                <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+                                    <button type="button" class="btn btn-success btn-sm" id="btn-fill-supplier"><i class="ri-magic-line align-bottom me-1"></i> Auto Fill Supplier</button>
+                                    <button type="button" class="btn btn-light btn-sm" data-clear="supplier-paste">Clear</button>
+                                </div>
+                                <div id="supplier-result" class="fs-12 mt-2"></div>
+                            </div>
+
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                                <h6 class="mb-0 flex-grow-1">Supplier table</h6>
+                                <label class="fs-12 text-muted mb-0" for="sup-use">Use for profit</label>
+                                <select id="sup-use" class="form-select form-select-sm w-auto"></select>
+                                <button type="button" class="btn btn-soft-success btn-sm" id="sup-add"><i class="ri-add-line align-bottom"></i> Add supplier</button>
+                            </div>
+                            <div class="table-responsive border rounded">
+                                <table class="table table-sm align-middle mb-0 ebay-grid" id="sup-table">
+                                    <thead class="table-light text-muted text-uppercase fs-11">
+                                        <tr><th class="text-center" style="width: 34px;" title="Used for the profit">✓</th><th style="width: 150px;">Source</th><th>Link</th>
+                                            <th style="width: 100px;">Cost $</th><th style="width: 100px;">Shipping $</th><th class="text-end" style="width: 80px;">Total</th><th style="width: 40px;"></th></tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                                <div class="text-center text-muted fs-12 py-3" id="sup-empty">No supplier yet – paste a supplier page above, use the one-click button, or click <strong>Add supplier</strong>.</div>
+                            </div>
+                            <div class="fs-11 text-muted mt-1"><span class="badge bg-success-subtle text-success">Green</span> = cheapest (cost + shipping) · <strong>✓</strong> = used for the profit (the cheapest, unless you choose another).</div>
+                        </div>
+
+                        {# ---------------- Competitors #}
+                        <div class="tab-pane" id="rp-competitor" role="tabpanel">
+                            <div class="border rounded p-3 mb-3 bg-light-subtle">
+                                <p class="text-muted fs-12 mb-2">Just paste – it fills by itself. A competitor's full eBay page becomes a row in the table (seller, price, shipping, sold, feedback); one or many eBay links each get a row.</p>
+                                <textarea id="competitor-paste" class="form-control font-monospace fs-12" rows="3" placeholder="Paste a competitor's eBay page, or eBay links (one or many)…"></textarea>
+                                <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+                                    <button type="button" class="btn btn-success btn-sm" id="btn-add-competitor"><i class="ri-user-add-line align-bottom me-1"></i> Add Competitor</button>
+                                    <button type="button" class="btn btn-light btn-sm" data-clear="competitor-paste">Clear</button>
+                                </div>
+                                <div id="competitor-result" class="fs-12 mt-2"></div>
+                            </div>
+
+                            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                                <h6 class="mb-0 flex-grow-1">Competitor table</h6>
+                                <label class="fs-12 text-muted mb-0" for="comp-main">Main competitor</label>
+                                <select id="comp-main" class="form-select form-select-sm w-auto"></select>
+                                <button type="button" class="btn btn-soft-primary btn-sm" id="comp-add"><i class="ri-add-line align-bottom"></i> Add competitor</button>
+                            </div>
+                            <div class="table-responsive border rounded">
+                                <table class="table table-sm align-middle mb-0 ebay-grid" id="comp-table">
+                                    <thead class="table-light text-muted text-uppercase fs-11">
+                                        <tr><th class="text-center" style="width: 34px;" title="Main competitor">★</th><th style="width: 150px;">Seller</th><th>Link</th>
+                                            <th style="width: 92px;">Price $</th><th style="width: 92px;">Shipping $</th><th style="width: 80px;">Sold</th><th style="width: 92px;">Feedback</th><th style="width: 40px;"></th></tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                                <div class="text-center text-muted fs-12 py-3" id="comp-empty">No competitor yet – paste a competitor's eBay page above, use the one-click button, or click <strong>Add competitor</strong>.</div>
+                            </div>
+                            <div class="fs-11 text-muted mt-1"><i class="ri-star-fill text-warning"></i> = Main competitor (the biggest – most sold, then most feedback – unless you choose another). Its sold and feedback go to the sheet.</div>
+                        </div>
+                    </div>
+
+                    {# ---- Always visible: your own price #}
+                    <h6 class="border-top pt-3 mb-3"><i class="ri-price-tag-3-line align-bottom text-muted me-1"></i> Your price</h6>
+
+                    <div class="row">
+                        <div class="col-sm-6 col-lg-3">{% include 'partials/field.html' with field=form.other_cost %}</div>
+                        <div class="col-sm-6 col-lg-3">{% include 'partials/field.html' with field=form.listed_price %}</div>
+                        <div class="col-sm-6 col-lg-3">{% include 'partials/field.html' with field=form.my_shipping %}</div>
+                        <div class="col-sm-6 col-lg-3">{% include 'partials/field.html' with field=form.status %}</div>
+                        {# Price suggestions – click one to use it, or type your own price above. #}
+                        <div class="col-12 mt-n2 mb-3" id="price-suggest">
+                            <div class="d-flex flex-wrap align-items-center gap-2 fs-12">
+                                <span class="text-muted"><i class="ri-lightbulb-flash-line align-bottom text-warning"></i> Suggested price:</span>
+                                <span id="suggest-buttons" class="d-flex flex-wrap gap-2"><span class="text-muted">add the Supplier Cost first</span></span>
+                                <span class="ms-auto d-flex align-items-center gap-1">
+                                    <label for="target-margin" class="text-muted mb-0">Target profit</label>
+                                    <input type="number" id="target-margin" class="form-control form-control-sm" style="width: 70px;" min="0" max="80" step="1" value="20">
+                                    <span class="text-muted">%</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# ------------------------------------------------ Right column #}
+        <div class="col-xl-4">
+            <div class="ebay-sticky">
+                <div class="card">
+                    <div class="card-header d-flex align-items-center">
+                        <h5 class="card-title mb-0 flex-grow-1"><i class="ri-calculator-line align-bottom text-primary me-1"></i> Profit calculator</h5>
+                        <span class="badge bg-light text-muted">Live</span>
+                    </div>
+                    <div class="card-body">
+                        {# Break-even only needs the supplier cost – it tells you the lowest safe price before you pick one. #}
+                        <div class="d-flex align-items-center justify-content-between gap-2 p-2 rounded bg-warning-subtle mb-3">
+                            <div>
+                                <div class="fw-semibold fs-13">Break-even Price</div>
+                                <div class="text-muted fs-11">List above this or you lose money</div>
+                            </div>
+                            <div class="fs-18 fw-bold text-warning-emphasis calc-value">$<span id="calc-break_even-text">—</span></div>
+                            <input type="hidden" id="calc-break_even">
+                        </div>
+                        <p class="text-muted fs-12 mb-3" id="calc-hint">Enter <strong>My Listed Price</strong> to see the results.</p>
+                        <div class="vstack gap-2">
+                            {% include 'ebay_dropshipping/partials/calc_row.html' with key='total_sale' label='Total Sale' prefix='$' %}
+                            {% include 'ebay_dropshipping/partials/calc_row.html' with key='ebay_fee' label='eBay Fee' prefix='$' %}
+                            {% include 'ebay_dropshipping/partials/calc_row.html' with key='ad_fee' label='Ad Fee' prefix='$' %}
+                            {% include 'ebay_dropshipping/partials/calc_row.html' with key='total_cost' label='Total Cost' prefix='$' %}
+                            {% include 'ebay_dropshipping/partials/calc_row.html' with key='profit' label='Profit' prefix='$' %}
+                            {% include 'ebay_dropshipping/partials/calc_row.html' with key='profit_pct' label='Profit Percentage' suffix='%' %}
+                            {% include 'ebay_dropshipping/partials/calc_row.html' with key='roi' label='ROI' suffix='%' %}
+                        </div>
+                        <p class="text-muted fs-11 mb-0 mt-3">Total Sale = My Listed Price + My Buyer Shipping. eBay charges its fee on the Total Sale. Competitor Shipping is not used.</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header p-0">
+                        <button type="button" class="btn btn-link text-body w-100 text-start px-3 py-3 d-flex align-items-center text-decoration-none" data-bs-toggle="collapse" data-bs-target="#fee-settings">
+                            <i class="ri-settings-3-line text-muted me-2"></i><span class="fw-semibold flex-grow-1">Settings</span>
+                            <span class="text-muted fs-12 me-2" id="fee-summary"></span>
+                            <i class="ri-arrow-down-s-line"></i>
+                        </button>
+                    </div>
+                    <div class="collapse" id="fee-settings">
+                        <div class="card-body border-top">
+                            <div class="row g-2">
+                                <div class="col-6"><label class="form-label fs-12" for="fee-ebay_fee_pct">eBay Fee %</label><input type="number" step="0.01" min="0" class="form-control form-control-sm fee-input" id="fee-ebay_fee_pct" value="{{ fees.ebay_fee_pct }}"></div>
+                                <div class="col-6"><label class="form-label fs-12" for="fee-ad_rate_pct">Ad Rate %</label><input type="number" step="0.01" min="0" class="form-control form-control-sm fee-input" id="fee-ad_rate_pct" value="{{ fees.ad_rate_pct }}"></div>
+                                <div class="col-4"><label class="form-label fs-12" for="fee-ebay_fixed_fee">Fixed fee ≤</label><input type="number" step="0.01" min="0" class="form-control form-control-sm fee-input" id="fee-ebay_fixed_fee" value="{{ fees.ebay_fixed_fee }}"></div>
+                                <div class="col-4"><label class="form-label fs-12" for="fee-fixed_fee_threshold">Threshold $</label><input type="number" step="0.01" min="0" class="form-control form-control-sm fee-input" id="fee-fixed_fee_threshold" value="{{ fees.fixed_fee_threshold }}"></div>
+                                <div class="col-4"><label class="form-label fs-12" for="fee-ebay_fixed_fee_high">Fixed fee &gt;</label><input type="number" step="0.01" min="0" class="form-control form-control-sm fee-input" id="fee-ebay_fixed_fee_high" value="{{ fees.ebay_fixed_fee_high }}"></div>
+                                <div class="col-12"><label class="form-label fs-12" for="fee-sales_tax_pct">Sales Tax buffer % <span class="text-muted">(0 = ignore, ~7 = safe side)</span></label><input type="number" step="0.01" min="0" class="form-control form-control-sm fee-input" id="fee-sales_tax_pct" value="{{ fees.sales_tax_pct }}"></div>
+                            </div>
+                            <button type="button" class="btn btn-soft-primary btn-sm w-100 mt-3" id="btn-save-fees"><i class="ri-save-line align-bottom me-1"></i> Save settings</button>
+                            <p class="text-muted fs-11 mb-0 mt-2">Used for every product and in the Google Sheet formulas.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body d-flex gap-2">
+                        <a href="{% url 'ebay_dropshipping:product_list' %}" class="btn btn-light flex-fill">Cancel</a>
+                        <button type="submit" class="btn btn-primary flex-fill" id="btn-submit"><i class="ri-send-plane-2-line align-bottom me-1"></i> {% if instance %}Save changes{% else %}Submit{% endif %}</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+{# ------------------------------------------------ Duplicate warning #}
+{% if duplicate %}
+<div class="modal fade" id="duplicate-modal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-4">
+                <div class="avatar-lg mx-auto mb-3"><span class="avatar-title bg-warning-subtle text-warning rounded-circle display-6"><i class="ri-file-copy-2-line"></i></span></div>
+                <h5>This item is already in “{{ duplicate.tab }}”</h5>
+                <p class="text-muted">Item ID <strong>{{ duplicate.item_id }}</strong> was saved on {{ duplicate.updated_at|date:'M j, Y H:i' }}.</p>
+                <div class="text-start bg-light rounded p-3 fs-13 mb-3">
+                    <div class="fw-medium mb-1">{{ duplicate.product_name|default:'(no name)' }}</div>
+                    <div class="text-muted">Status: {{ duplicate.status }} · Listed price: {% if duplicate.listed_price %}${{ duplicate.listed_price }}{% else %}—{% endif %}{% if duplicate_calc.profit is not None %} · Profit: ${{ duplicate_calc.profit }}{% endif %}</div>
+                </div>
+                <p class="mb-4">Do you want to <strong>update the existing row</strong> with the new values?</p>
+                <div class="d-flex gap-2 justify-content-center">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-warning" id="btn-confirm-update"><i class="ri-refresh-line align-bottom me-1"></i> Update existing row</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{{ fees|json_script:'fee-settings-data' }}
+{{ error_list|json_script:'form-errors-data' }}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    @media (min-width: 1200px) { .ebay-sticky { position: sticky; top: calc(70px + 1.5rem); } }
+    .calc-value { font-variant-numeric: tabular-nums; }
+    .just-filled { animation: ebay-flash 1.4s ease; }
+    .ebay-grid { min-width: 820px; }
+    .ebay-grid td:has(> div > input[type="url"]) { min-width: 230px; }
+    .ebay-grid td { padding: .3rem .35rem; }
+    .ebay-grid .form-control, .ebay-grid .form-select { font-size: .8125rem; padding: .25rem .5rem; }
+    .ebay-grid tr.cheapest > td { background: rgba(var(--vz-success-rgb), .12); }
+    .ebay-grid .mark-btn { border: 0; background: none; padding: 0 .25rem; font-size: 1.05rem; line-height: 1; color: var(--vz-gray-400); }
+    .ebay-grid .mark-btn.on { color: var(--vz-warning); }
+    .ebay-grid .mark-btn.on.used { color: var(--vz-success); }
+    @keyframes ebay-flash { 0% { box-shadow: 0 0 0 .2rem rgba(var(--vz-success-rgb), .45); } 100% { box-shadow: none; } }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'ebay_dropshipping/js/ebay-tool.js' %}"></script>
+<script>
+(function () {
+    var form = document.getElementById('product-form');
+    var fees = JSON.parse(document.getElementById('fee-settings-data').textContent);
+    function field(name) { return form.querySelector('[name="' + name + '"]'); }
+
+    /* ---- Tab picker */
+    var tabSelect = document.getElementById('tab_choice');
+    tabSelect.addEventListener('change', function () {
+        var isNew = tabSelect.value === '{{ new_tab_value }}';
+        document.getElementById('new-tab-wrap').classList.toggle('d-none', !isNew);
+        document.getElementById('tab-hint').classList.toggle('d-none', isNew);
+        if (isNew) document.getElementById('id_new_tab').focus();
+    });
+
+    /* ---- eBay link from the item ID */
+    function updateLink() {
+        // A pasted eBay URL becomes just its Item ID ("…/itm/147123049946?…" → 147123049946).
+        var raw = field('item_id').value || '';
+        var fromUrl = raw.match(/(?:\/itm\/(?:[^\s\/?#]+\/)?|[?&]item=)(\d{9,15})/i);
+        if (fromUrl) field('item_id').value = fromUrl[1];
+        var id = (field('item_id').value || '').replace(/\s+/g, '');
+        var url = /^\d+$/.test(id) ? 'https://www.ebay.com/itm/' + id : '';
+        document.getElementById('ebay-link').value = url;
+        var open = document.getElementById('ebay-link-open');
+        open.href = url || '#';
+        open.classList.toggle('disabled', !url);
+    }
+    field('item_id').addEventListener('input', updateLink);
+    updateLink();
+
+    /* ---- Image preview */
+    function updateImage() {
+        var url = (field('image_url').value || '').trim(), img = document.getElementById('image-preview');
+        var ok = /^https?:\/\//i.test(url);
+        img.classList.toggle('d-none', !ok);
+        document.getElementById('image-placeholder').classList.toggle('d-none', ok);
+        if (ok && img.getAttribute('src') !== url) img.src = url;
+    }
+    field('image_url').addEventListener('input', updateImage);
+    document.getElementById('image-preview').addEventListener('error', function () {
+        this.classList.add('d-none');
+        document.getElementById('image-placeholder').classList.remove('d-none');
+    });
+
+    /* ---- Auto Fill */
+    var AUTO = ['item_id', 'product_name', 'seller_name', 'seller_feedback', 'seller_price',
+                'buyer_shipping', 'sold_orders', 'sales_line', 'variation'];
+    var btnFill = document.getElementById('btn-autofill');
+    if (btnFill) {
+        btnFill.addEventListener('click', function () {
+            var text = document.getElementById('paste-box').value;
+            var result = document.getElementById('autofill-result');
+            if (!text.trim()) { result.className = 'fs-13 text-warning'; result.textContent = 'Paste the eBay page text first.'; return; }
+            var data = EbayTool.parse(text);
+            var filled = 0;
+            AUTO.forEach(function (key) {
+                var input = field(key);
+                input.value = data[key];                 // not found → stays empty, never guessed
+                input.classList.remove('is-invalid', 'just-filled');
+                if (data[key] !== '') { filled++; void input.offsetWidth; input.classList.add('just-filled'); }
+            });
+            updateLink();
+            result.className = 'fs-13 ' + (filled === AUTO.length ? 'text-success' : 'text-warning');
+            result.innerHTML = '<i class="ri-checkbox-circle-line align-bottom"></i> Filled ' + filled + ' of ' + AUTO.length +
+                ' fields' + (filled < AUTO.length ? ' – please check the empty ones.' : '. Check them, then add your research below.') +
+                (data.item_id ? '' : '<br><i class="ri-link align-bottom"></i> No Item ID in the copied text: copy the listing address ' +
+                '(<kbd>Ctrl</kbd>+<kbd>L</kbd>, <kbd>Ctrl</kbd>+<kbd>C</kbd>) and paste it into the <strong>ID</strong> box – the ID is taken from it.');
+            if (filled) document.getElementById('supplier-paste').focus({ preventScroll: true });
+        });
+        document.getElementById('btn-clear-paste').addEventListener('click', function () {
+            document.getElementById('paste-box').value = '';
+            document.getElementById('autofill-result').textContent = '';
+        });
+    }
+
+    /* ---- Quick fill for "Your research" */
+    function flash(input) { input.classList.remove('just-filled', 'is-invalid'); void input.offsetWidth; input.classList.add('just-filled'); }
+    function report(el, ok, html) { el.className = 'fs-12 mt-2 ' + (ok ? 'text-success' : 'text-warning'); el.innerHTML = html; }
+    function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    var platformSelect = document.getElementById('supplier-platform');
+    EbayTool.SUPPLIERS.forEach(function (s) {
+        var o = document.createElement('option'); o.value = s.key; o.textContent = s.label; platformSelect.appendChild(o);
+    });
+    try { platformSelect.value = localStorage.getItem('ebay-supplier-platform') || 'auto'; } catch (e) {}
+    if (!platformSelect.value) platformSelect.value = 'auto';
+    platformSelect.addEventListener('change', function () {
+        try { localStorage.setItem('ebay-supplier-platform', platformSelect.value); } catch (e) {}
+    });
+
+    /* ---- Competitor and supplier tables (kept as JSON in the hidden #id_competitors / #id_suppliers).
+     *  ★ main competitor = the one picked in "Main competitor", otherwise the biggest.
+     *  ✓ used supplier   = the one picked in "Use for profit", otherwise the cheapest (green). */
+    function readList(id) {
+        try { var v = JSON.parse(document.getElementById(id).value || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; }
+    }
+    var comps = readList('id_competitors'), sups = readList('id_suppliers');
+    var SOURCES = EbayTool.SUPPLIERS.filter(function (s) { return s.key !== 'auto'; });
+    var C_COLS = [['seller', 'text', 'Seller'], ['link', 'url', 'https://www.ebay.com/itm/…'], ['price', 'money'], ['shipping', 'money'], ['sold', 'count'], ['feedback', 'count']];
+    var S_COLS = [['source', 'source'], ['link', 'url', 'https://…'], ['cost', 'money'], ['shipping', 'money']];
+
+    function store() {
+        document.getElementById('id_competitors').value = JSON.stringify(comps);
+        document.getElementById('id_suppliers').value = JSON.stringify(sups);
+    }
+    function cell(row, key, kind, placeholder, onChange) {
+        var td = document.createElement('td'), input;
+        if (kind === 'source') {
+            input = document.createElement('select');
+            input.className = 'form-select form-select-sm';
+            SOURCES.forEach(function (s) { var o = document.createElement('option'); o.value = s.key; o.textContent = s.label; input.appendChild(o); });
+            input.value = row[key] || 'other';
+        } else {
+            input = document.createElement('input');
+            input.className = 'form-control form-control-sm';
+            input.type = kind === 'url' ? 'url' : (kind === 'text' ? 'text' : 'number');
+            if (kind === 'money') { input.step = '0.01'; input.min = '0'; input.inputMode = 'decimal'; }
+            if (kind === 'count') { input.step = '1'; input.min = '0'; input.inputMode = 'numeric'; }
+            if (placeholder) input.placeholder = placeholder;
+            input.value = row[key] === undefined || row[key] === null ? '' : row[key];
+        }
+        input.setAttribute('aria-label', key);
+        input.addEventListener(kind === 'source' ? 'change' : 'input', function () { row[key] = input.value.trim(); onChange(); });
+        td.appendChild(input);
+        if (kind === 'url') {
+            var open = document.createElement('a');
+            open.className = 'ms-1 text-muted'; open.target = '_blank'; open.rel = 'noopener'; open.title = 'Open link';
+            open.innerHTML = '<i class="ri-external-link-line"></i>';
+            var wrap = document.createElement('div');
+            wrap.className = 'd-flex align-items-center';
+            wrap.appendChild(input); wrap.appendChild(open);
+            td.appendChild(wrap);
+            var sync = function () {
+                var ok = /^https?:\/\//i.test(row[key] || '');
+                open.href = ok ? row[key] : '#';
+                open.classList.toggle('invisible', !ok);
+            };
+            input.addEventListener('input', sync);
+            sync();
+        }
+        return td;
+    }
+    function markCell(onClick) {
+        var td = document.createElement('td'); td.className = 'text-center';
+        var b = document.createElement('button');
+        b.type = 'button'; b.className = 'mark-btn';
+        b.addEventListener('click', onClick);
+        td.appendChild(b);
+        return td;
+    }
+    function deleteCell(onClick) {
+        var td = document.createElement('td'); td.className = 'text-end';
+        var b = document.createElement('button');
+        b.type = 'button'; b.className = 'btn btn-sm btn-ghost-danger btn-icon'; b.title = 'Delete row';
+        b.innerHTML = '<i class="ri-delete-bin-line"></i>';
+        b.addEventListener('click', onClick);
+        td.appendChild(b);
+        return td;
+    }
+    function pin(list, i) { list.forEach(function (r, k) { r.pinned = k === i; }); }
+
+    var TAB_KEY = 'ebay-research-tab';
+    function showResearchTab(name) {
+        var btn = document.querySelector('[data-research-tab="' + name + '"]');
+        if (btn) bootstrap.Tab.getOrCreateInstance(btn).show();
+    }
+    document.querySelectorAll('[data-research-tab]').forEach(function (btn) {
+        btn.addEventListener('shown.bs.tab', function () {
+            try { localStorage.setItem(TAB_KEY, btn.getAttribute('data-research-tab')); } catch (e) {}
+        });
+    });
+    try { if (localStorage.getItem(TAB_KEY) === 'competitor') showResearchTab('competitor'); } catch (e) {}
+    function fillSelect(sel, autoText, list, label) {
+        sel.innerHTML = '';
+        var auto = document.createElement('option'); auto.value = 'auto'; auto.textContent = autoText; sel.appendChild(auto);
+        list.forEach(function (r, i) { var o = document.createElement('option'); o.value = i; o.textContent = label(r, i); sel.appendChild(o); });
+        var pinned = list.findIndex(function (r) { return r.pinned; });
+        sel.value = pinned >= 0 ? String(pinned) : 'auto';
+        sel.disabled = !list.length;
+    }
+
+    /* Competitors */
+    function compLabel(c, i) {
+        return (c.seller || 'Competitor #' + (i + 1)) + (c.sold ? ' · ' + c.sold + ' sold' : '') + (c.feedback ? ' · fb ' + c.feedback : '');
+    }
+    function refreshComps() {   // marks, dropdown and counts – without rebuilding the inputs (keeps the cursor)
+        var main = EbayTool.mainCompetitor(comps), biggest = EbayTool.biggestCompetitor(comps);
+        document.querySelectorAll('#comp-table tbody tr').forEach(function (tr, i) {
+            var b = tr.querySelector('.mark-btn');
+            b.classList.toggle('on', i === main);
+            b.innerHTML = '<i class="ri-star-' + (i === main ? 'fill' : 'line') + '"></i>';
+            b.title = i === main ? 'Main competitor' : 'Make this the main competitor';
+        });
+        fillSelect(document.getElementById('comp-main'),
+                   '★ Auto – biggest' + (biggest >= 0 ? ' (' + compLabel(comps[biggest], biggest) + ')' : ''), comps, compLabel);
+        document.getElementById('comp-count').textContent = comps.length;
+        document.getElementById('comp-empty').classList.toggle('d-none', comps.length > 0);
+        store();
+    }
+    function renderComps() {
+        var body = document.querySelector('#comp-table tbody');
+        body.innerHTML = '';
+        comps.forEach(function (c, i) {
+            var tr = document.createElement('tr');
+            tr.appendChild(markCell(function () { pin(comps, i); refreshComps(); }));
+            C_COLS.forEach(function (col) { tr.appendChild(cell(c, col[0], col[1], col[2], refreshComps)); });
+            tr.appendChild(deleteCell(function () { comps.splice(i, 1); renderComps(); }));
+            body.appendChild(tr);
+        });
+        refreshComps();
+    }
+    /** Adds a competitor row, or updates the row of the same eBay listing. Returns {index, added}. */
+    function addCompetitor(c) {
+        var row = { seller: c.seller || '', link: c.link || '', price: c.price || '', shipping: c.shipping || '',
+                    sold: c.sold || '', feedback: c.feedback || '', pinned: false };
+        var id = EbayTool.itemIdOf(row.link);
+        var at = id ? comps.findIndex(function (x) { return EbayTool.itemIdOf(x.link) === id; }) : -1, added = at < 0;
+        if (at >= 0) {
+            Object.keys(row).forEach(function (k) { if (k !== 'pinned' && row[k] !== '') comps[at][k] = row[k]; });
+        } else {
+            comps.push(row); at = comps.length - 1;
+        }
+        renderComps();
+        showResearchTab('competitor');
+        var tr = document.querySelectorAll('#comp-table tbody tr')[at];
+        if (tr) tr.querySelectorAll('input').forEach(flash);
+        return { index: at, added: added };
+    }
+    function mainNote(index) {
+        var main = EbayTool.mainCompetitor(comps);
+        return main === index ? 'It is now the ★ Main competitor.' : 'The ★ Main competitor stays ' + compLabel(comps[main], main) + '.';
+    }
+    document.getElementById('comp-main').addEventListener('change', function (e) {
+        pin(comps, e.target.value === 'auto' ? -1 : parseInt(e.target.value, 10));
+        refreshComps();
+    });
+    document.getElementById('comp-add').addEventListener('click', function () {
+        comps.push({ seller: '', link: '', price: '', shipping: '', sold: '', feedback: '', pinned: false });
+        renderComps();
+        var rows = document.querySelectorAll('#comp-table tbody tr');
+        rows[rows.length - 1].querySelector('input').focus();
+    });
+
+    /* Suppliers */
+    function supLabel(s, i) {
+        var t = EbayTool.supplierTotal(s);
+        return '#' + (i + 1) + ' ' + EbayTool.supplierLabel(s.source || 'other') + (t !== null ? ' · $' + EbayTool.money(t) : '');
+    }
+    function refreshSups() {
+        var used = EbayTool.usedSupplier(sups), cheapest = EbayTool.cheapestSupplier(sups);
+        document.querySelectorAll('#sup-table tbody tr').forEach(function (tr, i) {
+            tr.classList.toggle('cheapest', i === cheapest);
+            var b = tr.querySelector('.mark-btn');
+            b.classList.toggle('on', i === used);
+            b.classList.add('used');
+            b.innerHTML = '<i class="ri-checkbox-circle-' + (i === used ? 'fill' : 'line') + '"></i>';
+            b.title = i === used ? 'Used for the profit' : 'Use this supplier for the profit';
+            var t = EbayTool.supplierTotal(sups[i]);
+            tr.querySelector('.sup-total').innerHTML = t === null ? '<span class="text-muted">—</span>' :
+                '$' + EbayTool.money(t) + (i === cheapest && sups.length > 1 ? '<div class="fs-10 text-success">cheapest</div>' : '');
+        });
+        fillSelect(document.getElementById('sup-use'),
+                   '✓ Auto – cheapest' + (cheapest >= 0 ? ' (' + supLabel(sups[cheapest], cheapest) + ')' : ''), sups, supLabel);
+        document.getElementById('sup-count').textContent = sups.length;
+        document.getElementById('sup-empty').classList.toggle('d-none', sups.length > 0);
+        store();
+        recalc();
+    }
+    function renderSups() {
+        var body = document.querySelector('#sup-table tbody');
+        body.innerHTML = '';
+        sups.forEach(function (s, i) {
+            var tr = document.createElement('tr');
+            tr.appendChild(markCell(function () { pin(sups, i); refreshSups(); }));
+            S_COLS.forEach(function (col) { tr.appendChild(cell(s, col[0], col[1], col[2], refreshSups)); });
+            var total = document.createElement('td'); total.className = 'text-end fw-medium sup-total'; tr.appendChild(total);
+            tr.appendChild(deleteCell(function () { sups.splice(i, 1); renderSups(); }));
+            body.appendChild(tr);
+        });
+        refreshSups();
+    }
+    /** Adds a supplier row, or updates the row with the same link. Returns {index, added}. */
+    function addSupplier(s) {
+        var row = { source: s.source || 'other', link: s.link || '', cost: s.cost || '', shipping: s.shipping || '', pinned: false };
+        var at = row.link ? sups.findIndex(function (x) { return x.link === row.link; }) : -1, added = at < 0;
+        if (at >= 0) {
+            Object.keys(row).forEach(function (k) { if (k !== 'pinned' && row[k] !== '') sups[at][k] = row[k]; });
+        } else {
+            sups.push(row); at = sups.length - 1;
+        }
+        renderSups();
+        showResearchTab('supplier');
+        var tr = document.querySelectorAll('#sup-table tbody tr')[at];
+        if (tr) tr.querySelectorAll('input, select').forEach(flash);
+        return { index: at, added: added };
+    }
+    function supplierNote(index) {
+        var cheapest = EbayTool.cheapestSupplier(sups), used = EbayTool.usedSupplier(sups);
+        return (index === cheapest && sups.length > 1 ? 'It is the cheapest (green). ' : '') +
+               (index === used ? 'Used for the profit ✓.' : 'The profit still uses ' + supLabel(sups[used], used) + '.');
+    }
+    document.getElementById('sup-use').addEventListener('change', function (e) {
+        pin(sups, e.target.value === 'auto' ? -1 : parseInt(e.target.value, 10));
+        refreshSups();
+    });
+    document.getElementById('sup-add').addEventListener('click', function () {
+        sups.push({ source: platformSelect.value !== 'auto' ? platformSelect.value : 'other', link: '', cost: '', shipping: '', pinned: false });
+        renderSups();
+        var rows = document.querySelectorAll('#sup-table tbody tr');
+        rows[rows.length - 1].querySelector('input').focus();
+    });
+
+    /* Quick fill → table rows */
+    document.getElementById('btn-fill-supplier').addEventListener('click', function () {
+        var box = document.getElementById('supplier-result');
+        var text = document.getElementById('supplier-paste').value;
+        if (!text.trim()) { report(box, false, 'Paste the supplier page text first.'); return; }
+        var r = EbayTool.parseSupplier(text, platformSelect.value);
+        if (r.platform === 'ebay') { report(box, false, '<i class="ri-information-line align-bottom"></i> ' + esc(r.notes[0])); return; }
+        var res = addSupplier({ source: r.platform, link: r.supplier_link, cost: r.supplier_cost, shipping: r.supplier_shipping });
+        document.getElementById('supplier-paste').value = '';
+        var filled = ['supplier_link', 'supplier_cost', 'supplier_shipping'].filter(function (k) { return r[k] !== ''; }).length;
+        report(box, filled === 3, '<i class="ri-checkbox-circle-line align-bottom"></i> ' + EbayTool.supplierLabel(r.platform) +
+            (res.added ? ' added' : ' updated') + ' (' + filled + ' of 3 values found). ' + esc(supplierNote(res.index)) +
+            (r.notes.length ? '<ul class="mb-0 ps-3 mt-1">' + r.notes.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ul>' : ''));
+    });
+
+    document.getElementById('btn-add-competitor').addEventListener('click', function () {
+        var box = document.getElementById('competitor-result');
+        var text = document.getElementById('competitor-paste').value;
+        if (!text.trim()) { report(box, false, 'Paste a competitor eBay page first.'); return; }
+        var c = EbayTool.parseCompetitors(text);
+        if (c.kind === 'supplier') { report(box, false, 'This looks like a supplier page – paste it in the "Supplier page" tab instead.'); return; }
+        if (c.kind === 'none') { report(box, false, 'No eBay listing found – paste a competitor’s eBay page or eBay links.'); return; }
+
+        // Never add the product itself as its own competitor.
+        var ownId = field('item_id').value.trim();
+        var links = c.kind === 'page_no_link' ? [''] : c.links;
+        var candidates = links.filter(function (l) { return !ownId || EbayTool.itemIdOf(l) !== ownId; });
+        var skipped = links.length - candidates.length;
+        if (!candidates.length) { report(box, false, 'That is the same listing as the product above – paste a different seller.'); return; }
+
+        var page = c.kind === 'page' || c.kind === 'page_no_link', res, added = 0;
+        candidates.forEach(function (l) {
+            res = addCompetitor(page ? { seller: c.seller, link: l, price: c.price, shipping: c.shipping,
+                                         sold: c.competitor_sold, feedback: c.competitor_feedbacks } : { link: l });
+            if (res.added) added++;
+        });
+        document.getElementById('competitor-paste').value = '';
+        var msg;
+        if (!page) {
+            msg = 'Added ' + added + ' of ' + candidates.length + ' link(s)' + (added < candidates.length ? ' (others were already in the table)' : '') +
+                  '. Open each one and click the one-click button (or paste its page) to fill seller, price, sold and feedback.';
+        } else {
+            msg = (res.added ? 'Added ' : 'Updated ') + esc(c.seller || 'competitor') + ' (feedback ' + esc(c.competitor_feedbacks || '—') +
+                  ', sold ' + esc(c.competitor_sold || '—') + '). ' + esc(mainNote(res.index));
+            if (c.kind === 'page_no_link') {
+                msg += '<br><i class="ri-link align-bottom"></i> The copied text has no link – type it in the row’s Link box ' +
+                       '(on the competitor’s page press <kbd>Ctrl</kbd>+<kbd>L</kbd>, <kbd>Ctrl</kbd>+<kbd>C</kbd>).';
+            }
+        }
+        if (skipped) msg += ' Your own listing was skipped.';
+        report(box, c.kind !== 'page_no_link', '<i class="ri-checkbox-circle-line align-bottom"></i> ' + msg);
+    });
+
+    // Paste = fill: run the matching Auto Fill as soon as text is pasted into a box.
+    [['paste-box', 'btn-autofill'], ['supplier-paste', 'btn-fill-supplier'], ['competitor-paste', 'btn-add-competitor']].forEach(function (pair) {
+        var area = document.getElementById(pair[0]), btn = document.getElementById(pair[1]);
+        if (area && btn) area.addEventListener('paste', function () { setTimeout(function () { btn.click(); }, 0); });
+    });
+
+    document.querySelectorAll('[data-clear]').forEach(function (b) {
+        b.addEventListener('click', function () { document.getElementById(b.getAttribute('data-clear')).value = ''; });
+    });
+
+    /* ---- Live profit calculation */
+    var INPUTS = ['listed_price', 'my_shipping', 'other_cost'];
+    function recalc() {
+        var values = {};
+        INPUTS.forEach(function (name) { values[name] = field(name).value; });
+        // Supplier cost and shipping come from the ✓ supplier row.
+        var used = sups[EbayTool.usedSupplier(sups)] || {};
+        values.supplier_cost = used.cost || '';
+        values.supplier_shipping = used.shipping || '';
+        var r = EbayTool.calculate(values, fees);
+        EbayTool.CALC_KEYS.forEach(function (key) {
+            document.getElementById('calc-' + key).value = EbayTool.money(r[key]);
+        });
+        document.getElementById('calc-break_even-text').textContent = r.break_even === null ? '—' : EbayTool.money(r.break_even);
+        document.getElementById('calc-hint').classList.toggle('d-none', r.hasPrice);
+        ['profit', 'profit_pct', 'roi'].forEach(function (key) {
+            var el = document.getElementById('calc-' + key);
+            el.classList.toggle('text-success', r[key] !== null && r.profit >= 0);
+            el.classList.toggle('text-danger', r[key] !== null && r.profit < 0);
+        });
+        // Warn when the listed price is below break-even.
+        var price = field('listed_price');
+        price.classList.toggle('border-danger', r.break_even !== null && r.hasPrice && parseFloat(price.value) < r.break_even);
+        renderSuggestions(values);
+    }
+    INPUTS.forEach(function (name) { field(name).addEventListener('input', recalc); });
+    field('seller_price').addEventListener('input', recalc);  // the competitor price feeds a suggestion
+
+    /* ---- Price suggestions: click to use, or type your own price */
+    var marginInput = document.getElementById('target-margin');
+    try { var savedMargin = localStorage.getItem('ebay-target-margin'); if (savedMargin) marginInput.value = savedMargin; } catch (e) {}
+    marginInput.addEventListener('input', function () {
+        try { localStorage.setItem('ebay-target-margin', marginInput.value); } catch (e) {}
+        recalc();
+    });
+
+    function renderSuggestions(values) {
+        var wrap = document.getElementById('suggest-buttons');
+        var vals = { seller_price: field('seller_price').value };
+        Object.keys(values).forEach(function (k) { vals[k] = values[k]; });
+        var s = EbayTool.suggestPrices(vals, fees, marginInput.value);
+        wrap.innerHTML = '';
+        if (!s || (!s.target && !s.undercut)) {
+            wrap.innerHTML = '<span class="text-muted">add the Supplier Cost first</span>';
+            return;
+        }
+        [['target', '<i class="ri-focus-3-line align-bottom"></i> ' + Number(s.margin) + '% profit'],
+         ['undercut', '<i class="ri-price-tag-3-line align-bottom"></i> 1¢ below competitor']].forEach(function (pair) {
+            var sug = s[pair[0]];
+            if (!sug || sug.price === null) return;
+            var loss = sug.profit < 0;
+            var b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'btn btn-sm py-0 px-2 ' + (loss ? 'btn-soft-danger' : 'btn-soft-success');
+            b.title = 'Click to use this price';
+            b.innerHTML = pair[1] + ': <strong>$' + EbayTool.money(sug.price) + '</strong> <span class="opacity-75">(' +
+                (loss ? 'loss' : 'profit') + ' $' + EbayTool.money(sug.profit) + ', ' + EbayTool.money(sug.profit_pct) + '%)</span>';
+            b.addEventListener('click', function () {
+                field('listed_price').value = EbayTool.money(sug.price);
+                flash(field('listed_price'));
+                recalc();
+            });
+            wrap.appendChild(b);
+        });
+    }
+
+    function feeSummary() {
+        document.getElementById('fee-summary').textContent = Number(fees.ebay_fee_pct) + '% + $' +
+            Number(fees.ebay_fixed_fee).toFixed(2) + '/' + Number(fees.ebay_fixed_fee_high).toFixed(2) +
+            ' · ads ' + Number(fees.ad_rate_pct) + '%' + (Number(fees.sales_tax_pct) ? ' · tax ' + Number(fees.sales_tax_pct) + '%' : '');
+    }
+    feeSummary();
+    renderComps();
+    renderSups();   // also runs recalc()
+
+    /* ---- Fee settings */
+    document.querySelectorAll('.fee-input').forEach(function (input) {
+        input.addEventListener('input', function () {
+            fees[input.id.replace('fee-', '')] = parseFloat(input.value) || 0;
+            recalc();
+        });
+    });
+    document.getElementById('btn-save-fees').addEventListener('click', function () {
+        var body = new FormData();
+        Object.keys(fees).forEach(function (k) { body.append(k, document.getElementById('fee-' + k).value); });
+        fetch('{% url "ebay_dropshipping:save_fees" %}', {
+            method: 'POST', body: body,
+            headers: { 'X-CSRFToken': getCookie('csrftoken'), 'X-Requested-With': 'XMLHttpRequest' }
+        }).then(function (r) { return r.json(); }).then(function (d) {
+            if (!d.ok) { appToast('Please enter valid fee values.', 'danger'); return; }
+            fees = d.fees;
+            feeSummary();
+            recalc();
+            appToast('Settings saved.' + (d.note || ''), d.note ? 'warning' : 'success');
+        }).catch(function () { appToast('Could not save settings.', 'danger'); });
+    });
+
+    /* ---- Errors: one SweetAlert listing everything, then jump to the first bad field */
+    function showErrors(list, focusEl) {
+        var ul = document.createElement('ul');
+        ul.className = 'text-start mb-0';
+        list.forEach(function (msg) { var li = document.createElement('li'); li.textContent = msg; ul.appendChild(li); });
+        Swal.fire({
+            icon: 'error', title: 'Not saved yet', html: ul.outerHTML,
+            footer: 'Fix the highlighted field and click Submit again.',
+            confirmButtonText: 'OK, fix it', customClass: { confirmButton: 'btn btn-primary w-xs' }, buttonsStyling: false
+        }).then(function () {
+            var el = focusEl || form.querySelector('.is-invalid');
+            if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.focus({ preventScroll: true }); }
+        });
+    }
+    var serverErrors = JSON.parse(document.getElementById('form-errors-data').textContent);
+    if (serverErrors.length) showErrors(serverErrors);
+
+    /* ---- Quick check before sending, then avoid double submits */
+    form.addEventListener('submit', function (e) {
+        var problems = [], first = null;
+        var itemId = field('item_id');
+        if (!itemId.value.trim()) { problems.push('ID: paste the eBay page and click Auto Fill, or type the Item ID.'); first = first || itemId; }
+        var newTab = document.getElementById('id_new_tab');
+        if (tabSelect.value === '{{ new_tab_value }}' && !newTab.value.trim()) {
+            problems.push('New tab name: type a name for the new tab (e.g. eBay Products).'); first = first || newTab;
+        }
+        if (problems.length) {
+            e.preventDefault();
+            if (first) first.classList.add('is-invalid');
+            showErrors(problems, first);
+            return;
+        }
+        var b = document.getElementById('btn-submit');
+        b.disabled = true;
+        b.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving…';
+    });
+
+    /* ---- Duplicate confirmation */
+    var dup = document.getElementById('duplicate-modal');
+    if (dup) {
+        new bootstrap.Modal(dup).show();
+        document.getElementById('btn-confirm-update').addEventListener('click', function () {
+            document.getElementById('confirm_update').value = '1';
+            form.submit();
+        });
+    }
+
+    /* ---- One-click button (bookmarklet): data arrives from capture.html.
+     *  eBay page  → the product above (when the ID is empty or the same) or a competitor.
+     *  other site → the supplier. Values not found on the page are left as they are. */
+    function labelOf(key) {
+        var l = form.querySelector('label[for="id_' + key + '"]');
+        return l ? l.textContent.replace(/\*/g, '').trim() : key;
+    }
+    function applyCapture(payload) {
+        var r = EbayTool.fromCapture(payload), f = r.fields, filled = [], missing = [];
+        function put(key) {
+            if (f[key] === undefined) return;
+            if (f[key] !== '') { field(key).value = f[key]; flash(field(key)); filled.push(labelOf(key)); }
+            else missing.push(labelOf(key));
+        }
+        var out = { ok: true, title: '', body: '', notes: r.notes.slice() };
+
+        if (r.role === 'none') {
+            out.ok = false; out.title = 'Not a product page'; out.body = r.notes.shift() || 'Open a product page and click the button again.';
+            out.notes = r.notes;
+        } else if (r.role === 'ebay') {
+            var ownId = field('item_id').value.trim();
+            if (!ownId || ownId === f.item_id) {
+                AUTO.forEach(put);
+                put('image_url');
+                updateLink(); updateImage();
+                out.title = 'eBay product filled';
+                out.body = 'Filled ' + filled.length + ' of ' + (AUTO.length + 1) + ' fields for #' + f.item_id + '.';
+                if (missing.length) out.notes.push('Not on the page, please check: ' + missing.join(', ') + '.');
+            } else {
+                var res = addCompetitor({ seller: f.seller_name, link: 'https://www.ebay.com/itm/' + f.item_id, price: f.seller_price,
+                                          shipping: f.buyer_shipping, sold: f.sold_orders, feedback: f.seller_feedback });
+                out.title = res.added ? 'Competitor added' : 'Competitor updated';
+                out.body = (f.seller_name || 'Seller') + ' – feedback ' + (f.seller_feedback || '—') + ', sold ' + (f.sold_orders || '—') +
+                    '. ' + mainNote(res.index) + ' Total: ' + comps.length + ' competitor(s).';
+                out.tip = 'To use this listing as the main product instead, clear the ID box and click the button again.';
+                report(document.getElementById('competitor-result'), true, '<i class="ri-checkbox-circle-line align-bottom"></i> ' + esc(out.body));
+            }
+        } else {
+            if (platformSelect.querySelector('option[value="' + r.platform + '"]')) platformSelect.value = r.platform;
+            var sres = addSupplier({ source: r.platform, link: f.supplier_link, cost: f.supplier_cost, shipping: f.supplier_shipping });
+            if (!field('image_url').value.trim() && f.image_url) { put('image_url'); updateImage(); }
+            var found = ['supplier_link', 'supplier_cost', 'supplier_shipping'].filter(function (k) { return f[k] !== ''; }).length;
+            out.title = EbayTool.supplierLabel(r.platform) + ' supplier ' + (sres.added ? 'added' : 'updated');
+            out.body = found + ' of 3 values found (link, cost, shipping). ' + supplierNote(sres.index);
+            report(document.getElementById('supplier-result'), !r.notes.length, '<i class="ri-checkbox-circle-line align-bottom"></i> ' + esc(out.body) +
+                (r.notes.length ? '<ul class="mb-0 ps-3 mt-1">' + r.notes.map(function (n) { return '<li>' + esc(n) + '</li>'; }).join('') + '</ul>' : ''));
+        }
+        recalc();
+        if (out.ok) out.ok = !out.notes.length;
+        if (out.tip) out.notes.push(out.tip);
+        appToast(out.title + ' – ' + out.body, out.ok ? 'success' : 'warning');
+        return out;
+    }
+
+    var formId = String(Date.now()) + Math.random().toString(16).slice(2), lastActive = Date.now();
+    function touch() { if (document.visibilityState === 'visible') lastActive = Date.now(); }
+    window.addEventListener('focus', touch);
+    document.addEventListener('visibilitychange', touch);
+    form.addEventListener('input', touch);
+    if ('BroadcastChannel' in window) {
+        var channel = new BroadcastChannel('ebay-capture');
+        channel.onmessage = function (e) {
+            var m = e.data || {};
+            if (m.type === 'offer') channel.postMessage({ type: 'claim', id: m.id, formId: formId, lastActive: lastActive });
+            if (m.type === 'apply' && m.to === formId) {
+                var res = applyCapture(m.payload);
+                channel.postMessage({ type: 'done', id: m.id, ok: res.ok, title: res.title, body: res.body, notes: res.notes });
+            }
+        };
+    }
+    {% if not instance %}
+    // No form was open when the button was clicked: the capture page saved the data and opened this form.
+    try {
+        var pending = JSON.parse(localStorage.getItem('ebay-capture-pending') || 'null');
+        localStorage.removeItem('ebay-capture-pending');
+        if (pending && Date.now() - pending.ts < 15 * 60 * 1000) applyCapture(pending.payload);
+    } catch (e) {}
+    {% endif %}
+})();
+</script>
+{% endblock %}

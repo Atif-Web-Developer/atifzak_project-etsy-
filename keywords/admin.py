@@ -3,9 +3,9 @@ from .models import User, KeywordSearch, KeywordResult
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ('username', 'first_name', 'email', 'is_approved', 'is_premium', 'is_staff')
+    list_display = ('username', 'first_name', 'email', 'role', 'is_active', 'is_approved', 'is_premium', 'is_staff')
     list_editable = ('is_approved', 'is_premium')
-    list_filter = ('is_approved', 'is_premium', 'is_staff')
+    list_filter = ('role', 'is_active', 'is_approved', 'is_premium', 'is_staff')
     actions = ['approve_users']
 
     @admin.action(description='Approve selected users')

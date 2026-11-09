@@ -1,0 +1,93 @@
+{% extends 'layouts/base.html' %}
+{% block title %}{% if is_new %}Add user{% else %}Edit {{ target.username }}{% endif %} | Atif-Zak Analytics{% endblock %}
+
+{% block page_header %}
+    {% url 'accounts:user_list' as users_url %}
+    {% if is_new %}{% include 'partials/page_title.html' with title='Add user' parent='Users' parent_url=users_url %}
+    {% else %}{% include 'partials/page_title.html' with title='Edit user' parent='Users' parent_url=users_url %}{% endif %}
+{% endblock %}
+
+{% block content %}
+<form method="post" novalidate>
+    {% csrf_token %}
+    <div class="row">
+        <div class="col-xl-8">
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0"><i class="ri-user-line align-middle me-1 text-muted"></i> Account details</h5></div>
+                <div class="card-body">
+                    {% include 'partials/form_errors.html' %}
+                    <div class="row">
+                        <div class="col-md-6">{% include 'partials/field.html' with field=form.first_name %}</div>
+                        <div class="col-md-6">{% include 'partials/field.html' with field=form.last_name %}</div>
+                        <div class="col-md-6">{% include 'partials/field.html' with field=form.username %}</div>
+                        <div class="col-md-6">{% include 'partials/field.html' with field=form.email %}</div>
+                        <div class="col-md-6">{% include 'partials/field.html' with field=form.phone %}</div>
+                        <div class="col-md-6">{% include 'partials/field.html' with field=form.job_title %}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0"><i class="ri-lock-password-line align-middle me-1 text-muted"></i> {% if is_new %}Password{% else %}Reset password{% endif %}</h5></div>
+                <div class="card-body">
+                    {% if not is_new %}<p class="text-muted fs-13">Leave both fields empty to keep the current password. The user will be notified if you change it.</p>{% endif %}
+                    <div class="row">
+                        <div class="col-md-6">{% include 'partials/field.html' with field=form.password1 %}</div>
+                        <div class="col-md-6">{% include 'partials/field.html' with field=form.password2 %}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0"><i class="ri-shield-user-line align-middle me-1 text-muted"></i> Role &amp; access</h5></div>
+                <div class="card-body">
+                    {% include 'partials/field.html' with field=form.role %}
+                    <div id="role-hint" class="alert alert-light border fs-13 mb-3 d-none"></div>
+                    {% include 'partials/field.html' with field=form.is_active %}
+                    {% if target.is_superuser %}
+                        <div class="alert alert-warning fs-13 mb-0"><i class="ri-vip-crown-2-line align-middle me-1"></i> This is a <strong>super admin</strong> account and always has full access, whatever the role.</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if target %}
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0">Recent activity</h5></div>
+                <div class="card-body">{% include 'accounts/partials/activity_feed.html' with items=target_activity %}</div>
+            </div>
+            {% endif %}
+
+            <div class="card">
+                <div class="card-body d-flex gap-2">
+                    <a href="{% url 'accounts:user_list' %}" class="btn btn-light flex-fill">Cancel</a>
+                    <button type="submit" class="btn btn-primary flex-fill"><i class="ri-save-3-line align-bottom me-1"></i> {% if is_new %}Create user{% else %}Save changes{% endif %}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+{{ role_hints|json_script:'role-hints' }}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    var hints = JSON.parse(document.getElementById('role-hints').textContent || '{}');
+    var select = document.getElementById('{{ form.role.id_for_label }}');
+    var box = document.getElementById('role-hint');
+    function update() {
+        var h = select && hints[select.value];
+        if (!h) { box.classList.add('d-none'); return; }
+        box.textContent = '';
+        var title = document.createElement('div'); title.className = 'fw-semibold mb-1'; title.textContent = h.description || h.name;
+        var mods = document.createElement('div'); mods.className = 'text-muted'; mods.textContent = h.modules.length ? 'Modules: ' + h.modules.join(', ') : 'No modules assigned.';
+        box.appendChild(title); box.appendChild(mods);
+        box.classList.remove('d-none');
+    }
+    if (select) { select.addEventListener('change', update); update(); }
+})();
+</script>
+{% endblock %}

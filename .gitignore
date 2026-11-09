@@ -52,3 +52,6 @@ static_root/
 # Coverage
 .coverage
 htmlcov/
+
+# Original Velzon theme download (only the needed assets are copied into static/velzon)
+admin_pannel_template/
