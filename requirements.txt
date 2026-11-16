@@ -8,3 +8,6 @@ gunicorn
 
 pillow
 python-dotenv
+django-extensions
+dj-database-url
+psycopg[binary]

@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import dj_database_url
 
 # Load environment variables from .env (project root)
 load_dotenv()
@@ -73,11 +74,14 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'etsy_researcher.wsgi.application'
 
+# Database: set DATABASE_URL in .env to use PostgreSQL (e.g. Neon/Supabase).
+# If DATABASE_URL is not set, the local SQLite file is used.
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 AUTH_PASSWORD_VALIDATORS = [
